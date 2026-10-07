@@ -10,16 +10,10 @@
   "lang": "tr",
   "icons": [
     {
-      "src": "android/app/src/main/res/drawable/gazonride_exact.jpg",
+      "src": "icons/gazonride.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "android/app/src/main/res/drawable/gazonride_exact.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }

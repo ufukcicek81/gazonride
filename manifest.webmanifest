@@ -1,8 +1,8 @@
 {
-  "id": "./?gazonride-app-20261007",
+  "id": "./?gazonride-app-20261008",
   "name": "GaZonRide",
   "short_name": "GaZonRide",
-  "start_url": "./?gazonride-app-20261007",
+  "start_url": "./?gazonride-app-20261008",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -11,22 +11,10 @@
   "lang": "tr",
   "icons": [
     {
-      "src": "android/app/src/main/res/drawable/gazonride_logo.png",
+      "src": "android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
-    },
-    {
-      "src": "android/app/src/main/res/drawable/gazonride_logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "android/app/src/main/res/drawable/gazonride_logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }

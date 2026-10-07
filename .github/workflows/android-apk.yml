@@ -6,29 +6,50 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Restore stable Android signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: gazonride-stable-debug-signing-v1
+
+      - name: Create signing key if missing
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v               -keystore "$HOME/.android/debug.keystore"               -storepass android               -alias androiddebugkey               -keypass android               -dname "CN=GaZonRide,O=GaZonRide,C=TR"               -keyalg RSA               -keysize 2048               -validity 10000
+          fi
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build release APK
+
+      - name: Build APK
         working-directory: android
         run: gradle --no-daemon assembleDebug -PbuildCode=${{ github.run_number }} -PbuildName=1.0.${{ github.run_number }}
+
       - name: Rename APK
         run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/GaZonRide.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: GazonRide-Android
           path: android/app/build/outputs/apk/debug/GaZonRide.apk
+
       - name: Publish APK release
         uses: softprops/action-gh-release@v2
         with:

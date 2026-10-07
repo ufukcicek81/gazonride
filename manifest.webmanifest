@@ -1,1 +1,25 @@
-{"name":"GazonRide","short_name":"GazonRide","start_url":"./","display":"standalone","background_color":"#080a0e","theme_color":"#080a0e","lang":"tr","icons":[]}
+{
+  "name": "GaZonRide",
+  "short_name": "GaZonRide",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080a0e",
+  "theme_color": "#080a0e",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "android/app/src/main/res/drawable/gazonride_exact.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "android/app/src/main/res/drawable/gazonride_exact.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

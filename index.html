@@ -272,10 +272,12 @@ function loadGoogleMaps(){
   if(window.google&&google.maps){googleReady=true;resolve();return;}
   var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";\n  try{if(!key&&window.AndroidBridge&&typeof window.AndroidBridge.getGoogleMapsApiKey==="function")key=String(window.AndroidBridge.getGoogleMapsApiKey()||"");}catch(e){}
   if(!key||key.indexOf("__")===0){reject(new Error("missing-key"));return;}
-  window.__gazonGoogleMapsReady=function(){googleReady=true;resolve();};
   var s=document.createElement("script");
   s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&libraries=places,geometry&callback=__gazonGoogleMapsReady&v=weekly&loading=async";
-  s.async=true;s.defer=true;s.onerror=function(){reject(new Error("google-load"));};document.head.appendChild(s);
+  var done=false;
+  var timer=setTimeout(function(){if(!done){done=true;reject(new Error("google-timeout"));}},10000);
+  window.__gazonGoogleMapsReady=function(){if(done)return;done=true;clearTimeout(timer);googleReady=true;resolve();};
+  s.async=true;s.defer=true;s.onerror=function(){if(done)return;done=true;clearTimeout(timer);reject(new Error("google-load"));};document.head.appendChild(s);
  });
 }
 async function initMap(){
@@ -532,9 +534,13 @@ function nav(page,button){
  else if(page==="ride"){setMode("ride");}
  else {setMode("overlay");showScreen(page);}
 }
-async function boot(){
+function boot(){
  applyAppTheme();
- var mapReady=await initMap();
+ var mapReady=false;
+ initMap().then(function(ok){
+   mapReady=ok;
+   if(ok&&currentPoint)setTimeout(function(){setMapCenter(currentPoint);},300);
+ }).catch(function(e){console.warn("Google Maps init",e);});
  if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){
   try{var raw=window.AndroidBridge.getBufferedPoints(),bg=JSON.parse(raw||"[]");
    if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}
@@ -579,7 +585,7 @@ async function boot(){
  requestWakeLock();
  setMode("discover");
  startGPS();
- if(mapReady&&currentPoint)setTimeout(function(){setMapCenter(currentPoint);},500);
+ 
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();

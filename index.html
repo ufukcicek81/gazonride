@@ -65,7 +65,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,tile=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,tile=null,lastGpsTs=0;
 function $(id){return document.getElementById(id);}
 function hav(a,b){var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)*Math.sin(dLon/2);return 2*R*Math.asin(Math.sqrt(x));}
 function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lon-a.lon)*p;return (Math.atan2(Math.sin(dl)*Math.cos(y2),Math.cos(y1)*Math.sin(y2)-Math.sin(y1)*Math.cos(y2)*Math.cos(dl))*180/Math.PI+360)%360;}
@@ -89,7 +89,13 @@ function applyPosition(pos){
  if(riding){
    track.push([p.lat,p.lon]);updateTurns();route.setLatLngs(track);
    if(track.length>1)map.panTo([p.lat,p.lon],{animate:true,duration:.25});
-   if(lastPoint){var d=hav(lastPoint,p);if(d<0.5)totalKm+=d;$("distance").textContent=totalKm.toFixed(2);}
+   if(lastPoint){
+ var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(Date.now()-lastGpsTs)/1000):1;
+ var acc=Number(c.accuracy||999),implied=dt>0?(d*3600/dt):999;
+ if(d>0.003 && d<0.8 && (acc<=80 || implied<=180)) totalKm+=d;
+ $("distance").textContent=totalKm.toFixed(2);
+}
+lastGpsTs=Date.now();
    lastPoint=p;
    var sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$("speed").textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$("max").textContent=Math.round(maxSpeed);
    if(c.altitude!=null){$("altitude").textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$("elev").textContent=Math.round(totalClimb);}
@@ -104,17 +110,17 @@ function startGPS(){
 }
 function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
- riding=true;startTime=Date.now();lastPoint=null;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;
+ riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;
  route&&route.setLatLngs([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
  $("startBtn").textContent="⏹️ Sürüşü Bitir";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
  timer=setInterval(function(){$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000));},1000);
- watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+ watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000}); if(window.AndroidBridge&&window.AndroidBridge.startRide)try{window.AndroidBridge.startRide();}catch(e){}
 }
 function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").textContent="🏍️ Yeni Sürüş";$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track};
- var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
+ if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
 }
 function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
 function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
@@ -180,9 +186,19 @@ function showScreen(page){
  if(page==="routes"){
    var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
    x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Sürüş Geçmişim</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
-   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
+   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar'da Aç</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
    x.querySelector("#closeScreen").onclick=closeScreen;
-   x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-route"))];if(a&&a.track&&a.track.length&&map){closeScreen();route.setLatLngs(a.track);map.fitBounds(route.getBounds(),{padding:[25,25]});window.scrollTo({top:0,behavior:"smooth"});$("status").textContent="Kayıtlı rota haritada gösteriliyor.";}}});
+   x.querySelectorAll("[data-google]").forEach(function(b){b.onclick=function(){
+ var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-google"))];
+ if(!a||!a.track||a.track.length<2)return;
+ var pts=a.track.filter(function(p){return Array.isArray(p)&&p.length>=2;});
+ var origin=pts[0][0]+","+pts[0][1], dest=pts[pts.length-1][0]+","+pts[pts.length-1][1], mids=[];
+ for(var k=1;k<=3;k++){var idx=Math.round((pts.length-1)*k/4);if(idx>0&&idx<pts.length-1)mids.push(pts[idx][0]+","+pts[idx][1]);}
+ var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(dest)+"&travelmode=driving";
+ if(mids.length)url+="&waypoints="+encodeURIComponent(mids.join("|"));
+ window.open(url,"_blank");
+};});
+x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-route"))];if(a&&a.track&&a.track.length&&map){closeScreen();route.setLatLngs(a.track);map.fitBounds(route.getBounds(),{padding:[25,25]});window.scrollTo({top:0,behavior:"smooth"});$("status").textContent="Kayıtlı rota haritada gösteriliyor.";}}});
  }else if(page==="groups"){
    var groups=JSON.parse(localStorage.getItem("gazon_groups")||"[]");
    x.innerHTML='<div class="screenHead"><div><div class="ey">SOSYAL SÜRÜŞ</div><div class="screenTitle">Gruplar</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Yeni grup oluştur</b><input class="input" id="groupName" placeholder="Grup adı"><button class="screenBtn" id="createGroup">＋ Grup Oluştur</button></div><div class="screenCard"><b>Gruba katıl</b><input class="input" id="groupCode" placeholder="Davet kodu"><button class="screenBtn dark" id="joinGroup">Katıl</button></div><div class="ey">GRUPLARIM</div>'+(groups.length?groups.map(function(g){return '<div class="screenCard"><b>🏍️ '+g.name+'</b><div class="sub">Kod: '+g.code+' · '+g.members+' sürücü</div></div>';}).join(""):'<div class="screenCard"><div class="sub">Henüz bir grubun yok.</div></div>');
@@ -204,6 +220,11 @@ function nav(page,button){
 }
 function boot(){
  if(!initMap())return;
+ if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){
+  try{var raw=window.AndroidBridge.getBufferedPoints(),bg=JSON.parse(raw||"[]");
+   if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}
+  }catch(e){}
+ }
  renderHistory();
  $("startBtn").addEventListener("click",function(){if(riding)finishRide();else startRide();});
  $("shareBtn").addEventListener("click",shareRide);

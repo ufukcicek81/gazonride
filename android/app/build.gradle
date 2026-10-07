@@ -1,5 +1,14 @@
 plugins { id 'com.android.application' }
 
+def buildCode = (project.findProperty("buildCode") ?: System.getenv("GITHUB_RUN_NUMBER") ?: "1").toString().toInteger()
+def buildName = (project.findProperty("buildName") ?: System.getenv("GITHUB_REF_NAME") ?: "1.0.${buildCode}").toString()
+
 android { namespace 'com.gazonride.app'; compileSdk 35
-    defaultConfig { applicationId 'com.gazonride.app'; minSdk 23; targetSdk 35; versionCode 1; versionName '1.0.0' }
+    defaultConfig {
+        applicationId 'com.gazonride.app'
+        minSdk 23
+        targetSdk 35
+        versionCode buildCode
+        versionName buildName
+    }
 }

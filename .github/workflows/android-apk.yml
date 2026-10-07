@@ -37,6 +37,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Rebuild high-resolution launcher icon
+        shell: bash
+        run: |
+          cat android/icon_chunks/part*.b64 | tr -d '\r\n' | base64 --decode > android/app/src/main/res/drawable/gazonride_launcher_hq.webp
+
       - name: Build APK
         working-directory: android
         run: gradle --no-daemon assembleDebug -PbuildCode=${{ github.run_number }} -PbuildName=1.0.${{ github.run_number }}

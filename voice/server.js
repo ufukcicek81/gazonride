@@ -1,0 +1,6 @@
+const http=require("http");const WebSocket=require("ws");
+const server=http.createServer((req,res)=>{res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify({ok:true,service:"gazonride-voice"}));});
+const wss=new WebSocket.Server({server});const rooms=new Map();
+function send(ws,msg){if(ws.readyState===1)ws.send(JSON.stringify(msg));}
+wss.on("connection",ws=>{ws.on("message",raw=>{let m;try{m=JSON.parse(raw)}catch{return}if(m.type==="join"){ws.room=m.room;ws.id=m.id;ws.name=m.name||"Sürücü";if(!rooms.has(m.room))rooms.set(m.room,new Set());const room=rooms.get(m.room);for(const p of room)send(p,{type:"peer-joined",id:ws.id,name:ws.name});room.add(ws);send(ws,{type:"members",members:[...room].map(p=>({id:p.id,name:p.name}))});}else if(m.type==="signal"){const room=rooms.get(ws.room)||[];for(const p of room)if(p.id===m.to)send(p,{type:"signal",from:ws.id,data:m.data});}else if(m.type==="leave"){ws.close()}});ws.on("close",()=>{const room=rooms.get(ws.room);if(room){room.delete(ws);for(const p of room)send(p,{type:"peer-left",id:ws.id});if(!room.size)rooms.delete(ws.room)}})});
+server.listen(process.env.PORT||8080,"0.0.0.0",()=>console.log("GazonRide voice signaling ready"));

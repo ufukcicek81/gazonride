@@ -10,7 +10,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.IBinder;
-import androidx.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -60,5 +59,5 @@ public class RideLocationService extends Service {
         if(lm!=null)try{lm.removeUpdates(listener);}catch(Exception ignored){}
         super.onDestroy();
     }
-    @Nullable @Override public IBinder onBind(Intent intent){return null;}
+    @Override public IBinder onBind(Intent intent){return null;}
 }

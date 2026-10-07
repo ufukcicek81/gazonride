@@ -164,7 +164,7 @@ function initMap(){
  if(typeof L==="undefined"){$("status").textContent="Harita yüklenemedi. İnternet bağlantısını kontrol edin.";return false;}
  map=L.map("map",{zoomControl:false}).setView([39,35],6);
  tile=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors © CARTO"}).addTo(map);
- route=L.polyline([],{color:"#e31b23",weight:5,opacity:.95}).addTo(map);
+ route=L.polyline([],{color:"#ff5a1f",weight:5,opacity:.95}).addTo(map);
  return true;
 }
 function applyPosition(pos){
@@ -284,7 +284,7 @@ function stopNavigation(){
  $("status").textContent="Navigasyon kapatıldı.";
 }
 
-function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";window.scrollTo({top:0,behavior:"smooth"});}
+function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay"))setMode("discover");window.scrollTo({top:0,behavior:"smooth"});}
 var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
 var VOICE_WS="wss://gazonride-voice.onrender.com";
 function voiceId(){return "rider-"+Math.random().toString(36).slice(2,9);}
@@ -377,7 +377,7 @@ function nav(page,button){
  if(page==="discover"){setMode("discover");}
  else if(page==="navigation"){setMode("navigation");startGPS();}
  else if(page==="ride"){setMode("ride");}
- else {document.body.classList.add("mode-overlay");showScreen(page);}
+ else {setMode("overlay");showScreen(page);}
 }
 function boot(){
  if(!initMap())return;

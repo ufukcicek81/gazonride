@@ -1,1 +1,2 @@
 gazonride-stable-debug-signing-v1
+verified-for-in-place-updates

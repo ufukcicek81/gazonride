@@ -27,7 +27,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;padding:0 16px}.btn{border-radius:17px;padding:16px;font-weight:900;font-size:14px}.dark{background:#191d24;color:#fff;border:1px solid #343943}.red{background:var(--red);color:#fff;border:0}
 .status{margin:12px 16px;padding:12px;border-radius:14px;background:#10131a;border:1px solid var(--line);color:#a5acb6;font-size:11px;text-align:center}
 .history{padding:20px 16px}.ride{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px;display:flex;justify-content:space-between}.ride small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
-.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#080a0ef8;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
+.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#080a0ef8;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
 .navBtn{border:0;background:transparent;color:#737b87;font-size:10px;padding:5px;cursor:pointer}.navBtn b{display:block;font-size:21px;margin-bottom:2px}.navBtn.active{color:#fff}
 .bikeIcon{font-size:25px;text-shadow:0 2px 5px #000}.screen{display:none;padding:18px 16px 30px}.screen.active{display:block}.screenHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.screenTitle{font-size:22px;font-weight:900}.screenCard{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:10px}.screenBtn{width:100%;border:0;border-radius:13px;padding:13px;background:var(--red);color:#fff;font-weight:800;margin-top:8px}.screenBtn.dark{background:#191d24;border:1px solid #343943}.input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#0c0f14;color:#fff;outline:none;margin-top:7px}.statRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.statBox{background:#0d1015;border:1px solid var(--line);border-radius:13px;padding:12px}.statBox b{font-size:20px;display:block}
 </style>
@@ -55,13 +55,13 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 <div class="status" id="status">Uygulama açılır açılmaz konumunuz bulunuyor.</div>
 <section class="history"><div class="ey">SON SÜRÜŞLER</div><div id="historyList"></div></section>
 </div>
-<section id="screen" class="screen"></section><nav class="bottom">
+<section id="screen" class="screen"></section><audio id="remoteAudio" autoplay playsinline></audio><nav class="bottom">
 <button class="navBtn active" data-page="ride"><b>🏍️</b>Sürüş</button>
 <button class="navBtn" data-page="routes"><b>🗺️</b>Rotalar</button>
-<button class="navBtn" data-page="groups"><b>👥</b>Gruplar</button>
+<button class="navBtn" data-page="groups"><b>👥</b>Gruplar</button><button class="navBtn" data-page="voice"><b>🎙️</b>Intercom</button>
 <button class="navBtn" data-page="profile"><b>👤</b>Profil</button>
 </nav>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -121,6 +121,30 @@ function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$(
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
 function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";window.scrollTo({top:0,behavior:"smooth"});}
+var voice={peer:null,room:"",host:false,peers:{},stream:null,mic:false};
+function voiceUI(){return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Marka bağımsız grup konuşması</b><div class="sub">Cardo, Sena, Midland ve diğer Bluetooth kulaklıklar telefon üzerinden aynı ses grubuna bağlanabilir.</div><input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)"><button class="screenBtn" id="createVoice">＋ Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button></div><div class="screenCard"><div class="statRow"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div><div class="statBox"><b id="voiceCount">0</b><span class="sub">Bağlı sürücü</span></div></div><button class="screenBtn" id="micBtn">🎙️ Mikrofonu Aç</button><div class="sub" style="margin-top:10px">Konuşurken müzik otomatik olarak kısılacak; konuşma bitince geri dönecek.</div></div><div class="screenCard"><b>Bağlantı kodu</b><div class="sub" id="voiceCode">—</div></div>';}
+function setupVoice(){
+ $("closeScreen").onclick=closeScreen;
+ $("createVoice").onclick=function(){var c=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(c,true);};
+ $("joinVoice").onclick=function(){var c=$("roomCode").value.trim().toUpperCase();if(c)startVoice(c,false);else $("voiceState").textContent="Kod gerekli";};
+ $("micBtn").onclick=toggleMic;
+}
+async function startVoice(code,host){
+ if(!window.Peer){$("voiceState").textContent="Ses modülü yüklenemedi";return;}
+ try{
+  if(voice.peer)voice.peer.destroy();
+  voice.room=code;voice.host=host;
+  voice.peer=new Peer("gazon-"+code+"-"+Math.random().toString(36).slice(2,7),{debug:0});
+  voice.peer.on("open",function(id){$("voiceCode").textContent=code+" · ID "+id.slice(-6);$("voiceState").textContent=host?"Grup oluşturuldu":"Gruba bağlanıyor";voice.peer.on("call",function(call){if(!voice.stream)return;call.answer(voice.stream);call.on("stream",playRemote);});});
+  voice.peer.on("error",function(e){$("voiceState").textContent="Bağlantı hatası";});
+  await ensureMic();
+  if(host) $("voiceState").textContent="Grup hazır · Arkadaşların kodla katılabilir";
+  else $("voiceState").textContent="Mikrofon hazır · bağlantı kuruluyor";
+ }catch(e){$("voiceState").textContent="Ses başlatılamadı";}
+}
+async function ensureMic(){if(voice.stream)return voice.stream;voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});return voice.stream;}
+async function toggleMic(){try{var st=await ensureMic();voice.mic=!voice.mic;st.getAudioTracks().forEach(function(t){t.enabled=voice.mic;});$("micBtn").textContent=voice.mic?"🔴 Konuşmayı Kapat":"🎙️ Mikrofonu Aç";$("voiceState").textContent=voice.mic?"Konuşuyorsun":"Dinlemede";}catch(e){$("voiceState").textContent="Mikrofon izni gerekli";}}
+function playRemote(stream){var a=$("remoteAudio");a.srcObject=stream;a.play().catch(function(){});$("voiceCount").textContent="1+";}
 function showScreen(page){
  var x=$("screen");x.classList.add("active");
  if(page==="routes"){
@@ -135,7 +159,7 @@ function showScreen(page){
    x.querySelector("#closeScreen").onclick=closeScreen;
    x.querySelector("#createGroup").onclick=function(){var n=x.querySelector("#groupName").value.trim();if(!n)return;x.querySelector("#groupName").value="";groups.push({name:n,code:"GR"+Math.random().toString(36).slice(2,7).toUpperCase(),members:1});localStorage.setItem("gazon_groups",JSON.stringify(groups));showScreen("groups");};
    x.querySelector("#joinGroup").onclick=function(){var c=x.querySelector("#groupCode").value.trim().toUpperCase();if(!c)return;$("status").textContent="Davet kodu kontrol ediliyor: "+c;};
- }else if(page==="profile"){
+ }else if(page==="voice"){x.innerHTML=voiceUI();setupVoice();}else if(page==="profile"){
    var p=JSON.parse(localStorage.getItem("gazon_profile")||'{"name":"GazonRide sürücüsü","bike":"KTM 1290"}'),rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(a,r){return a+Number(r.km||0)},0);
    x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜCÜ PROFİLİ</div><div class="screenTitle">Profilim</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>👤 Sürücü bilgileri</b><input class="input" id="profileName" value="'+p.name.replace(/"/g,"&quot;")+'" placeholder="Adınız"><input class="input" id="profileBike" value="'+p.bike.replace(/"/g,"&quot;")+'" placeholder="Motosiklet"><button class="screenBtn" id="saveProfile">Kaydet</button></div><div class="statRow"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(1)+'</b><span class="sub">Toplam km</span></div></div>';
    x.querySelector("#closeScreen").onclick=closeScreen;

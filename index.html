@@ -5,34 +5,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080a0e">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
 <title>GazonRide</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--red:#e31b23;--bg:#080a0e;--card:#12151b;--line:#272c34;--muted:#8d95a2}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
-button{font:inherit}.app{max-width:540px;margin:auto;min-height:100vh;padding-bottom:86px}
-header{padding:18px;display:flex;align-items:center;justify-content:space-between}.logo{font-weight:950;font-size:25px}.logo span{color:var(--red)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}button{font:inherit}
+.app{max-width:540px;margin:auto;min-height:100vh;padding-bottom:86px}header{padding:18px;display:flex;align-items:center;justify-content:space-between}.logo{font-weight:950;font-size:25px}.logo span{color:var(--red)}
 .motor{font-size:11px;color:#c9ced7;background:#171b22;border:1px solid var(--line);border-radius:999px;padding:9px 12px}
-.map{height:390px;margin:0 12px;border-radius:25px;position:relative;overflow:hidden;border:1px solid var(--line);background:radial-gradient(ellipse at 15% 20%,#314a3d 0 12%,transparent 13%),radial-gradient(ellipse at 75% 72%,#263c32 0 19%,transparent 20%),linear-gradient(135deg,#15211c,#101820 50%,#19251f)}
-.map:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(32deg,transparent 0 42px,#304039 43px 45px,transparent 46px 92px);opacity:.6;transform:rotate(-7deg)}
-.road{position:absolute;left:-15%;top:54%;width:135%;height:28px;border-radius:40px;background:#535960;border:6px solid #e3e3df;transform:rotate(-24deg)}
-.route{position:absolute;left:-12%;top:54%;width:130%;height:7px;background:var(--red);border-radius:20px;transform:rotate(-24deg);box-shadow:0 0 18px #e31b2370}
-.point{position:absolute;width:19px;height:19px;border-radius:50%;border:3px solid #fff;background:#25d46a;left:21%;top:44%;box-shadow:0 0 0 8px #25d46a22}.point.end{background:var(--red);left:77%;top:70%}
-.bike{position:absolute;left:53%;top:53%;font-size:31px;filter:drop-shadow(0 5px 6px #000);transform:rotate(-18deg)}
-.live{position:absolute;top:13px;left:13px;right:13px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.live div{background:#07090dcc;border:1px solid #30353e;border-radius:15px;padding:9px 10px;backdrop-filter:blur(12px)}.live b{display:block;font-size:20px}.live small{color:#9ca3af;font-size:9px}
-.location{position:absolute;bottom:14px;left:14px;background:#07090ddd;border:1px solid #30353e;border-radius:13px;padding:9px 11px;font-size:11px}
-.content{padding:20px 16px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--red);font-weight:900;margin-bottom:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px}.full{grid-column:1/-1}.big{font-size:29px;font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:3px}
+.map{height:390px;margin:0 12px;border-radius:25px;position:relative;overflow:hidden;border:1px solid var(--line)}#map{position:absolute;inset:0}.leaflet-control-attribution{font-size:8px}.leaflet-control-zoom{display:none}
+.live{position:absolute;z-index:500;top:13px;left:13px;right:13px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.live div{background:#07090dcc;border:1px solid #30353e;border-radius:15px;padding:9px 10px;backdrop-filter:blur(12px)}.live b{display:block;font-size:20px}.live small{color:#9ca3af;font-size:9px}
+.location{position:absolute;z-index:500;bottom:14px;left:14px;background:#07090ddd;border:1px solid #30353e;border-radius:13px;padding:9px 11px;font-size:11px;max-width:90%}
+.bikeIcon{font-size:25px;text-shadow:0 2px 4px #000}.content{padding:20px 16px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--red);font-weight:900;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px}.full{grid-column:1/-1}.big{font-size:29px;font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:3px}
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;padding:0 16px}.btn{border:0;border-radius:17px;padding:16px;font-weight:900}.dark{background:#191d24;color:#fff;border:1px solid #30353e}.red{background:var(--red);color:#fff}
 .status{margin:12px 16px 0;padding:12px;border-radius:14px;background:#10131a;border:1px solid var(--line);font-size:11px;color:#9da4af;text-align:center}
-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(540px,100%);background:#080a0ef2;backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px calc(10px + env(safe-area-inset-bottom));z-index:5}nav div{text-align:center;color:#7e8692;font-size:10px}nav b{display:block;font-size:19px;margin-bottom:2px}
+.history{padding:20px 16px}.ride{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px}.ride b{font-size:16px}.ride small{display:block;color:var(--muted);margin-top:3px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(540px,100%);background:#080a0ef2;backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px calc(10px + env(safe-area-inset-bottom));z-index:900}nav div{text-align:center;color:#7e8692;font-size:10px}nav b{display:block;font-size:19px;margin-bottom:2px}nav .active{color:#fff}
 </style>
 </head>
 <body>
 <div class="app">
 <header><div class="logo">GAZON<span>RIDE</span></div><button class="motor">🏍️ KTM 1290</button></header>
-<section class="map">
+<section class="map"><div id="map"></div>
 <div class="live"><div><b id="speed">0</b><small>KM/SA HIZ</small></div><div><b id="distance">0.00</b><small>KM MESAFE</small></div><div><b id="altitude">—</b><small>M RAKIM</small></div></div>
-<div class="road"></div><div class="route"></div><div class="point"></div><div class="point end"></div><div class="bike">🏍️</div><div class="location" id="location">📍 Konum bekleniyor...</div>
-</section>
+<div class="location" id="location">📍 Konum bekleniyor...</div></section>
 <section class="content"><div class="eyebrow">AKTİF SÜRÜŞ</div><div class="grid">
 <div class="card"><div class="big" id="duration">00:00</div><div class="sub">Sürüş süresi</div></div>
 <div class="card"><div class="big" id="avg">0</div><div class="sub">Ortalama hız · km/sa</div></div>
@@ -41,20 +39,25 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(540px,
 <div class="card full"><b>GPS durumu</b><div class="sub" id="gps">Hazır</div></div>
 </div></section>
 <div class="actions"><button class="btn dark" onclick="shareRide()">↗ Paylaş</button><button class="btn red" id="startBtn" onclick="toggleRide()">🏍️ Sürüşü Başlat</button></div>
-<div class="status" id="status">Sürüş başlatıldığında telefonun GPS konumu kaydedilecek.</div>
+<div class="status" id="status">Sürüş başlatıldığında gerçek GPS rotan haritada çizilecek.</div>
+<section class="history"><div class="eyebrow">SON SÜRÜŞLER</div><div id="historyList"></div></section>
 </div>
-<nav><div><b>🏍️</b>Sürüş</div><div><b>🗺️</b>Rotalar</div><div><b>👥</b>Gruplar</div><div><b>👤</b>Profil</div></nav>
+<nav><div class="active" onclick="scrollTo(0,0)"><b>🏍️</b>Sürüş</div><div onclick="document.querySelector('.history').scrollIntoView({behavior:'smooth'})"><b>🗺️</b>Rotalar</div><div><b>👥</b>Gruplar</div><div><b>👤</b>Profil</div></nav>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let riding=false,watchId=null,startTime=null,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,prevAlt=null,timer=null;
+let riding=false,watchId=null,startTime=null,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,prevAlt=null,timer=null,track=[],map,marker,route;
 const $=id=>document.getElementById(id);
+function initMap(){map=L.map('map',{zoomControl:false}).setView([39.0,35.0],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);route=L.polyline([],{color:'#e31b23',weight:5,opacity:.95}).addTo(map)}
 function hav(a,b){const R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
-function fmt(s){let m=Math.floor(s/60),h=Math.floor(m/60);m%=60;return h?String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0"):String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function fmt(s){let m=Math.floor(s/60),h=Math.floor(m/60);m%=60;return h?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0'):String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function toggleRide(){riding?finishRide():startRide()}
-function startRide(){if(!navigator.geolocation){$("status").textContent="Bu telefonda GPS desteği bulunamadı.";return}riding=true;startTime=Date.now();totalKm=0;maxSpeed=0;totalClimb=0;prevAlt=null;lastPoint=null;$("startBtn").textContent="⏹️ Sürüşü Bitir";$("gps").textContent="Konum alınıyor";$("status").textContent="GPS aktif. Sürüş başladı.";timer=setInterval(()=>{$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000))},1000);watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:1000,timeout:15000})}
-function onPos(pos){const c=pos.coords,p={lat:c.latitude,lon:c.longitude};$("location").textContent="📍 "+p.lat.toFixed(5)+", "+p.lon.toFixed(5);$("gps").textContent="Bağlı";if(c.altitude!=null){$("altitude").textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$("elev").textContent=Math.round(totalClimb)}const sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$("speed").textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$("max").textContent=Math.round(maxSpeed);if(lastPoint){totalKm+=hav(lastPoint,p);$("distance").textContent=totalKm.toFixed(2)}lastPoint=p;const elapsed=(Date.now()-startTime)/3600000;$("avg").textContent=elapsed?Math.round(totalKm/elapsed):0}
-function onErr(){$("gps").textContent="GPS hatası";$("status").textContent="GPS alınamadı. Konum iznini kontrol et."}
-function finishRide(){riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearInterval(timer);$("startBtn").textContent="🏍️ Yeni Sürüş";$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";localStorage.setItem("gazon_last_ride",JSON.stringify({km:totalKm,duration:$("duration").textContent,max:maxSpeed,date:new Date().toISOString()}))}
-function shareRide(){const t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(t)}
+function startRide(){if(!navigator.geolocation){$('status').textContent='Bu telefonda GPS desteği bulunamadı.';return}riding=true;startTime=Date.now();totalKm=0;maxSpeed=0;totalClimb=0;prevAlt=null;lastPoint=null;track=[];route.setLatLngs([]);$('distance').textContent='0.00';$('duration').textContent='00:00';$('max').textContent='0';$('avg').textContent='0';$('elev').textContent='0';$('startBtn').textContent='⏹️ Sürüşü Bitir';$('gps').textContent='Konum alınıyor';$('status').textContent='GPS aktif. Sürüş başladı.';timer=setInterval(()=>{$('duration').textContent=fmt(Math.floor((Date.now()-startTime)/1000))},1000);watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:1000,timeout:15000})}
+function onPos(pos){const c=pos.coords,p={lat:c.latitude,lon:c.longitude};track.push([p.lat,p.lon]);$('location').textContent='📍 '+p.lat.toFixed(5)+', '+p.lon.toFixed(5);$('gps').textContent='Bağlı';if(!marker){marker=L.marker([p.lat,p.lon],{icon:L.divIcon({className:'bikeIcon',html:'🏍️',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map);map.setView([p.lat,p.lon],16)}else{marker.setLatLng([p.lat,p.lon])}route.setLatLngs(track);if(track.length>1)map.panTo([p.lat,p.lon],{animate:true,duration:.4});if(c.altitude!=null){$('altitude').textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$('elev').textContent=Math.round(totalClimb)}const sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$('speed').textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$('max').textContent=Math.round(maxSpeed);if(lastPoint){totalKm+=hav(lastPoint,p);$('distance').textContent=totalKm.toFixed(2)}lastPoint=p;const elapsed=(Date.now()-startTime)/3600000;$('avg').textContent=elapsed?Math.round(totalKm/elapsed):0}
+function onErr(){ $('gps').textContent='GPS hatası';$('status').textContent='GPS alınamadı. Konum iznini ve HTTPS bağlantısını kontrol et.'}
+function finishRide(){riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);clearInterval(timer);$('startBtn').textContent='🏍️ Yeni Sürüş';$('status').textContent='Sürüş tamamlandı: '+totalKm.toFixed(1)+' km';const ride={km:totalKm,duration:$('duration').textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),date:new Date().toLocaleString('tr-TR'),track};const rides=JSON.parse(localStorage.getItem('gazon_rides')||'[]');rides.unshift(ride);localStorage.setItem('gazon_rides',JSON.stringify(rides.slice(0,10)));renderHistory()}
+function shareRide(){const t='GazonRide 🏍️\n'+totalKm.toFixed(1)+' km · '+$('duration').textContent+' · Max '+Math.round(maxSpeed)+' km/sa';if(navigator.share)navigator.share({title:'GazonRide sürüşüm',text:t}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(t)}
+function renderHistory(){const rides=JSON.parse(localStorage.getItem('gazon_rides')||'[]');$('historyList').innerHTML=rides.length?rides.map((r,i)=>'<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+' · '+r.duration+'</small></div><div><b>'+r.max+' km/sa</b><small>Max hız</small></div></div>').join(''):'<div class="sub">Henüz kayıtlı sürüş yok.</div>'}
+initMap();renderHistory();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
-</body>
-</html>
+</body></html>

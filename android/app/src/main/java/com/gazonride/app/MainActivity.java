@@ -18,6 +18,10 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
+import android.view.WindowManager;
+import android.view.View;
+import android.content.res.Configuration;
+import android.os.Build;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -49,8 +53,10 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
-        getWindow().setStatusBarColor(Color.rgb(8,10,14));
-        getWindow().setNavigationBarColor(Color.rgb(8,10,14));
+        // GaZonRide is used as a motorcycle navigation screen: keep display awake
+        // while the application is in the foreground.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        applySystemTheme();
         webView=new WebView(this); setContentView(webView);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setGeolocationEnabled(true);
@@ -68,6 +74,24 @@ public class MainActivity extends Activity {
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
         webView.loadUrl(URL);
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
+    }
+
+    private void applySystemTheme(){
+        boolean dark=(getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)==Configuration.UI_MODE_NIGHT_YES;
+        int bg=dark ? Color.rgb(8,10,14) : Color.rgb(247,248,250);
+        getWindow().setStatusBarColor(bg);
+        getWindow().setNavigationBarColor(bg);
+        if(Build.VERSION.SDK_INT>=23){
+            int flags=dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if(Build.VERSION.SDK_INT>=26 && !dark) flags|=View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+        }
+        if(webView!=null) webView.setBackgroundColor(bg);
+    }
+
+    @Override public void onConfigurationChanged(Configuration newConfig){
+        super.onConfigurationChanged(newConfig);
+        applySystemTheme();
     }
 
     private void checkForNativeUpdate(){

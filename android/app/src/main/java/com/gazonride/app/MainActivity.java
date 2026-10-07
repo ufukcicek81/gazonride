@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
         webView=new WebView(this); setContentView(webView);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setGeolocationEnabled(true);
-        s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false);
+        s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false); s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webView.setBackgroundColor(Color.rgb(8,10,14));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
         webView.setWebViewClient(new WebViewClient());
@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
             @Override public void onPermissionRequest(PermissionRequest request){runOnUiThread(()->request.grant(request.getResources()));}
         });
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
-        webView.loadUrl(URL);
+        webView.loadUrl(URL + "?v=" + System.currentTimeMillis());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
     }
 

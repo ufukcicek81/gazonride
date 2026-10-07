@@ -37,10 +37,18 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Rebuild high-resolution launcher icon
+      - name: Rebuild real raster launcher icons
         shell: bash
         run: |
-          cat android/icon_chunks/part*.b64 | tr -d '\r\n' | base64 --decode > android/app/src/main/res/drawable/gazonride_launcher_hq.webp
+          set -e
+          cat android/icon_chunks/part*.b64 | tr -d '\r\n' | base64 --decode > /tmp/gazonride_launcher.webp
+          rm -rf android/app/src/main/res/mipmap
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-$density"
+            cp /tmp/gazonride_launcher.webp "android/app/src/main/res/mipmap-$density/ic_launcher.webp"
+            cp /tmp/gazonride_launcher.webp "android/app/src/main/res/mipmap-$density/ic_launcher_round.webp"
+          done
 
       - name: Build APK
         working-directory: android

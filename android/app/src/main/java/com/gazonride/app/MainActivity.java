@@ -51,6 +51,18 @@ public class MainActivity extends Activity {
         @JavascriptInterface public String getSystemTheme(){
             return isSystemDarkMode() ? "dark" : "light";
         }
+        @JavascriptInterface public String getGoogleMapsApiKey(){
+            try {
+                java.io.BufferedReader r = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(getAssets().open("google_maps_api_key.txt"))
+                );
+                String key = r.readLine();
+                r.close();
+                return key == null ? "" : key.trim();
+            } catch(Exception e) {
+                return "";
+            }
+        }
     }
 
     @Override public void onCreate(Bundle state) {

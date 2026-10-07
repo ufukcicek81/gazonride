@@ -512,6 +512,30 @@ function boot(){
  $("locBtn").addEventListener("click",locate);
  $("satBtn").addEventListener("click",toggleSatellite);
  document.querySelectorAll(".navBtn").forEach(function(b){b.addEventListener("click",function(){nav(b.getAttribute("data-page"),b);});});
+ /* discover-menu-bindings */
+ document.querySelectorAll(".chip[data-discover]").forEach(function(b){
+   b.addEventListener("click",function(){setDiscoverFilter(b.getAttribute("data-discover"));});
+ });
+ document.querySelectorAll("[data-show]").forEach(function(b){
+   b.addEventListener("click",function(){setDiscoverFilter(b.getAttribute("data-show"));});
+ });
+ $("discoverSearch").addEventListener("input",runDiscoverSearch);
+ document.querySelectorAll("[data-route-destination]").forEach(function(card){
+   card.addEventListener("click",function(){
+     var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
+     $("navDestination").value=card.getAttribute("data-route-destination");
+   });
+ });
+ document.querySelectorAll("[data-place-query]").forEach(function(card){
+   card.addEventListener("click",function(){
+     var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
+     $("navDestination").value=card.getAttribute("data-place-query");$("navDestination").focus();
+   });
+ });
+ $("motorBtn").addEventListener("click",function(){
+   var b=document.querySelector('[data-page="profile"]');nav("profile",b);
+ });
+
  $("quickNav").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
  $("quickIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
  $("navGo").addEventListener("click",planNavigation);

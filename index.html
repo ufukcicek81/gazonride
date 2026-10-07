@@ -453,7 +453,7 @@ function showScreen(page){
  if(page==="routes"){
    var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
    x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Sürüş Geçmişim</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
-   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar'da Aç</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
+   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar\'da Aç</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
    x.querySelector("#closeScreen").onclick=closeScreen;
    x.querySelectorAll("[data-google]").forEach(function(b){b.onclick=function(){
  var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-google"))];

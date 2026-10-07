@@ -29,7 +29,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 .history{padding:20px 16px}.ride{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px;display:flex;justify-content:space-between}.ride small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
 .bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#080a0ef8;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
 .navBtn{border:0;background:transparent;color:#737b87;font-size:10px;padding:5px;cursor:pointer}.navBtn b{display:block;font-size:21px;margin-bottom:2px}.navBtn.active{color:#fff}
-.bikeIcon{font-size:25px;text-shadow:0 2px 5px #000}
+.bikeIcon{font-size:25px;text-shadow:0 2px 5px #000}.screen{display:none;padding:18px 16px 30px}.screen.active{display:block}.screenHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.screenTitle{font-size:22px;font-weight:900}.screenCard{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:10px}.screenBtn{width:100%;border:0;border-radius:13px;padding:13px;background:var(--red);color:#fff;font-weight:800;margin-top:8px}.screenBtn.dark{background:#191d24;border:1px solid #343943}.input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#0c0f14;color:#fff;outline:none;margin-top:7px}.statRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.statBox{background:#0d1015;border:1px solid var(--line);border-radius:13px;padding:12px}.statBox b{font-size:20px;display:block}
 </style>
 </head>
 <body>
@@ -55,7 +55,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 <div class="status" id="status">Uygulama açılır açılmaz konumunuz bulunuyor.</div>
 <section class="history"><div class="ey">SON SÜRÜŞLER</div><div id="historyList"></div></section>
 </div>
-<nav class="bottom">
+<section id="screen" class="screen"></section><nav class="bottom">
 <button class="navBtn active" data-page="ride"><b>🏍️</b>Sürüş</button>
 <button class="navBtn" data-page="routes"><b>🗺️</b>Rotalar</button>
 <button class="navBtn" data-page="groups"><b>👥</b>Gruplar</button>
@@ -117,11 +117,33 @@ function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||
 function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
 function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
+function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";window.scrollTo({top:0,behavior:"smooth"});}
+function showScreen(page){
+ var x=$("screen");x.classList.add("active");
+ if(page==="routes"){
+   var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
+   x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Sürüş Geçmişim</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
+   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
+   x.querySelector("#closeScreen").onclick=closeScreen;
+   x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-route"))];if(a&&a.track&&a.track.length&&map){closeScreen();route.setLatLngs(a.track);map.fitBounds(route.getBounds(),{padding:[25,25]});window.scrollTo({top:0,behavior:"smooth"});$("status").textContent="Kayıtlı rota haritada gösteriliyor.";}}});
+ }else if(page==="groups"){
+   var groups=JSON.parse(localStorage.getItem("gazon_groups")||"[]");
+   x.innerHTML='<div class="screenHead"><div><div class="ey">SOSYAL SÜRÜŞ</div><div class="screenTitle">Gruplar</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Yeni grup oluştur</b><input class="input" id="groupName" placeholder="Grup adı"><button class="screenBtn" id="createGroup">＋ Grup Oluştur</button></div><div class="screenCard"><b>Gruba katıl</b><input class="input" id="groupCode" placeholder="Davet kodu"><button class="screenBtn dark" id="joinGroup">Katıl</button></div><div class="ey">GRUPLARIM</div>'+(groups.length?groups.map(function(g){return '<div class="screenCard"><b>🏍️ '+g.name+'</b><div class="sub">Kod: '+g.code+' · '+g.members+' sürücü</div></div>';}).join(""):'<div class="screenCard"><div class="sub">Henüz bir grubun yok.</div></div>');
+   x.querySelector("#closeScreen").onclick=closeScreen;
+   x.querySelector("#createGroup").onclick=function(){var n=x.querySelector("#groupName").value.trim();if(!n)return;x.querySelector("#groupName").value="";groups.push({name:n,code:"GR"+Math.random().toString(36).slice(2,7).toUpperCase(),members:1});localStorage.setItem("gazon_groups",JSON.stringify(groups));showScreen("groups");};
+   x.querySelector("#joinGroup").onclick=function(){var c=x.querySelector("#groupCode").value.trim().toUpperCase();if(!c)return;$("status").textContent="Davet kodu kontrol ediliyor: "+c;};
+ }else if(page==="profile"){
+   var p=JSON.parse(localStorage.getItem("gazon_profile")||'{"name":"GazonRide sürücüsü","bike":"KTM 1290"}'),rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(a,r){return a+Number(r.km||0)},0);
+   x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜCÜ PROFİLİ</div><div class="screenTitle">Profilim</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>👤 Sürücü bilgileri</b><input class="input" id="profileName" value="'+p.name.replace(/"/g,"&quot;")+'" placeholder="Adınız"><input class="input" id="profileBike" value="'+p.bike.replace(/"/g,"&quot;")+'" placeholder="Motosiklet"><button class="screenBtn" id="saveProfile">Kaydet</button></div><div class="statRow"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(1)+'</b><span class="sub">Toplam km</span></div></div>';
+   x.querySelector("#closeScreen").onclick=closeScreen;
+   x.querySelector("#saveProfile").onclick=function(){localStorage.setItem("gazon_profile",JSON.stringify({name:x.querySelector("#profileName").value||"GazonRide sürücüsü",bike:x.querySelector("#profileBike").value||"Motosiklet"}));$("motorBtn").textContent="🏍️ "+x.querySelector("#profileBike").value; $("status").textContent="Profil kaydedildi.";};
+ }
+ x.scrollIntoView({behavior:"smooth"});
+}
 function nav(page,button){
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
- if(page==="ride")window.scrollTo({top:0,behavior:"smooth"});
- else if(page==="routes")$("historyList").scrollIntoView({behavior:"smooth"});
- else $("status").textContent=page==="groups"?"Gruplar bölümü hazırlanıyor.":"Profil bölümü hazırlanıyor.";
+ if(page==="ride"){closeScreen();window.scrollTo({top:0,behavior:"smooth"});}
+ else showScreen(page);
 }
 function boot(){
  if(!initMap())return;

@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:theme="@style/AppTheme" android:label="GaZonRide" android:icon="@drawable/gazonride_real" android:roundIcon="@drawable/gazonride_real" android:usesCleartextTraffic="false" android:hardwareAccelerated="true" android:allowBackup="true">
+    <application android:theme="@style/AppTheme" android:label="GaZonRide" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="false" android:hardwareAccelerated="true" android:allowBackup="true">
         <service android:name=".RideLocationService" android:foregroundServiceType="location" />
         <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
             <intent-filter>

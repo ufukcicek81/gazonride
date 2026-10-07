@@ -48,7 +48,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 <div class="card"><div class="big" id="duration">00:00</div><div class="sub">Sürüş süresi</div></div>
 <div class="card"><div class="big" id="avg">0</div><div class="sub">Ortalama hız · km/sa</div></div>
 <div class="card"><div class="big" id="max">0</div><div class="sub">Maksimum hız · km/sa</div></div>
-<div class="card"><div class="big" id="elev">0</div><div class="sub">Tırmanış · m</div></div>
+<div class="card"><div class="big" id="elev">0</div><div class="sub">Tırmanış · m</div></div><div class="card"><div class="big" id="turns">0</div><div class="sub">Toplam viraj</div></div>
 <div class="card full"><b id="gps">GPS aranıyor...</b><div class="sub" id="accuracy">Konum doğruluğu: —</div></div>
 </div></section>
 <div class="actions"><button class="btn dark" id="shareBtn">↗ Paylaş</button><button class="btn red" id="startBtn">🏍️ Sürüşü Başlat</button></div>
@@ -65,9 +65,12 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,tile=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,tile=null;
 function $(id){return document.getElementById(id);}
 function hav(a,b){var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p,x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)*Math.sin(dLon/2);return 2*R*Math.asin(Math.sqrt(x));}
+function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lon-a.lon)*p;return (Math.atan2(Math.sin(dl)*Math.cos(y2),Math.cos(y1)*Math.sin(y2)-Math.sin(y1)*Math.cos(y2)*Math.cos(dl))*180/Math.PI+360)%360;}
+function angleDiff(a,b){var d=Math.abs(a-b)%360;return d>180?360-d:d;}
+function updateTurns(){if(track.length<3)return;var n=track.length-1,a=track[n-2],b=track[n-1],c=track[n],d1=hav({lat:a[0],lon:a[1]},{lat:b[0],lon:b[1]}),d2=hav({lat:b[0],lon:b[1]},{lat:c[0],lon:c[1]});if(d1<0.015||d2<0.015)return;var turn=angleDiff(bearing({lat:a[0],lon:a[1]},{lat:b[0],lon:b[1]}),bearing({lat:b[0],lon:b[1]},{lat:c[0],lon:c[1]}));if(turn>=25&&turn<=160){var last=track._lastTurn||0;if(n-last>=4){turnCount++;track._lastTurn=n;$("turns").textContent=turnCount;}}}
 function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m=m%60;return h?String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0"):String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
 function initMap(){
  if(typeof L==="undefined"){$("status").textContent="Harita yüklenemedi. İnternet bağlantısını kontrol edin.";return false;}
@@ -84,7 +87,7 @@ function applyPosition(pos){
  if(map){if(!marker){marker=L.marker([p.lat,p.lon],{icon:L.divIcon({className:"bikeIcon",html:"🏍️",iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map);}else marker.setLatLng([p.lat,p.lon]);}
  if(map&&!riding)map.setView([p.lat,p.lon],16);
  if(riding){
-   track.push([p.lat,p.lon]);route.setLatLngs(track);
+   track.push([p.lat,p.lon]);updateTurns();route.setLatLngs(track);
    if(track.length>1)map.panTo([p.lat,p.lon],{animate:true,duration:.25});
    if(lastPoint){var d=hav(lastPoint,p);if(d<0.5)totalKm+=d;$("distance").textContent=totalKm.toFixed(2);}
    lastPoint=p;
@@ -101,8 +104,8 @@ function startGPS(){
 }
 function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
- riding=true;startTime=Date.now();lastPoint=null;totalKm=0;maxSpeed=0;totalClimb=0;prevAlt=null;track=[];
- route&&route.setLatLngs([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";
+ riding=true;startTime=Date.now();lastPoint=null;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;
+ route&&route.setLatLngs([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
  $("startBtn").textContent="⏹️ Sürüşü Bitir";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
  timer=setInterval(function(){$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000));},1000);
  watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
@@ -110,10 +113,10 @@ function startRide(){
 function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").textContent="🏍️ Yeni Sürüş";$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
- var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),date:new Date().toLocaleString("tr-TR"),track:track};
+ var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track};
  var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
 }
-function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
+function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
 function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
 function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}

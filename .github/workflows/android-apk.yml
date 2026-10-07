@@ -62,24 +62,6 @@ jobs:
           mkdir -p android/app/src/main/assets
           printf 'window.GAZONRIDE_GOOGLE_MAPS_API_KEY=%s;\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > android/app/src/main/assets/gazonride-config.js
 
-      - name: Publish Google Maps config to Pages branch
-        shell: bash
-        env:
-          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          git fetch origin gh-pages || true
-          rm -rf /tmp/gazon-pages
-          git worktree add /tmp/gazon-pages origin/gh-pages
-          cd /tmp/gazon-pages
-          printf 'window.GAZONRIDE_GOOGLE_MAPS_API_KEY=%s;\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > gazonride-config.js
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gazonride-config.js
-          git diff --cached --quiet || git commit -m "Update GaZonRide Maps runtime config"
-          git push origin HEAD:gh-pages
-
       - name: Build APK
         working-directory: android
         run: gradle --no-daemon assembleDebug -PbuildCode=${{ github.run_number }} -PbuildName=1.0.${{ github.run_number }}

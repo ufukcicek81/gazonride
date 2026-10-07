@@ -75,7 +75,7 @@ function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m=m%60;return h?String
 function initMap(){
  if(typeof L==="undefined"){$("status").textContent="Harita yüklenemedi. İnternet bağlantısını kontrol edin.";return false;}
  map=L.map("map",{zoomControl:false}).setView([39,35],6);
- tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
+ tile=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors © CARTO"}).addTo(map);
  route=L.polyline([],{color:"#e31b23",weight:5,opacity:.95}).addTo(map);
  return true;
 }
@@ -125,7 +125,7 @@ function finishRide(){
 function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
 function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
-function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
+function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors © CARTO"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";window.scrollTo({top:0,behavior:"smooth"});}
 var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
 var VOICE_WS="wss://gazonride-voice.onrender.com";

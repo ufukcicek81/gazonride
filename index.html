@@ -14,7 +14,7 @@
 :root{--red:#e31b23;--bg:#080a0e;--card:#12151b;--line:#2b3039;--muted:#949ca8}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 body{min-height:100vh}.app{max-width:540px;margin:auto;padding-bottom:92px}
-header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950}.logo span{color:var(--red)}
+header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 12px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950;line-height:1}.logo span{color:var(--red)}
 .motor{border:1px solid var(--line);background:#171b22;color:#fff;border-radius:22px;padding:9px 12px;font-size:11px}
 .map{height:410px;margin:0 12px;border:1px solid var(--line);border-radius:25px;overflow:hidden;position:relative;background:#18201d}
 #map{position:absolute;inset:0}.leaflet-control-attribution{font-size:8px}.leaflet-control-zoom{display:none}
@@ -36,7 +36,7 @@ header{height:72px;padding:15px 18px;display:flex;align-items:center;justify-con
 </head>
 <body>
 <div class="app">
-<header><div class="logo">GAZON<span>RIDE</span></div><button class="motor" id="motorBtn">🏍️ KTM 1290</button></header>
+<header class="appHeader"><div class="logo">GAZON<span>RIDE</span></div><button class="motor" id="motorBtn">🏍️ KTM 1290</button></header>
 <section class="map">
 <div id="map"></div>
 <div class="live">

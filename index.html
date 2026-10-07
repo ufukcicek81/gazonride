@@ -270,7 +270,8 @@ function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m=m%60;return h?String
 function loadGoogleMaps(){
  return new Promise(function(resolve,reject){
   if(window.google&&google.maps){googleReady=true;resolve();return;}
-  var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";\n  try{if(!key&&window.AndroidBridge&&typeof window.AndroidBridge.getGoogleMapsApiKey==="function")key=String(window.AndroidBridge.getGoogleMapsApiKey()||"");}catch(e){}
+  var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
+  try{if(!key&&window.AndroidBridge&&typeof window.AndroidBridge.getGoogleMapsApiKey==="function")key=String(window.AndroidBridge.getGoogleMapsApiKey()||"");}catch(e){}
   if(!key||key.indexOf("__")===0){reject(new Error("missing-key"));return;}
   var s=document.createElement("script");
   s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&libraries=places,geometry&callback=__gazonGoogleMapsReady&v=weekly&loading=async";

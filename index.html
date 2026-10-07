@@ -121,8 +121,31 @@ function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$(
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
 function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";window.scrollTo({top:0,behavior:"smooth"});}
-var voice={peer:null,room:"",host:false,peers:{},stream:null,mic:false};
-function voiceUI(){return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Marka bağımsız grup konuşması</b><div class="sub">Cardo, Sena, Midland ve diğer Bluetooth kulaklıklar telefon üzerinden aynı ses grubuna bağlanabilir.</div><input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)"><button class="screenBtn" id="createVoice">＋ Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button></div><div class="screenCard"><div class="statRow"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div><div class="statBox"><b id="voiceCount">0</b><span class="sub">Bağlı sürücü</span></div></div><button class="screenBtn" id="micBtn">🎙️ Mikrofonu Aç</button><div class="sub" style="margin-top:10px">Konuşurken müzik otomatik olarak kısılacak; konuşma bitince geri dönecek.</div></div><div class="screenCard"><b>Bağlantı kodu</b><div class="sub" id="voiceCode">—</div></div>';}
+var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
+var VOICE_WS="wss://gazonride-voice.onrender.com";
+function voiceId(){return "rider-"+Math.random().toString(36).slice(2,9);}
+function sendSignal(msg){if(voice.ws&&voice.ws.readyState===1)voice.ws.send(JSON.stringify(msg));}
+function pcFor(id,offer){
+  if(voice.peers[id]) return voice.peers[id];
+  var pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+  voice.peers[id]=pc;
+  if(voice.stream)voice.stream.getTracks().forEach(function(t){pc.addTrack(t,voice.stream);});
+  pc.onicecandidate=function(e){if(e.candidate)sendSignal({type:"signal",to:id,data:{kind:"ice",candidate:e.candidate}});};
+  pc.ontrack=function(e){if(e.streams&&e.streams[0])playRemote(e.streams[0],id);};
+  pc.onconnectionstatechange=function(){if(["failed","closed","disconnected"].indexOf(pc.connectionState)>=0){delete voice.peers[id];updateVoiceCount();}};
+  if(offer)pc.createOffer().then(function(o){return pc.setLocalDescription(o);}).then(function(){sendSignal({type:"signal",to:id,data:{kind:"offer",sdp:pc.localDescription}});}).catch(function(){});
+  return pc;
+}
+async function handleSignal(m){
+  var d=m.data,pc=pcFor(m.from,false);
+  try{
+    if(d.kind==="offer"){await pc.setRemoteDescription(d.sdp);var a=await pc.createAnswer();await pc.setLocalDescription(a);sendSignal({type:"signal",to:m.from,data:{kind:"answer",sdp:pc.localDescription}});}
+    else if(d.kind==="answer"){await pc.setRemoteDescription(d.sdp);}
+    else if(d.kind==="ice"&&d.candidate){await pc.addIceCandidate(d.candidate);}
+  }catch(e){console.warn("voice signal",e);}
+}
+function updateVoiceCount(){var n=Object.keys(voice.peers).length+1;$("voiceCount").textContent=n;}
+function voiceUI(){return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Marka bağımsız grup konuşması</b><div class="sub">Cardo, Sena, Midland ve diğer Bluetooth kulaklıklar telefon üzerinden aynı ses grubuna bağlanabilir.</div><input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)"><button class="screenBtn" id="createVoice">＋ Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button></div><div class="screenCard"><div class="statRow"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div><div class="statBox"><b id="voiceCount">0</b><span class="sub">Bağlı sürücü</span></div></div><button class="screenBtn" id="micBtn">🎙️ Mikrofonu Aç</button><div class="sub" style="margin-top:10px">Ses bağlantısı internet üzerinden çalışır. Bluetooth intercom telefona bağlı olmalıdır.</div></div><div class="screenCard"><b>Bağlantı kodu</b><div class="sub" id="voiceCode">—</div></div>';}
 function setupVoice(){
  $("closeScreen").onclick=closeScreen;
  $("createVoice").onclick=function(){var c=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(c,true);};
@@ -130,21 +153,28 @@ function setupVoice(){
  $("micBtn").onclick=toggleMic;
 }
 async function startVoice(code,host){
- if(!window.Peer){$("voiceState").textContent="Ses modülü yüklenemedi";return;}
  try{
-  if(voice.peer)voice.peer.destroy();
-  voice.room=code;voice.host=host;
-  voice.peer=new Peer("gazon-"+code+"-"+Math.random().toString(36).slice(2,7),{debug:0});
-  voice.peer.on("open",function(id){$("voiceCode").textContent=code+" · ID "+id.slice(-6);$("voiceState").textContent=host?"Grup oluşturuldu":"Gruba bağlanıyor";voice.peer.on("call",function(call){if(!voice.stream)return;call.answer(voice.stream);call.on("stream",playRemote);});});
-  voice.peer.on("error",function(e){$("voiceState").textContent="Bağlantı hatası";});
+  if(!window.RTCPeerConnection||!window.WebSocket||!navigator.mediaDevices){$("voiceState").textContent="Bu cihaz tarayıcı sesini desteklemiyor";return;}
   await ensureMic();
-  if(host) $("voiceState").textContent="Grup hazır · Arkadaşların kodla katılabilir";
-  else $("voiceState").textContent="Mikrofon hazır · bağlantı kuruluyor";
- }catch(e){$("voiceState").textContent="Ses başlatılamadı";}
+  if(voice.ws)voice.ws.close();
+  Object.keys(voice.peers).forEach(function(id){try{voice.peers[id].close();}catch(e){}});voice.peers={};
+  voice.room=code;voice.id=voiceId();
+  voice.ws=new WebSocket(VOICE_WS);
+  voice.ws.onopen=function(){sendSignal({type:"join",room:code,id:voice.id,name:"GazonRide"});$("voiceCode").textContent=code;$("voiceState").textContent=host?"Grup hazır":"Gruba bağlanıyor";};
+  voice.ws.onmessage=async function(ev){var m;try{m=JSON.parse(ev.data)}catch(e){return}
+    if(m.type==="members"){(m.members||[]).forEach(function(p){if(p.id!==voice.id)pcFor(p.id,true);});updateVoiceCount();}
+    else if(m.type==="peer-joined"){updateVoiceCount();}
+    else if(m.type==="signal")await handleSignal(m);
+    else if(m.type==="peer-left"){if(voice.peers[m.id]){voice.peers[m.id].close();delete voice.peers[m.id];}updateVoiceCount();}
+  };
+  voice.ws.onerror=function(){$("voiceState").textContent="Sunucu bağlantı hatası";};
+  voice.ws.onclose=function(){if(voice.room)$("voiceState").textContent="Bağlantı kapandı";};
+  voice.mic=false;voice.stream.getAudioTracks().forEach(function(t){t.enabled=false;});$("micBtn").textContent="🎙️ Mikrofonu Aç";
+ }catch(e){$("voiceState").textContent="Mikrofon izni gerekli";}
 }
 async function ensureMic(){if(voice.stream)return voice.stream;voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});return voice.stream;}
 async function toggleMic(){try{var st=await ensureMic();voice.mic=!voice.mic;st.getAudioTracks().forEach(function(t){t.enabled=voice.mic;});$("micBtn").textContent=voice.mic?"🔴 Konuşmayı Kapat":"🎙️ Mikrofonu Aç";$("voiceState").textContent=voice.mic?"Konuşuyorsun":"Dinlemede";}catch(e){$("voiceState").textContent="Mikrofon izni gerekli";}}
-function playRemote(stream){var a=$("remoteAudio");a.srcObject=stream;a.play().catch(function(){});$("voiceCount").textContent="1+";}
+function playRemote(stream,id){var a=document.getElementById("remote-"+id);if(!a){a=document.createElement("audio");a.id="remote-"+id;a.autoplay=true;a.playsInline=true;a.controls=false;a.style.display="none";document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});updateVoiceCount();}
 function showScreen(page){
  var x=$("screen");x.classList.add("active");
  if(page==="routes"){

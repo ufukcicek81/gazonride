@@ -1,8 +1,8 @@
 {
-  "id": "./?gazonride-app-20261008",
+  "id": "/gazonride-v2",
   "name": "GaZonRide",
   "short_name": "GaZonRide",
-  "start_url": "./?gazonride-app-20261008",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

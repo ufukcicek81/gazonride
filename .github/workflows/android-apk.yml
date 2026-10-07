@@ -7,6 +7,7 @@ on:
     branches: [ main ]
     paths:
       - 'android/**'
+      - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 
 jobs:
@@ -51,6 +52,14 @@ jobs:
             cp /tmp/gazonride_launcher.webp "android/app/src/main/res/mipmap-$density/ic_launcher.webp"
             cp /tmp/gazonride_launcher.webp "android/app/src/main/res/mipmap-$density/ic_launcher_round.webp"
           done
+
+      - name: Inject Google Maps key into Android assets
+        shell: bash
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          test -n "$GOOGLE_MAPS_API_KEY"
+          printf 'window.GAZONRIDE_GOOGLE_MAPS_API_KEY=%s;\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > android/app/src/main/assets/gazonride-config.js
 
       - name: Build APK
         working-directory: android

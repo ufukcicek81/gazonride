@@ -60,6 +60,7 @@ jobs:
         run: |
           test -n "$GOOGLE_MAPS_API_KEY"
           mkdir -p android/app/src/main/assets
+          printf '%s' "$GOOGLE_MAPS_API_KEY" > android/app/src/main/assets/google_maps_api_key.txt
           printf 'window.GAZONRIDE_GOOGLE_MAPS_API_KEY=%s;\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > android/app/src/main/assets/gazonride-config.js
 
       - name: Build APK

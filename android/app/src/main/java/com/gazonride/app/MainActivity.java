@@ -48,6 +48,9 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public String getBufferedPoints(){return prefs.getString("buffer","[]");}
         @JavascriptInterface public void clearBufferedPoints(){prefs.edit().putString("buffer","[]").apply();}
+        @JavascriptInterface public String getSystemTheme(){
+            return isSystemDarkMode() ? "dark" : "light";
+        }
     }
 
     @Override public void onCreate(Bundle state) {
@@ -61,7 +64,7 @@ public class MainActivity extends Activity {
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setGeolocationEnabled(true);
         s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false); s.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webView.setBackgroundColor(Color.rgb(8,10,14));
+        webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient(){
@@ -72,12 +75,16 @@ public class MainActivity extends Activity {
             @Override public void onPermissionRequest(PermissionRequest request){runOnUiThread(()->request.grant(request.getResources()));}
         });
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
-        webView.loadUrl(URL + "?v=" + System.currentTimeMillis());
+        webView.loadUrl(URL + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
     }
 
+    private boolean isSystemDarkMode(){
+        return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)==Configuration.UI_MODE_NIGHT_YES;
+    }
+
     private void applySystemTheme(){
-        boolean dark=(getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)==Configuration.UI_MODE_NIGHT_YES;
+        boolean dark=isSystemDarkMode();
         int bg=dark ? Color.rgb(8,10,14) : Color.rgb(247,248,250);
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
@@ -92,6 +99,10 @@ public class MainActivity extends Activity {
     @Override public void onConfigurationChanged(Configuration newConfig){
         super.onConfigurationChanged(newConfig);
         applySystemTheme();
+        if(webView!=null){
+            webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
+            webView.evaluateJavascript("if(window.applyAppTheme){window.applyAppTheme();}",null);
+        }
     }
 
     private void checkForNativeUpdate(){

@@ -95,6 +95,25 @@ body.mode-overlay .app{display:none}
 .profileName{font-size:22px;font-weight:950}.profileBike{font-size:11px;color:#e9edf3;margin-top:3px}.menuRow{display:flex;align-items:center;gap:11px;padding:14px 0;border-bottom:1px solid var(--line)}.menuRow:last-child{border-bottom:0}.menuRow>.mi{width:26px;color:var(--accent)}.menuRow b{flex:1;font-size:12px}.menuRow .arrow{color:var(--muted);font-size:18px}
 .navInstruction{box-shadow:0 14px 30px #0002}.navTurn{display:flex;align-items:center;gap:9px}.navTurn:before{content:'turn_right';font-family:'Material Symbols Rounded';font-size:32px;color:var(--accent)}
 @media(prefers-color-scheme:light){.voiceStatus{background:#e9fff1;border-color:#bce9ca;color:#188345}.profileBike{color:#f4f4f4}}
+
+.mapBottom .loc{display:flex;align-items:center;gap:5px}.mapBottom .loc .mi{font-size:16px;color:var(--accent)}.mapBtn{display:grid;place-items:center;min-width:42px}.mapBtn .mi{font-size:20px}
+body.mode-navigation .appHeader{position:relative;z-index:910}
+body.mode-navigation .map{height:calc(100vh - 150px);min-height:520px;margin-top:0;border-radius:0;margin-left:0;margin-right:0;border-left:0;border-right:0}
+body.mode-navigation .navigationPanel{position:fixed;z-index:905;top:calc(env(safe-area-inset-top,0px) + 84px);left:50%;transform:translateX(-50%);width:min(516px,calc(100% - 24px));padding:0;pointer-events:none}
+body.mode-navigation .navigationPanel>*{pointer-events:auto}
+body.mode-navigation .navigationPanel>.ey{display:none}
+body.mode-navigation .navSearchRow{background:rgba(10,13,18,.94);padding:8px;border:1px solid #343b46;border-radius:18px;backdrop-filter:blur(18px);box-shadow:0 14px 30px #0005}
+body.mode-navigation .navSearchRow .input{background:transparent;border:0;margin:0}
+body.mode-navigation .navSearchRow button{min-width:54px}
+body.mode-navigation .navigationPanel>.sub{display:none}
+body.mode-navigation .navInstruction{background:rgba(10,13,18,.94);backdrop-filter:blur(18px);border-color:#343b46;box-shadow:0 14px 30px #0005}
+body.mode-navigation .map .live{top:154px}
+body.mode-navigation .mapBottom{bottom:18px}
+.talkBtn.active{background:#e93535;border-color:#ff6a6a;box-shadow:0 16px 42px #e9353544}
+@media(prefers-color-scheme:light){
+ body.mode-navigation .navSearchRow,body.mode-navigation .navInstruction{background:rgba(255,255,255,.94);border-color:#d7dde5;box-shadow:0 12px 26px #0002}
+ body.mode-navigation .navSearchRow .input{color:#111}
+}
 </style>
 </head>
 <body>
@@ -131,11 +150,11 @@ body.mode-overlay .app{display:none}
 <div class="liveBox"><b id="distance">0.00</b><small>KM MESAFE</small></div>
 <div class="liveBox"><b id="altitude">—</b><small>M RAKIM</small></div>
 </div>
-<div class="mapBottom"><div class="loc" id="location">📍 Konum aranıyor...</div><button class="mapBtn" id="locBtn">◎ Konumum</button><button class="mapBtn" id="satBtn">🛰️ Uydu</button></div>
+<div class="mapBottom"><div class="loc" id="location"><span class="mi">location_on</span><span>Konum aranıyor...</span></div><button class="mapBtn" id="locBtn"><span class="mi">my_location</span></button><button class="mapBtn" id="satBtn"><span class="mi">satellite_alt</span></button></div>
 </section>
 <section class="navigationPanel" id="navigationPanel">
-  <div class="ey">MOTOSİKLET NAVİGASYONU</div>
-  <div class="navSearchRow"><input class="input" id="navDestination" placeholder="Nereye sürmek istiyorsun?"><button id="navGo">Git</button></div>
+  <div class="ey">GAZONRIDE NAVİGASYON</div>
+  <div class="navSearchRow"><input class="input" id="navDestination" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button></div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
   <div class="navInstruction" id="navInstruction">
     <div class="navTurn" id="navTurn">Rota hazır</div>
@@ -191,7 +210,7 @@ function initMap(){
 }
 function applyPosition(pos){
  var c=pos.coords,p={lat:c.latitude,lon:c.longitude};currentPoint=p;if(navActive)updateNavigation(p);
- $("location").textContent="📍 "+p.lat.toFixed(5)+", "+p.lon.toFixed(5);
+ $("location").innerHTML='<span class="mi">location_on</span><span>'+p.lat.toFixed(5)+", "+p.lon.toFixed(5)+"</span>";
  $("gps").textContent="GPS bağlı";
  $("accuracy").textContent="Konum doğruluğu: ±"+Math.round(c.accuracy||0)+" m";
  if(map){if(!marker){marker=L.marker([p.lat,p.lon],{icon:L.divIcon({className:"bikeIcon",html:"<span class=\"mi\" style=\"font-size:27px;color:#ff5a1f;text-shadow:0 2px 5px #000\">two_wheeler</span>",iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map);}else marker.setLatLng([p.lat,p.lon]);}
@@ -213,7 +232,7 @@ lastGpsTs=Date.now();
  }
 }
 function startGPS(){
- if(!navigator.geolocation){$("gps").textContent="GPS desteklenmiyor";$("location").textContent="📍 GPS kullanılamıyor";return;}
+ if(!navigator.geolocation){$("gps").textContent="GPS desteklenmiyor";$("location").innerHTML='<span class="mi">location_off</span><span>GPS kullanılamıyor</span>';return;}
  $("gps").textContent="Konum aranıyor...";
  navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);$("status").textContent="Konum bulundu. Sürüşe hazırsın.";},function(err){$("gps").textContent="Konum bekleniyor";$("status").textContent=err.code===1?"Konum izni verilmedi. Tarayıcı ayarlarından izin verin.":"GPS sinyali aranıyor...";},{enableHighAccuracy:false,maximumAge:30000,timeout:5000});
  navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
@@ -233,7 +252,7 @@ function finishRide(){
  if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
 }
 function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
-function shareRide(){var t="GazonRide 🏍️\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
+function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map)map.invalidateSize();}
 function toggleSatellite(){if(!map)return;if(satellite){map.removeLayer(tile);tile=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors © CARTO"}).addTo(map);}else{map.removeLayer(tile);tile=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}satellite=!satellite;}
 
@@ -263,7 +282,7 @@ async function planNavigation(){
  var q=$("navDestination").value.trim();
  if(!q){$("navDestination").focus();return;}
  if(!currentPoint){$("status").textContent="Önce GPS konumu bekleniyor.";startGPS();return;}
- $("navGo").textContent="...";
+ $("navGo").innerHTML='<span class="mi">hourglass_top</span>';
  try{
    var g=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q),{headers:{"Accept":"application/json"}});
    var places=await g.json();
@@ -281,7 +300,7 @@ async function planNavigation(){
    $("navRoad").textContent=d.label;renderNavStep();
    $("status").textContent="Navigasyon başladı. Intercom aynı anda kullanılabilir.";
  }catch(e){$("status").textContent="Rota oluşturulamadı. Hedefi daha açık yazıp tekrar dene.";}
- finally{$("navGo").textContent="Git";}
+ finally{$("navGo").innerHTML='<span class="mi">navigation</span>';}
 }
 function renderNavStep(){
  var s=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))];
@@ -355,11 +374,11 @@ async function startVoice(code,host){
   };
   voice.ws.onerror=function(){var e=$("voiceState");if(e)e.textContent="Sunucu bağlantı hatası";$("voiceDockSub").textContent="Bağlantı hatası";};
   voice.ws.onclose=function(){var e=$("voiceState");if(voice.room&&e)e.textContent="Bağlantı kapandı";$("voiceDockSub").textContent="Bağlantı kapandı";};
-  voice.mic=false;voice.stream.getAudioTracks().forEach(function(t){t.enabled=false;});var mb=$("micBtn");if(mb)mb.textContent="🎙️ Mikrofonu Aç";$("voiceDockMic").innerHTML='<span class="mi">mic</span>';
+  voice.mic=false;voice.stream.getAudioTracks().forEach(function(t){t.enabled=false;});var mb=$("micBtn");if(mb){mb.innerHTML='<span class="mi">mic</span>';mb.classList.remove("active");}$("voiceDockMic").innerHTML='<span class="mi">mic</span>';
  }catch(e){var vs=$("voiceState");if(vs)vs.textContent="Mikrofon izni gerekli";}
 }
 async function ensureMic(){if(voice.stream)return voice.stream;voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});return voice.stream;}
-async function toggleMic(){try{var st=await ensureMic();voice.mic=!voice.mic;st.getAudioTracks().forEach(function(t){t.enabled=voice.mic;});var m=$("micBtn");if(m)m.textContent=voice.mic?"🔴 Konuşmayı Kapat":"🎙️ Mikrofonu Aç";var s=$("voiceState");if(s)s.textContent=voice.mic?"Konuşuyorsun":"Dinlemede";$("voiceDockMic").innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';$("voiceDockSub").textContent=voice.mic?"Konuşuyorsun · "+voice.room:"Dinlemede · "+voice.room;}catch(e){var s=$("voiceState");if(s)s.textContent="Mikrofon izni gerekli";}}
+async function toggleMic(){try{var st=await ensureMic();voice.mic=!voice.mic;st.getAudioTracks().forEach(function(t){t.enabled=voice.mic;});var m=$("micBtn");if(m){m.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';m.classList.toggle("active",voice.mic);}var s=$("voiceState");if(s)s.textContent=voice.mic?"Konuşuyorsun":"Dinlemede";$("voiceDockMic").innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';$("voiceDockSub").textContent=voice.mic?"Konuşuyorsun · "+voice.room:"Dinlemede · "+voice.room;}catch(e){var s=$("voiceState");if(s)s.textContent="Mikrofon izni gerekli";}}
 function playRemote(stream,id){var a=document.getElementById("remote-"+id);if(!a){a=document.createElement("audio");a.id="remote-"+id;a.autoplay=true;a.playsInline=true;a.controls=false;a.style.display="none";document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});updateVoiceCount();}
 function showScreen(page){
  var x=$("screen");x.classList.add("active");

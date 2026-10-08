@@ -13,9 +13,9 @@ function syncUi(){
 async function loadProfile(user){
  var snap=await firebase.database().ref("users/"+user.uid).once("value"),p=snap.val()||{};
  var email=(user.email||"").toLowerCase(),isListed=admins.indexOf(email)>=0;
- if(isListed&&user.emailVerified&&p.role!=="admin"){p.role="admin";await firebase.database().ref("users/"+user.uid+"/role").set("admin")}
- state.profile={uid:user.uid,email:user.email||"",name:p.name||user.displayName||"GaZonRide sürücüsü",bike:p.bike||"Motosiklet",role:p.role||"member"};
- state.role=state.profile.role;saveLocalProfile(state.profile);syncUi();return state.profile;
+ var role=(isListed&&user.emailVerified)?"admin":(p.role||"member");
+ state.profile={uid:user.uid,email:user.email||"",name:p.name||user.displayName||"GaZonRide sürücüsü",bike:p.bike||"Motosiklet",role:role};
+ state.role=role;saveLocalProfile(state.profile);syncUi();return state.profile;
 }
 async function register(email,password,name,bike){
  if(!configured)throw new Error("Firebase ayarı henüz tamamlanmadı.");

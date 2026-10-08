@@ -650,7 +650,7 @@ async function planNavigation(){
    if(!routes.length||!routes[0].path||!routes[0].path.length)throw new Error("noroute");
    clearAlternativeRoutes();
    navAlternatives=routes.slice(0,4).map(routeToData);
-   navAlternativePolylines=navAlternatives.map(function(d,i){return new google.maps.Polyline({map:map,path:d.pts.map(function(p){return {lat:p.lat,lng:p.lon}}),strokeColor:i===0?"#3457ff":"#8d96a3",strokeWeight:i===0?8:5,strokeOpacity:i===0?.98:.65,zIndex:i===0?20:10})});
+   navAlternativePolylines=navAlternatives.map(function(d,i){var p=new google.maps.Polyline({map:map,path:d.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:i===0?"#3457ff":"#8d96a3",strokeWeight:i===0?8:5,strokeOpacity:i===0?.98:.65,zIndex:i===0?20:10,clickable:true});google.maps.event.addListener(p,"click",function(){selectAlternativeRoute(i)});return p});
    navRoute=navAlternativePolylines[0];
    activeNavLabel=d.label||q;activeRouteMode=mode;activeNavDestination={lat:Number(d.lat),lon:Number(d.lon)};navActive=false;navReady=true;navOffRouteCount=0;
    if(routes[0].viewport)map.fitBounds(routes[0].viewport,42);else fitPolyline(navRoute);
@@ -697,7 +697,8 @@ function updateGuidanceHud(p){
  var cur=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))]||{},next=navSteps[navStepIndex+1]||null;
  var curText=cleanInstruction(cur.instruction&&cur.instruction.instructions)||googleManeuverText(cur.instruction&&cur.instruction.maneuver);
  $("guidanceTurnIcon").textContent=guidanceIcon(cur.instruction&&cur.instruction.maneuver);
- $("guidanceTitle").textContent=googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ var turnMeters=cur&&cur.end&&p?hav(p,cur.end)*1000:0,turnText=googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ $("guidanceTitle").textContent=(turnMeters>5?guidanceDistanceText(turnMeters)+" · ":"")+turnText;
  $("guidanceRoad").textContent=curText;
  if(next){$("guidanceNextIcon").textContent=guidanceIcon(next.instruction&&next.instruction.maneuver);$("guidanceNextText").textContent=googleManeuverText(next.instruction&&next.instruction.maneuver);}
  else{$("guidanceNextIcon").textContent="flag";$("guidanceNextText").textContent="Varış";}

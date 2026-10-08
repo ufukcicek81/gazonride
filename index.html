@@ -9,7 +9,9 @@
 <link rel="apple-touch-icon" sizes="192x192" href="android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008">
 <link rel="manifest" href="gazonride-v2.json?v=20261009">
 <title>GazonRide</title>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">\n<link rel="stylesheet" href="social.css?v=20261008-social3">\n<link rel="stylesheet" href="replay.css?v=20261008-r2">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
+<link rel="stylesheet" href="social.css?v=20261008-social3">
+<link rel="stylesheet" href="replay.css?v=20261008-r2">
 <script>
 (function(){
   var saved=localStorage.getItem("gazon_theme")||"system", q=new URLSearchParams(location.search).get("theme"), dark;
@@ -146,6 +148,29 @@ html.theme-dark{color-scheme:dark}
 .discoverEmpty{display:none;background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:20px;text-align:center;color:var(--muted);margin:12px 0}
 .menuRow{cursor:pointer}.menuRow:active,.placeCard:active,.routeCard:active,.chip:active{transform:scale(.985)}
 .routeCard,.placeCard,.chip,.sectionLine span{cursor:pointer}
+
+/* Turn-by-turn riding guidance */
+.guidanceHud{display:none}
+body.guidance-active{overflow:hidden}
+body.guidance-active .app{max-width:none;padding:0}
+body.guidance-active .appHeader,body.guidance-active .bottom,body.guidance-active .navigationPanel,body.guidance-active .voiceDock{display:none!important}
+body.guidance-active .map{position:fixed;z-index:880;inset:0;width:100%;height:100vh!important;min-height:0!important;margin:0!important;border:0!important;border-radius:0!important}
+body.guidance-active .map .live,body.guidance-active .mapBottom{display:none!important}
+body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inset:0;pointer-events:none}
+.guidanceTop{position:absolute;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);pointer-events:auto}
+.guidanceMain{background:#076b67;color:#fff;border-radius:20px 20px 14px 14px;padding:16px 18px;box-shadow:0 10px 26px #0004}
+.guidanceTurnRow{display:flex;align-items:flex-start;gap:14px}
+.guidanceTurnIcon{font-size:50px;line-height:1;flex:0 0 auto}
+.guidanceRoadWrap{min-width:0;flex:1}.guidanceRoadWrap b{display:block;font-size:25px;line-height:1.08;font-weight:950;letter-spacing:-.4px}.guidanceRoadWrap small{display:block;font-size:13px;margin-top:5px;color:#d9fffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guidanceNext{display:flex;align-items:center;gap:10px;background:#075d5a;color:#fff;border-top:1px solid #ffffff22;border-radius:0 0 14px 14px;width:max-content;max-width:82%;padding:10px 16px;font-size:15px;font-weight:800;box-shadow:0 8px 20px #0003}
+.guidanceNext .mi{font-size:30px}.guidanceNext span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guidanceFloat{position:absolute;right:15px;top:34%;display:grid;gap:11px;pointer-events:auto}
+.guidanceFloat button,.guidanceSpeed{width:58px;height:58px;border-radius:50%;border:1px solid #d8dde3;background:#fff;color:#171a1f;box-shadow:0 4px 14px #0003;display:grid;place-items:center}
+.guidanceFloat button .mi{font-size:29px}.guidanceSpeed{position:absolute;left:14px;bottom:112px;width:66px;height:66px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-weight:950;pointer-events:none}.guidanceSpeed b{font-size:24px;line-height:1}.guidanceSpeed small{font-size:9px;margin-top:3px}
+.guidanceBottom{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #d9dde3;color:#171a1f;display:grid;grid-template-columns:62px 1fr 62px;align-items:center;gap:8px;pointer-events:auto;box-shadow:0 -8px 24px #0002}
+.guidanceBottom button{width:58px;height:58px;border-radius:50%;border:1px solid #cfd5dc;background:#fff;color:#20242a;display:grid;place-items:center}.guidanceBottom button .mi{font-size:31px}
+.guidanceSummary{text-align:center;min-width:0}.guidanceSummary b{display:block;color:#1b8b42;font-size:28px;line-height:1;font-weight:900}.guidanceSummary small{display:block;color:#6d7680;font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:390px){.guidanceRoadWrap b{font-size:21px}.guidanceTurnIcon{font-size:44px}.guidanceSummary b{font-size:24px}}
 </style>
 </head>
 <body>
@@ -200,6 +225,28 @@ html.theme-dark{color-scheme:dark}
     <button class="screenBtn" id="navDrive" style="background:var(--accent);color:#fff;border-color:var(--accent);font-size:16px;font-weight:950"><span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat</button><button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
   </div>
 </section>
+<div class="guidanceHud" id="guidanceHud">
+  <div class="guidanceTop">
+    <div class="guidanceMain">
+      <div class="guidanceTurnRow">
+        <span class="mi guidanceTurnIcon" id="guidanceTurnIcon">straight</span>
+        <div class="guidanceRoadWrap"><b id="guidanceTitle">Rotayı takip et</b><small id="guidanceRoad">—</small></div>
+      </div>
+    </div>
+    <div class="guidanceNext"><span>Ardından</span><span class="mi" id="guidanceNextIcon">turn_left</span><span id="guidanceNextText">—</span></div>
+  </div>
+  <div class="guidanceFloat">
+    <button id="guidanceCenter" title="Konumuma dön"><span class="mi">navigation</span></button>
+    <button id="guidanceSound" title="Sesli yönlendirme"><span class="mi">volume_up</span></button>
+    <button id="guidanceMapType" title="Harita görünümü"><span class="mi">layers</span></button>
+  </div>
+  <div class="guidanceSpeed"><b id="guidanceSpeed">0</b><small>km/sa</small></div>
+  <div class="guidanceBottom">
+    <button id="guidanceClose" title="Navigasyonu bitir"><span class="mi">close</span></button>
+    <div class="guidanceSummary"><b id="guidanceEta">—</b><small id="guidanceRemain">—</small></div>
+    <button id="guidanceMore" title="Rota özeti"><span class="mi">more_vert</span></button>
+  </div>
+</div>
 
 <section class="content"><div class="ey">AKTİF SÜRÜŞ</div><div class="grid">
 <div class="card"><div class="big" id="duration">00:00</div><div class="sub">Sürüş süresi</div></div>
@@ -227,7 +274,7 @@ html.theme-dark{color-scheme:dark}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -323,8 +370,16 @@ function applyPosition(pos){
  $("location").innerHTML='<span class="mi">location_on</span><span>'+p.lat.toFixed(5)+", "+p.lon.toFixed(5)+"</span>";
  $("gps").textContent="GPS bağlı";
  $("accuracy").textContent="Konum doğruluğu: ±"+Math.round(c.accuracy||0)+" m";
- if(map){var gp={lat:p.lat,lng:p.lon};if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}});}else marker.setPosition(gp);}
- if(map&&!riding)setMapCenter(p,16);
+ if(map){
+   var gp={lat:p.lat,lng:p.lon},hd=Number(c.heading);
+   if(!isFinite(hd)&&lastPoint&&hav(lastPoint,p)>.004)hd=bearing(lastPoint,p);
+   if(isFinite(hd))lastHeading=hd;
+   var markerIcon=navActive?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:lastHeading||0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
+   if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:markerIcon,zIndex:999});}
+   else{marker.setPosition(gp);marker.setIcon(markerIcon);}
+   if(navActive){map.panTo(gp);if(map.getZoom()<17)map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
+ }
+ if(map&&!riding&&!navActive)setMapCenter(p,16);
  if(riding){
    track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),Date.now()]);updateTurns();setPolyline(route,track);
    if(track.length>1)map.panTo({lat:p.lat,lng:p.lon});
@@ -498,7 +553,7 @@ async function planNavigation(){
      return {lat:lat,lon:lng};
    });
    if(navRoute)navRoute.setMap(null);
-   navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon};}),strokeColor:"#ff5a1f",strokeWeight:7,strokeOpacity:.96});
+   navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon};}),strokeColor:"#3457ff",strokeWeight:8,strokeOpacity:.98});
    if(rt.viewport)map.fitBounds(rt.viewport,42);else fitPolyline(navRoute);
 
    var leg=rt.legs&&rt.legs[0],steps=(leg&&leg.steps)||[];
@@ -529,34 +584,101 @@ async function planNavigation(){
  }
  finally{$("navGo").innerHTML='<span class="mi">navigation</span>';}
 }
+function guidanceIcon(m){
+ var x=String(m||"").toLowerCase();
+ if(x.indexOf("u_turn")>=0||x.indexOf("uturn")>=0)return "u_turn_left";
+ if(x.indexOf("roundabout")>=0)return "roundabout_right";
+ if(x.indexOf("fork")>=0&&x.indexOf("left")>=0)return "fork_left";
+ if(x.indexOf("fork")>=0&&x.indexOf("right")>=0)return "fork_right";
+ if(x.indexOf("merge")>=0)return "merge";
+ if(x.indexOf("slight_left")>=0)return "turn_slight_left";
+ if(x.indexOf("slight_right")>=0)return "turn_slight_right";
+ if(x.indexOf("left")>=0)return "turn_left";
+ if(x.indexOf("right")>=0)return "turn_right";
+ return "straight";
+}
+function guidanceDistanceText(m){
+ m=Math.max(0,Number(m||0));
+ return m>=1000?(m/1000).toFixed(m>=10000?0:1)+" km":Math.max(10,Math.round(m/10)*10)+" m";
+}
+function cleanInstruction(t){return String(t||"Rotayı takip et").replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();}
+function speakGuidance(text){
+ if(guidanceMuted||!("speechSynthesis" in window)||!text)return;
+ try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(cleanInstruction(text));u.lang="tr-TR";u.rate=1.02;speechSynthesis.speak(u);}catch(e){}
+}
+function remainingGuidanceMeters(p){
+ if(!navSteps.length)return Math.max(0,navTotalKm*1000);
+ var s=navSteps[Math.min(navStepIndex,navSteps.length-1)],total=0;
+ if(s&&s.end&&p)total=hav(p,s.end)*1000;else total=Number(s&&s.distance||0);
+ for(var i=navStepIndex+1;i<navSteps.length;i++)total+=Number(navSteps[i].distance||0);
+ return Math.max(0,total);
+}
+function updateGuidanceHud(p){
+ if(!navActive)return;
+ var cur=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))]||{},next=navSteps[navStepIndex+1]||null;
+ var curText=cleanInstruction(cur.instruction&&cur.instruction.instructions)||googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ $("guidanceTurnIcon").textContent=guidanceIcon(cur.instruction&&cur.instruction.maneuver);
+ $("guidanceTitle").textContent=googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ $("guidanceRoad").textContent=curText;
+ if(next){$("guidanceNextIcon").textContent=guidanceIcon(next.instruction&&next.instruction.maneuver);$("guidanceNextText").textContent=googleManeuverText(next.instruction&&next.instruction.maneuver);}
+ else{$("guidanceNextIcon").textContent="flag";$("guidanceNextText").textContent="Varış";}
+ var remM=remainingGuidanceMeters(p),ratio=navTotalKm>0?Math.min(1,(remM/1000)/navTotalKm):0,remSec=Math.max(60,navTotalSec*ratio);
+ var mins=Math.max(1,Math.round(remSec/60)),eta=new Date(Date.now()+remSec*1000),etaTxt=eta.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+ $("guidanceEta").textContent=mins>=60?(Math.floor(mins/60)+" sa. "+(mins%60)+" dk."):(mins+" dk.");
+ $("guidanceRemain").textContent=(remM/1000).toFixed(remM>=100000?0:1)+" km · "+etaTxt;
+ var sp=$("speed");$("guidanceSpeed").textContent=sp?sp.textContent:"0";
+}
+function enterGuidanceMode(){
+ document.body.classList.add("guidance-active");
+ var hud=$("guidanceHud");if(hud)hud.style.display="block";
+ if(map&&currentPoint){map.setCenter({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
+ updateGuidanceHud(currentPoint);
+}
+function exitGuidanceMode(){
+ document.body.classList.remove("guidance-active");
+ var hud=$("guidanceHud");if(hud)hud.style.display="";
+ try{if(map){map.setTilt(0);map.setHeading(0);}}catch(e){}
+}
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
  navActive=true;
  navReady=false;
+ navGuidanceStart=Date.now();
+ lastGuidanceStep=-1;
  if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
  requestWakeLock();
+ enterGuidanceMode();
+ renderNavStep();
+ speakGuidance((navSteps[0]&&navSteps[0].instruction&&navSteps[0].instruction.instructions)||"Navigasyon başladı");
  var b=$("navDrive");if(b){b.disabled=true;b.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">navigation</span>Navigasyon Aktif';}
  $("status").textContent="Navigasyon ve sürüş kaydı birlikte başladı.";
  if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});
 }
 function renderNavStep(){
  var s=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))];
- if(!s){$("navTurn").textContent="Rotayı takip et";$("navNext").textContent="—";return;}
+ if(!s){$("navTurn").textContent="Rotayı takip et";$("navNext").textContent="—";updateGuidanceHud(currentPoint);return;}
  $("navTurn").textContent=googleManeuverText(s.instruction&&s.instruction.maneuver);
  $("navRoad").textContent=(s.instruction&&s.instruction.instructions)||$("navRoad").textContent||"";
  $("navNext").textContent=s.distance>=1000?(s.distance/1000).toFixed(1)+" km":Math.max(10,Math.round(s.distance/10)*10)+" m";
+ updateGuidanceHud(currentPoint);
 }
 function updateNavigation(p){
  if(!navActive||!navSteps.length)return;
  var s=navSteps[navStepIndex];
  if(s&&s.end){
    var d=hav(p,s.end);
-   if(d<0.07&&navStepIndex<navSteps.length-1){navStepIndex++;renderNavStep();}
+   if(d<0.055&&navStepIndex<navSteps.length-1){
+     navStepIndex++;
+     renderNavStep();
+     if(lastGuidanceStep!==navStepIndex){lastGuidanceStep=navStepIndex;var ns=navSteps[navStepIndex];speakGuidance(ns&&ns.instruction&&ns.instruction.instructions);}
+   }
  }
- if(map)map.panTo({lat:p.lat,lng:p.lon});
+ updateGuidanceHud(p);
+ if(map){map.panTo({lat:p.lat,lng:p.lon});if(map.getZoom()<17)map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
 }
 function stopNavigation(){
  navActive=false;navReady=false;navSteps=[];navStepIndex=0;
+ exitGuidanceMode();
  if(navRoute){navRoute.setMap(null);navRoute=null;}
  $("navInstruction").classList.remove("active");
  var db=$("navDrive");if(db){db.disabled=false;db.style.display="block";db.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat';}
@@ -757,6 +879,11 @@ function boot(){
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
  $("navDrive").addEventListener("click",startPlannedNavigation);
  $("navStop").addEventListener("click",stopNavigation);
+ $("guidanceClose").addEventListener("click",stopNavigation);
+ $("guidanceCenter").addEventListener("click",function(){if(map&&currentPoint){map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}});
+ $("guidanceSound").addEventListener("click",function(){guidanceMuted=!guidanceMuted;this.innerHTML='<span class="mi">'+(guidanceMuted?"volume_off":"volume_up")+'</span>';if(!guidanceMuted)updateGuidanceHud(currentPoint);});
+ $("guidanceMapType").addEventListener("click",toggleSatellite);
+ $("guidanceMore").addEventListener("click",function(){alert(activeNavLabel+"\n"+$("guidanceRemain").textContent);});
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();
  setMode("discover");
@@ -766,6 +893,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-social4"></script>\n<script src="replay.js?v=20261008-r2"></script>
+<script src="social.js?v=20261008-social4"></script>
+<script src="replay.js?v=20261008-r2"></script>
 </body>
 </html>

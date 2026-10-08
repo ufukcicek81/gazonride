@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" sizes="192x192" href="icon-192.svg?v=20261008">
 <link rel="apple-touch-icon" sizes="192x192" href="android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008">
-<link rel="manifest" href="gazonride-v2.json?v=20261009">
+<link rel="manifest" href="gazonride-v2.json?v=20261008-profile1">
 <title>GazonRide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,12 +41,12 @@
 <style>
 :root{--red:#ff5a1f;--accent:#ff5a1f;--bg:#080a0e;--card:#12151b;--card2:#181c23;--line:#2b3039;--muted:#949ca8;--text:#fff;--soft:#0d1015;color-scheme:dark light}
 *{box-sizing:border-box}
-.mi{width:1em;max-width:1em;height:1em;overflow:hidden;white-space:nowrap;flex:0 0 1em}
+.mi{width:1.15em;max-width:1.15em;height:1.15em;line-height:1.15;overflow:visible;white-space:nowrap;flex:0 0 1.15em;display:inline-flex;align-items:center;justify-content:center}
 html.icons-loading:not(.icons-ready) .mi{visibility:hidden!important;color:transparent!important}
 html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 body{min-height:100vh}.app{max-width:540px;margin:auto;padding-bottom:92px}
 header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 12px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950;line-height:1}.logo span{color:var(--red)}
-.motor{border:1px solid var(--line);background:#171b22;color:#fff;border-radius:22px;padding:9px 12px;font-size:11px}
+.motor{border:1px solid var(--line);background:#141820;color:#fff;border-radius:15px;padding:7px 9px;font-size:10px;min-width:0;max-width:152px;display:grid;grid-template-columns:22px minmax(0,1fr) 16px;align-items:center;gap:5px;text-align:left}.motor>.mi:first-child{font-size:18px;color:var(--accent)}.motor .motorText{min-width:0}.motor .motorText b{display:block;font-size:10px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.motor .motorText small{display:block;color:#9ca4af;font-size:8px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.motor .chev{font-size:16px;color:#89919d}
 .map{height:410px;margin:0 12px;border:1px solid var(--line);border-radius:25px;overflow:hidden;position:relative;background:#18201d}
 #map{position:absolute;inset:0}.live{position:absolute;z-index:500;top:12px;left:12px;right:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .liveBox{background:#080a0ee8;border:1px solid #3a3f48;border-radius:15px;padding:9px}.liveBox b{font-size:20px;display:block}.liveBox small{font-size:8px;color:#a1a8b3}
@@ -197,10 +197,10 @@ body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inse
 .homeSection{display:none;padding:10px 16px 28px}
 .homeHero{background:linear-gradient(135deg,#141922,#0b0e13);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .homeHero b{font-size:22px;display:block}.homeHero small{display:block;color:var(--muted);font-size:11px;margin-top:5px}
-.homeHero .homeAvatar{width:52px;height:52px;border-radius:17px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:0 0 auto}.homeHero .homeAvatar .mi{font-size:30px}
+.homeHero .homeAvatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;flex:0 0 auto;overflow:hidden;border:2px solid #ffffff22}.homeHero .homeAvatar .mi{font-size:30px}.homeHero .homeAvatar img{width:100%;height:100%;object-fit:cover;display:block}
 .homeMenuGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .homeMenuBtn{min-height:112px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:19px;padding:15px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px #0000000c}
-.homeMenuBtn .mi{font-size:29px;color:var(--accent)}.homeMenuBtn b{font-size:15px}.homeMenuBtn small{display:block;font-size:9px;color:var(--muted);margin-top:3px;line-height:1.35}
+.homeMenuBtn>.mi{font-size:29px;color:var(--accent);line-height:1.15;margin-top:2px;overflow:visible}.homeMenuBtn b{font-size:15px}.homeMenuBtn small{display:block;font-size:9px;color:var(--muted);margin-top:3px;line-height:1.35}
 .homeMenuBtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.homeMenuBtn.primary .mi,.homeMenuBtn.primary small{color:#fff}
 .communityTop{display:flex;align-items:center;gap:10px;margin-bottom:12px}.communityTop button{width:42px;height:42px;border-radius:13px;border:1px solid var(--line);background:var(--card);color:var(--text)}.communityTop b{font-size:20px}
 body.mode-home .homeSection{display:block}
@@ -208,6 +208,7 @@ body.mode-home .discoverSection,body.mode-home .map,body.mode-home .content,body
 body.mode-discover .homeSection,body.mode-ride .homeSection,body.mode-navigation .homeSection,body.mode-overlay .homeSection{display:none}
 html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .communityTop button{background:#fff!important;color:#171a1f!important;border-color:var(--line)!important}
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.profileAvatarWrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}.profileAvatar{width:82px;height:82px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center}.profileAvatar img{width:100%;height:100%;object-fit:cover}.profileAvatar .mi{font-size:38px;color:var(--accent)}.avatarPick{flex:1}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
 /* Community cleanup */
 body.mode-discover #discoverSection>.discoverSearch,
 body.mode-discover #discoverSection>.discoverTabs,
@@ -220,9 +221,9 @@ body.mode-discover #discoverEmpty{display:none!important}
 </head>
 <body>
 <div class="app">
-<header class="appHeader"><div class="logoWrap"><div class="logoMark"><span class="mi">two_wheeler</span></div><div class="logo">GAZON<span>RIDE</span></div></div><button class="motor" id="motorBtn"><span class="mi">two_wheeler</span><span>KTM 1290</span><span class="mi chev">expand_more</span></button></header>
+<header class="appHeader"><div class="logoWrap"><div class="logoMark"><span class="mi">two_wheeler</span></div><div class="logo">GAZON<span>RIDE</span></div></div><button class="motor" id="motorBtn"><span class="mi">two_wheeler</span><span class="motorText"><b id="motorName">KTM 1290</b><small id="motorModel">Super Adventure</small></span><span class="mi chev">expand_more</span></button></header>
 <section class="homeSection" id="homeSection">
-  <div class="homeHero"><div><b id="homeWelcome">GaZonRide</b><small>Ne yapmak istiyorsun?</small></div><div class="homeAvatar"><span class="mi">two_wheeler</span></div></div>
+  <div class="homeHero"><div><b id="homeWelcome">GaZonRide</b><small id="homeBikeSummary">Ne yapmak istiyorsun?</small></div><div class="homeAvatar" id="homeAvatar"><span class="mi">person</span></div></div>
   <div class="homeMenuGrid">
     <button class="homeMenuBtn primary" id="homeNavigation"><span class="mi">navigation</span><div><b>Navigasyon</b><small>Hedef seç, rotayı aç ve SÜR.</small></div></button>
     <button class="homeMenuBtn" id="homeRide"><span class="mi">two_wheeler</span><div><b>Sürüş</b><small>Sürüş kaydı ve 3D tekrar.</small></div></button>
@@ -468,6 +469,39 @@ function startGPS(){
  navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);$("status").textContent="Konum bulundu. Sürüşe hazırsın.";},function(err){$("gps").textContent="Konum bekleniyor";$("status").textContent=err.code===1?"Konum izni verilmedi. Tarayıcı ayarlarından izin verin.":"GPS sinyali aranıyor...";},{enableHighAccuracy:false,maximumAge:30000,timeout:5000});
  navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
 }
+function getRiderProfile(){
+ var d={name:"GaZonRide sürücüsü",bike:"KTM 1290",avatar:"",motor:{brand:"KTM",model:"1290 Super Adventure",year:"",engine:"1290",tank:23,consumption:5.5,fuelPrice:0,odometer:0}};
+ try{var p=JSON.parse(localStorage.getItem("gazon_profile")||"{}");if(p&&typeof p==="object"){Object.assign(d,p);d.motor=Object.assign({},d.motor,p.motor||{});}}catch(e){}
+ if(!d.bike)d.bike=[d.motor.brand,d.motor.model].filter(Boolean).join(" ")||"Motosiklet";
+ return d
+}
+function saveRiderProfileLocal(p){localStorage.setItem("gazon_profile",JSON.stringify(p));updateHomeProfileUI()}
+function updateHomeProfileUI(){
+ var p=getRiderProfile(),m=p.motor||{},name=$("motorName"),model=$("motorModel"),welcome=$("homeWelcome"),sum=$("homeBikeSummary"),av=$("homeAvatar");
+ if(name)name.textContent=m.brand||p.bike||"Motosiklet";
+ if(model)model.textContent=m.model||"Motor bilgilerini gir";
+ if(welcome)welcome.textContent="Merhaba, "+(p.name||"Sürücü");
+ if(sum)sum.textContent=(m.consumption?Number(m.consumption).toFixed(1)+" L/100 km · ":"")+(m.tank?Number(m.tank).toFixed(0)+" L depo":"Motor bilgilerini tamamla");
+ if(av)av.innerHTML=p.avatar?'<img src="'+p.avatar+'" alt="Profil">':'<span class="mi">person</span>';
+}
+function fuelEstimate(km,p){
+ p=p||getRiderProfile();var m=p.motor||{},cons=Number(m.consumption||0),price=Number(m.fuelPrice||0),liters=cons>0?Number(km||0)*cons/100:0;
+ return {consumption:cons,liters:liters,cost:liters*price,price:price}
+}
+async function uploadProfileAvatar(file){
+ var p=getRiderProfile();
+ if(!file)return p.avatar||"";
+ var local=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(String(r.result||""))};r.onerror=reject;r.readAsDataURL(file)});
+ p.avatar=local;saveRiderProfileLocal(p);
+ try{
+  if(window.GaZonAuth&&GaZonAuth.configured){await GaZonAuth.ready;if(GaZonAuth.state.user){
+   var uid=GaZonAuth.state.user.id,path=uid+"/avatar-"+Date.now()+".jpg";
+   var up=await GaZonAuth.client.storage.from("community-media").upload(path,file,{contentType:file.type||"image/jpeg",upsert:false,cacheControl:"3600"});
+   if(!up.error){var pub=GaZonAuth.client.storage.from("community-media").getPublicUrl(path),url=pub&&pub.data&&pub.data.publicUrl;if(url){p.avatar=url;saveRiderProfileLocal(p);await GaZonAuth.client.from("profiles").update({avatar_url:url}).eq("id",uid)}}
+  }}
+ }catch(e){console.warn("avatar upload",e)}
+ return p.avatar||local
+}
 function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
  riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;
@@ -479,9 +513,9 @@ function startRide(){
 function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
- var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING"};
+ var rp=getRiderProfile(),fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{}};
  if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,20)));renderHistory();
- if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track});if(r.error)console.warn("ride cloud save",r.error);});}
+ if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track,fuel_liters:ride.fuelLiters,fuel_cost:ride.fuelCost,fuel_consumption:ride.fuelConsumption,motor:ride.motor});if(r.error)console.warn("ride cloud save",r.error);});}
 }
 function syncMemberRideHistory(){
  if(!(window.GaZonAuth&&GaZonAuth.configured))return;
@@ -489,7 +523,7 @@ function syncMemberRideHistory(){
   if(!GaZonAuth.state.user)return;
   var r=await GaZonAuth.client.from("rides").select("*").eq("user_id",GaZonAuth.state.user.id).order("created_at",{ascending:false}).limit(20);
   if(r.error){console.warn("ride cloud load",r.error);return;}
-  var cloud=(r.data||[]).map(function(x){var sec=Number(x.duration_sec||0),hh=Math.floor(sec/3600),mm=Math.floor((sec%3600)/60),ss=sec%60;return {km:Number(x.distance_km||0),duration:(hh?String(hh).padStart(2,"0")+":":"")+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0"),max:Number(x.max_speed_kmh||0),elev:Number(x.elevation_gain_m||0),turns:Number(x.turns||0),date:new Date(x.created_at).toLocaleString("tr-TR"),track:x.track||[],destination:x.destination||"",routeMode:x.route_mode||"DRIVING"};});
+  var cloud=(r.data||[]).map(function(x){var sec=Number(x.duration_sec||0),hh=Math.floor(sec/3600),mm=Math.floor((sec%3600)/60),ss=sec%60;return {km:Number(x.distance_km||0),duration:(hh?String(hh).padStart(2,"0")+":":"")+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0"),max:Number(x.max_speed_kmh||0),elev:Number(x.elevation_gain_m||0),turns:Number(x.turns||0),date:new Date(x.created_at).toLocaleString("tr-TR"),track:x.track||[],destination:x.destination||"",routeMode:x.route_mode||"DRIVING",fuelLiters:Number(x.fuel_liters||0),fuelCost:Number(x.fuel_cost||0),fuelConsumption:Number(x.fuel_consumption||0),motor:x.motor||{}};});
   if(cloud.length){localStorage.setItem("gazon_rides",JSON.stringify(cloud));renderHistory();}
  });
 }
@@ -512,7 +546,7 @@ function buildDemoRide(){
 }
 window.GaZonDemoRide=buildDemoRide();
 function ridesForHistory(){var rs=[];try{rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(!Array.isArray(rs))rs=[]}catch(e){rs=[]}return rs.concat([window.GaZonDemoRide])}
-function renderHistory(){var rs=ridesForHistory();$("historyList").innerHTML=rs.map(function(r){return '<div class="ride'+(r.demo?' demoRide':'')+'"><div><b>'+(r.demo?'Örnek 3D · ':'')+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join("");}
+function renderHistory(){var rs=ridesForHistory();$("historyList").innerHTML=rs.map(function(r){var fuel=!r.demo&&Number(r.fuelConsumption||0)>0?'<small class="rideFuel">'+Number(r.fuelConsumption).toFixed(1)+' L/100 · '+Number(r.fuelLiters||0).toFixed(1)+' L'+(Number(r.fuelCost||0)>0?' · '+Number(r.fuelCost).toFixed(0)+' ₺':'')+'</small>':"";return '<div class="ride'+(r.demo?' demoRide':'')+'"><div><b>'+(r.demo?'Örnek 3D · ':'')+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small>'+fuel+'</div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join("");}
 function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map&&currentPoint)setMapCenter(currentPoint,16);}
 function toggleSatellite(){if(!map)return;satellite=!satellite;map.setMapTypeId(satellite?"hybrid":"roadmap");}
@@ -1072,24 +1106,35 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
    x.querySelectorAll("[data-group-voice]").forEach(function(b){b.onclick=function(){var g=groups[Number(b.getAttribute("data-group-voice"))];if(!g)return;showScreen("voice");setTimeout(function(){var r=$("roomCode");if(r)r.value=g.code;},40);};});
    x.querySelectorAll("[data-group-remove]").forEach(function(b){b.onclick=function(){groups.splice(Number(b.getAttribute("data-group-remove")),1);localStorage.setItem("gazon_groups",JSON.stringify(groups));showScreen("groups");};});
  }else if(page==="voice"){x.innerHTML=voiceUI();setupVoice();}else if(page==="profile"){
-   var p=JSON.parse(localStorage.getItem("gazon_profile")||'{"name":"GaZonRide sürücüsü","bike":"KTM 1290"}'),rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(a,r){return a+Number(r.km||0)},0);
-   x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜCÜ PROFİLİ</div><div class="screenTitle">Profilim</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div><div class="profileHero"><div><div class="profileName">'+p.name+'</div><div class="profileBike">'+p.bike+' · GaZonRide</div></div></div><div class="statRow" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(0)+'</b><span class="sub">Toplam km</span></div><div class="statBox"><b>'+Math.round(rs.reduce(function(a,r){return a+Number(r.turns||0)},0))+'</b><span class="sub">Viraj</span></div></div><div class="screenCard"><div class="menuRow" data-profile-action="bike"><span class="mi">two_wheeler</span><b>Motosikletim · '+p.bike+'</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="routes"><span class="mi">route</span><b>Rota kayıtlarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="groups"><span class="mi">groups</span><b>Gruplarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="favorites"><span class="mi">favorite</span><b>Favorilerim</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="stats"><span class="mi">bar_chart</span><b>Sürüş istatistikleri</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="intercom"><span class="mi">headset_mic</span><b>Intercom geçmişi</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="contributions"><span class="mi">upload</span><b>Topluluk katkılarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="admin"><span class="mi">admin_panel_settings</span><b>Admin onay kuyruğu</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="settings"><span class="mi">settings</span><b>Ayarlar</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="logout"><span class="mi">logout</span><b>Çıkış Yap</b><span class="mi arrow">chevron_right</span></div></div><div class="screenCard"><b>Profili Düzenle</b><input class="input" id="profileName" value="'+p.name.replace(/"/g,"&quot;")+'" placeholder="Adınız"><input class="input" id="profileBike" value="'+p.bike.replace(/"/g,"&quot;")+'" placeholder="Motosiklet"><button class="screenBtn" id="saveProfile">Kaydet</button></div>';
+   var p=getRiderProfile(),m=p.motor||{},rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(a,r){return a+Number(r.km||0)},0),fuelL=rs.reduce(function(a,r){return a+Number(r.fuelLiters||0)},0),fuelC=rs.reduce(function(a,r){return a+Number(r.fuelCost||0)},0);
+   var avatarHtml=p.avatar?'<img src="'+p.avatar+'" alt="Profil fotoğrafı">':'<span class="mi">person</span>';
+   x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜCÜ PROFİLİ</div><div class="screenTitle">Profilim</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div>'+
+   '<div class="profileAvatarWrap"><div class="profileAvatar" id="profileAvatarView">'+avatarHtml+'</div><div class="avatarPick"><b>'+String(p.name||"Sürücü").replace(/</g,"&lt;")+'</b><div class="sub">'+String(p.bike||"Motosiklet").replace(/</g,"&lt;")+'</div><label for="profileAvatarInput"><span class="mi">photo_camera</span> Fotoğraf Değiştir</label><input id="profileAvatarInput" type="file" accept="image/*" style="display:none"></div></div>'+
+   '<div class="statRow" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(0)+'</b><span class="sub">Toplam km</span></div><div class="statBox"><b>'+Math.round(rs.reduce(function(a,r){return a+Number(r.turns||0)},0))+'</b><span class="sub">Viraj</span></div></div>'+
+   '<div class="fuelSummary"><div><b>'+Number(m.consumption||0).toFixed(1)+'</b><small>L/100 KM</small></div><div><b>'+fuelL.toFixed(1)+' L</b><small>TAHMİNİ YAKIT</small></div><div><b>'+fuelC.toFixed(0)+' ₺</b><small>TAHMİNİ MALİYET</small></div></div>'+
+   '<div class="screenCard" style="margin-top:10px"><b>Sürücü Bilgileri</b><input class="input" id="profileName" value="'+String(p.name||"").replace(/"/g,"&quot;")+'" placeholder="Ad soyad"></div>'+
+   '<div class="screenCard"><b>Motosiklet Bilgileri</b><div class="motorFormGrid"><input class="input" id="motorBrand" value="'+String(m.brand||"").replace(/"/g,"&quot;")+'" placeholder="Marka"><input class="input" id="motorModelInput" value="'+String(m.model||"").replace(/"/g,"&quot;")+'" placeholder="Model"><input class="input" id="motorYear" value="'+String(m.year||"").replace(/"/g,"&quot;")+'" inputmode="numeric" placeholder="Model yılı"><input class="input" id="motorEngine" value="'+String(m.engine||"").replace(/"/g,"&quot;")+'" placeholder="Motor hacmi (cc)"><input class="input" id="motorTank" value="'+String(m.tank||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Depo (L)"><input class="input" id="motorOdo" value="'+String(m.odometer||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Kilometre sayacı"><input class="input" id="motorConsumption" value="'+String(m.consumption||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Ort. tüketim L/100 km"><input class="input" id="motorFuelPrice" value="'+String(m.fuelPrice||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Yakıt litre fiyatı ₺"></div><div class="sub" style="margin-top:9px">Tüketim ve litre fiyatına göre yeni sürüşlerde yakıt ve maliyet otomatik hesaplanır.</div><button class="screenBtn" id="saveProfile">Bilgileri Kaydet</button></div>'+
+   '<div class="screenCard"><div class="menuRow" data-profile-action="routes"><span class="mi">route</span><b>Rota kayıtlarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="groups"><span class="mi">groups</span><b>Gruplarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="favorites"><span class="mi">favorite</span><b>Favorilerim</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="stats"><span class="mi">bar_chart</span><b>Sürüş istatistikleri</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="contributions"><span class="mi">upload</span><b>Topluluk katkılarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="admin"><span class="mi">admin_panel_settings</span><b>Admin</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="settings"><span class="mi">settings</span><b>Ayarlar</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="logout"><span class="mi">logout</span><b>Çıkış Yap</b><span class="mi arrow">chevron_right</span></div></div>';
    x.querySelector("#closeScreen").onclick=closeScreen;
-   x.querySelector("#saveProfile").onclick=async function(){var pp={name:x.querySelector("#profileName").value||"GaZonRide sürücüsü",bike:x.querySelector("#profileBike").value||"Motosiklet"};localStorage.setItem("gazon_profile",JSON.stringify(pp));var mb=$("motorBtn");if(mb)mb.innerHTML='<span class="mi">two_wheeler</span><span>'+pp.bike+'</span><span class="mi chev">expand_more</span>';$("status").textContent="Profil kaydediliyor...";try{if(window.GaZonAuth&&GaZonAuth.configured)await GaZonAuth.saveProfile(pp.name,pp.bike);$("status").textContent="Profil kaydedildi.";}catch(e){$("status").textContent="Profil kaydedilemedi: "+(e.message||e);}};
+   x.querySelector("#profileAvatarInput").onchange=async function(){var file=this.files&&this.files[0];if(!file)return;$("status").textContent="Profil fotoğrafı yükleniyor...";var url=await uploadProfileAvatar(file);if(url)x.querySelector("#profileAvatarView").innerHTML='<img src="'+url+'" alt="Profil fotoğrafı">';$("status").textContent="Profil fotoğrafı kaydedildi."};
+   x.querySelector("#saveProfile").onclick=async function(){
+     var pp=getRiderProfile();pp.name=x.querySelector("#profileName").value.trim()||"GaZonRide sürücüsü";
+     pp.motor={brand:x.querySelector("#motorBrand").value.trim(),model:x.querySelector("#motorModelInput").value.trim(),year:x.querySelector("#motorYear").value.trim(),engine:x.querySelector("#motorEngine").value.trim(),tank:Number(String(x.querySelector("#motorTank").value).replace(",","."))||0,odometer:Number(String(x.querySelector("#motorOdo").value).replace(",","."))||0,consumption:Number(String(x.querySelector("#motorConsumption").value).replace(",","."))||0,fuelPrice:Number(String(x.querySelector("#motorFuelPrice").value).replace(",","."))||0};
+     pp.bike=[pp.motor.brand,pp.motor.model].filter(Boolean).join(" ")||"Motosiklet";saveRiderProfileLocal(pp);$("status").textContent="Profil kaydediliyor...";
+     try{if(window.GaZonAuth&&GaZonAuth.configured){await GaZonAuth.saveProfile(pp.name,pp.bike);await GaZonAuth.ready;if(GaZonAuth.state.user)await GaZonAuth.client.from("profiles").update({motor_data:pp.motor,avatar_url:pp.avatar||null}).eq("id",GaZonAuth.state.user.id)}$("status").textContent="Profil ve motosiklet bilgileri kaydedildi.";showScreen("profile")}catch(e){$("status").textContent="Profil kaydedilemedi: "+(e.message||e)}
+   };
    var ar=x.querySelector('[data-profile-action="admin"]');if(ar&&(!window.GaZonAuth||GaZonAuth.state.role!=="admin"))ar.style.display="none";
    x.querySelectorAll("[data-profile-action]").forEach(function(row){row.onclick=function(){
      var a=row.getAttribute("data-profile-action");
-     if(a==="bike"){x.querySelector("#profileBike").focus();x.querySelector("#profileBike").scrollIntoView({behavior:"smooth",block:"center"});}
-     else if(a==="routes"){showScreen("routes");}
-     else if(a==="groups"){showScreen("groups");}
-     else if(a==="favorites"){showFavoritesScreen();}
-     else if(a==="stats"){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(t,r){return t+Number(r.km||0)},0),mx=rs.reduce(function(t,r){return Math.max(t,Number(r.max||0))},0);showSimpleScreen("Sürüş İstatistikleri",'<div class="statRow"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(1)+' km</b><span class="sub">Toplam</span></div><div class="statBox"><b>'+mx+' km/sa</b><span class="sub">En yüksek</span></div><div class="statBox"><b>'+rs.reduce(function(t,r){return t+Number(r.turns||0)},0)+'</b><span class="sub">Viraj</span></div></div>');}
-     else if(a==="intercom"){showIntercomHistoryScreen();}
-     else if(a==="contributions"){if(window.GaZonRideSocial&&window.GaZonRideSocial.mine)window.GaZonRideSocial.mine();}
-     else if(a==="admin"){if(window.GaZonRideSocial&&window.GaZonRideSocial.admin)window.GaZonRideSocial.admin();}
-     else if(a==="logout"){if(window.GaZonAuth&&window.GaZonAuth.configured)window.GaZonAuth.logout();else $("status").textContent="Üyelik bağlantısı tamamlanınca çıkış aktif olacak.";}
-     else if(a==="settings"){var pref=localStorage.getItem("gazon_theme")||"system";showSimpleScreen("Ayarlar",'<div class="screenCard"><b>Tema</b><div class="sub">Cihaz ayarını takip et veya elle seç.</div><button class="screenBtn '+(pref==="system"?"":"dark")+'" data-theme="system">Cihaz ayarını kullan</button><button class="screenBtn dark" data-theme="light">Aydınlık</button><button class="screenBtn dark" data-theme="dark">Karanlık</button></div>');document.querySelectorAll("[data-theme]").forEach(function(b){b.onclick=function(){setThemePreference(b.getAttribute("data-theme"));closeScreen();};});}
-   };});
+     if(a==="routes"){showScreen("routes")}
+     else if(a==="groups"){showScreen("groups")}
+     else if(a==="favorites"){showFavoritesScreen()}
+     else if(a==="stats"){var rr=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),kk=rr.reduce(function(t,r){return t+Number(r.km||0)},0),mx=rr.reduce(function(t,r){return Math.max(t,Number(r.max||0))},0),fl=rr.reduce(function(t,r){return t+Number(r.fuelLiters||0)},0),fc=rr.reduce(function(t,r){return t+Number(r.fuelCost||0)},0);showSimpleScreen("Sürüş İstatistikleri",'<div class="statRow"><div class="statBox"><b>'+rr.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+kk.toFixed(1)+' km</b><span class="sub">Toplam</span></div><div class="statBox"><b>'+mx+' km/sa</b><span class="sub">En yüksek</span></div><div class="statBox"><b>'+fl.toFixed(1)+' L</b><span class="sub">Tahmini yakıt</span></div><div class="statBox"><b>'+fc.toFixed(0)+' ₺</b><span class="sub">Yakıt maliyeti</span></div></div>')}
+     else if(a==="contributions"){if(window.GaZonRideSocial&&window.GaZonRideSocial.mine)window.GaZonRideSocial.mine()}
+     else if(a==="admin"){if(window.GaZonRideSocial&&window.GaZonRideSocial.admin)window.GaZonRideSocial.admin()}
+     else if(a==="logout"){if(window.GaZonAuth&&window.GaZonAuth.configured)window.GaZonAuth.logout()}
+     else if(a==="settings"){var pref=localStorage.getItem("gazon_theme")||"system";showSimpleScreen("Ayarlar",'<div class="screenCard"><b>Tema</b><div class="sub">Cihaz ayarını takip et veya elle seç.</div><button class="screenBtn '+(pref==="system"?"":"dark")+'" data-theme="system">Cihaz ayarını kullan</button><button class="screenBtn dark" data-theme="light">Aydınlık</button><button class="screenBtn dark" data-theme="dark">Karanlık</button></div>');document.querySelectorAll("[data-theme]").forEach(function(b){b.onclick=function(){setThemePreference(b.getAttribute("data-theme"));closeScreen()}})}
+   }});
 
  }
  x.scrollIntoView({behavior:"smooth"});
@@ -1171,7 +1216,8 @@ function boot(){
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();
  setMode("home");
- try{var hp=JSON.parse(localStorage.getItem("gazon_profile")||"{}");if(hp.name)$("homeWelcome").textContent="Merhaba, "+hp.name;}catch(e){}
+ updateHomeProfileUI();
+ if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){try{var cp=GaZonAuth.state.profile;if(cp){var lp=getRiderProfile();if(cp.name)lp.name=cp.name;if(cp.bike)lp.bike=cp.bike;if(cp.avatar_url)lp.avatar=cp.avatar_url;if(cp.motor_data)lp.motor=Object.assign({},lp.motor,cp.motor_data);saveRiderProfileLocal(lp)}}catch(e){}});
  startGPS();
  
 }

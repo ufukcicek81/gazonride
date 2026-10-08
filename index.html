@@ -63,7 +63,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .feedPhoto:after{content:"🏍️";position:absolute;font-size:60px;left:42%;bottom:12px;filter:drop-shadow(0 5px 5px #000)}
 .feedText{font-size:11px;line-height:1.5;margin-top:9px;color:var(--text)}
 .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0}.quickBtn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:13px;font-size:12px;font-weight:900}.quickBtn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
-.navigationPanel{display:none;padding:14px 16px 24px}.navigationPanel.active{display:block}.navSearchRow{display:flex;gap:8px}.navSearchRow .input{margin:0}.navSearchRow button{border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;padding:0 16px}
+.navigationPanel{display:none;padding:14px 16px 24px}.navigationPanel.active{display:block}.navSearchRow{display:flex;gap:8px}.navSearchRow{position:relative}.navSearchRow .input{margin:0}.navSearchRow button{border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;padding:0 16px}.navSuggest{position:absolute;z-index:1800;left:0;right:66px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 14px 35px #0005;display:none;max-height:300px;overflow-y:auto}.navSuggest.active{display:block}.navSuggest button{width:100%;display:block;text-align:left;background:var(--card);color:var(--text);border:0;border-bottom:1px solid var(--line);padding:13px 14px;font-weight:700;font-size:13px}.navSuggest button:last-child{border-bottom:0}
 .navInstruction{display:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px}.navInstruction.active{display:block}.navTurn{font-size:21px;font-weight:950}.navInfo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.navInfo div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px}.navInfo b{display:block;font-size:17px}.navInfo small{color:var(--muted);font-size:8px}
 .voiceDock{position:fixed;z-index:1300;left:50%;transform:translateX(-50%);bottom:78px;width:min(500px,calc(100% - 24px));background:rgba(13,16,21,.94);backdrop-filter:blur(18px);border:1px solid #39404a;border-radius:18px;padding:9px 10px;display:none;align-items:center;gap:9px;box-shadow:0 10px 30px #0008}.voiceDock.active{display:flex}.voiceDock .vMain{flex:1;min-width:0}.voiceDock b{display:block;font-size:11px}.voiceDock small{font-size:9px;color:#aab1bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.voiceDock button{width:44px;height:44px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:18px}
 .navCenter b{width:48px;height:48px;border-radius:50%;display:grid!important;place-items:center;margin:-18px auto 2px!important;background:var(--accent);color:#fff;font-size:22px!important;box-shadow:0 7px 22px #ff5a1f66}
@@ -187,7 +187,7 @@ html.theme-dark{color-scheme:dark}
 </section>
 <section class="navigationPanel" id="navigationPanel">
   <div class="ey">GAZONRIDE NAVİGASYON</div>
-  <div class="navSearchRow"><input class="input" id="navDestination" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button></div>
+  <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
   <div class="navInstruction" id="navInstruction">
     <div class="navTurn" id="navTurn">Rota hazır</div>
@@ -227,7 +227,7 @@ html.theme-dark{color-scheme:dark}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -388,6 +388,58 @@ function maneuverText(step){
  if(mod==="uturn")return "U dönüşü yap";
  return "Düz devam et";
 }
+function clearNavSuggestions(){
+ var box=$("navSuggest");if(box){box.classList.remove("active");box.innerHTML="";}
+}
+async function selectNavSuggestion(prediction){
+ try{
+  var place=prediction.toPlace();
+  await place.fetchFields({fields:["displayName","formattedAddress","location"]});
+  if(!place.location)return;
+  var input=$("navDestination"),label=place.formattedAddress||place.displayName||prediction.text.toString();
+  input.value=label;
+  input.dataset.lat=String(place.location.lat());
+  input.dataset.lon=String(place.location.lng());
+  input.dataset.label=label;
+  clearNavSuggestions();
+  navAutocompleteToken=null;
+  if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()});
+ }catch(e){console.warn("Place selection",e);}
+}
+async function fetchNavSuggestions(value,seq){
+ if(!googleReady||!value||value.length<2){clearNavSuggestions();return;}
+ try{
+  var lib=await google.maps.importLibrary("places");
+  if(!navAutocompleteToken)navAutocompleteToken=new lib.AutocompleteSessionToken();
+  var req={input:value,sessionToken:navAutocompleteToken,language:"tr",region:"tr",includedRegionCodes:["tr"]};
+  if(currentPoint)req.origin={lat:currentPoint.lat,lng:currentPoint.lon};
+  var res=await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+  if(seq!==navAutocompleteSeq)return;
+  var box=$("navSuggest");if(!box)return;
+  box.innerHTML="";
+  (res.suggestions||[]).slice(0,6).forEach(function(s){
+   var p=s.placePrediction;if(!p)return;
+   var b=document.createElement("button");b.type="button";
+   var txt=p.text&&p.text.toString?p.text.toString():String(p.text||"");
+   b.textContent=txt;
+   b.addEventListener("click",function(){selectNavSuggestion(p);});
+   box.appendChild(b);
+  });
+  box.classList.toggle("active",box.children.length>0);
+ }catch(e){console.warn("Places autocomplete",e);clearNavSuggestions();}
+}
+function setupNavAutocomplete(){
+ var input=$("navDestination");if(!input)return;
+ input.addEventListener("input",function(){
+  delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;
+  var value=input.value.trim(),seq=++navAutocompleteSeq;
+  clearTimeout(navAutocompleteTimer);
+  if(value.length<2){clearNavSuggestions();return;}
+  navAutocompleteTimer=setTimeout(function(){fetchNavSuggestions(value,seq);},180);
+ });
+ input.addEventListener("focus",function(){if(input.value.trim().length>=2){var seq=++navAutocompleteSeq;fetchNavSuggestions(input.value.trim(),seq);}});
+ document.addEventListener("click",function(e){if(!e.target.closest(".navSearchRow"))clearNavSuggestions();});
+}
 async function geocodeGoogle(q){
  return new Promise(function(resolve,reject){
   if(!geocoder){reject(new Error("maps-not-ready"));return;}
@@ -414,7 +466,7 @@ async function planNavigation(){
  if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor, birkaç saniye sonra tekrar dene.";return;}
  $("navGo").innerHTML='<span class="mi">hourglass_top</span>';
  try{
-   var d=await geocodeGoogle(q),key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
+   var input=$("navDestination"),d;\n   if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};\n   else d=await geocodeGoogle(q);\n   clearNavSuggestions();\n   var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
    var body={origin:{location:{latLng:{latitude:currentPoint.lat,longitude:currentPoint.lon}}},destination:{location:{latLng:{latitude:d.lat,longitude:d.lon}}},travelMode:"TWO_WHEELER",routingPreference:"TRAFFIC_AWARE",languageCode:"tr-TR",units:"METRIC",polylineQuality:"HIGH_QUALITY",polylineEncoding:"ENCODED_POLYLINE"};
    var rr=await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":key,"X-Goog-FieldMask":"routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.navigationInstruction,routes.legs.steps.polyline.encodedPolyline"},body:JSON.stringify(body)});
    if(!rr.ok)throw new Error("routes-"+rr.status);

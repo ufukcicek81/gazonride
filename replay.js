@@ -89,27 +89,48 @@ function buildOverviewMap(ride){
 async function build3DMap(ride){
  var a=pts(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
- try{
-  var lib=await google.maps.importLibrary("maps3d"),Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement;
-  if(!Map3DElement||!Polyline3DElement||!Marker3DElement)throw new Error("3D desteklenmiyor");
-  var first=a[0],second=a[1];
-  map3d=new Map3DElement({center:{lat:first.lat,lng:first.lng,altitude:0},range:2200,tilt:38,heading:bearing(first,second),mode:"ROADMAP",defaultUIDisabled:true});
-  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
-  route3d=new Polyline3DElement({path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:1.5}}),strokeColor:"#d9272e",strokeWidth:7,outerColor:"#ffffff",outerWidth:.1,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true});
-  travel3d=new Polyline3DElement({path:[{lat:first.lat,lng:first.lng,altitude:2}],strokeColor:"#ffffff",strokeWidth:4,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true});
-  bike3d=new Marker3DElement({position:{lat:first.lat,lng:first.lng,altitude:3},altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true});
-  map3d.append(route3d);map3d.append(travel3d);map3d.append(bike3d);host.append(map3d);using3d=true
- }catch(e){
-  console.warn("3D fallback",e);
-  classicMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:14,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
-  classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:7,strokeOpacity:1});
-  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#fff",strokeWeight:4,strokeOpacity:.95});
-  classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",15)});
-  using3d=false
- }
- mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";$("grReplayState").textContent=using3d?"3D sürüş hazırlanıyor":"Eğimli haritada sürüş hazırlanıyor";
+ await waitForGoogle();
+ using3d=false;
+ classicMap=new google.maps.Map(host,{
+  center:{lat:a[0].lat,lng:a[0].lng},
+  zoom:12,
+  mapTypeId:"roadmap",
+  disableDefaultUI:true,
+  gestureHandling:"greedy",
+  clickableIcons:false,
+  streetViewControl:false,
+  fullscreenControl:false,
+  mapTypeControl:false
+ });
+ classicRoute=new google.maps.Polyline({
+  map:classicMap,
+  path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),
+  strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1
+ });
+ classicTravel=new google.maps.Polyline({
+  map:classicMap,
+  path:[{lat:a[0].lat,lng:a[0].lng}],
+  strokeColor:"#ffffff",strokeWeight:4,strokeOpacity:.95
+ });
+ classicBike=new google.maps.Marker({
+  map:classicMap,
+  position:{lat:a[0].lat,lng:a[0].lng},
+  label:{text:"🏍",fontSize:"22px"},
+  icon:makeDotIcon("#ff5a1f",14),
+  zIndex:50
+ });
+ try{classicMap.setTilt(20);classicMap.setHeading(bearing(a[0],a[1]))}catch(e){}
+ mode="3d";
+ $("grReplayPlay3D").style.display="none";
+ $("grReplayPause").style.display="inline-flex";
+ $("grReplayState").textContent="Yol haritasında sürüş hazırlanıyor";
  auto=false;start=0;lastProgress=0;cancelAnimationFrame(anim);updateScene(0);
- setTimeout(function(){if(mode!=="3d")return;auto=true;start=0;$("grReplayState").textContent=using3d?"3D sürüş oynatılıyor":"Eğimli haritada sürüş oynatılıyor";anim=requestAnimationFrame(loop)},introDelay)
+ setTimeout(function(){
+  if(mode!=="3d")return;
+  auto=true;start=0;
+  $("grReplayState").textContent="Yol haritasında sürüş oynatılıyor";
+  anim=requestAnimationFrame(loop)
+ },introDelay)
 }
 function updateScene(progress){
  var a=pts(currentRide);if(a.length<2)return;var x=pointAt(a,progress);if(!x)return;var p=x.point,hd=bearing(p,x.next);
@@ -118,7 +139,7 @@ function updateScene(progress){
   travel3d.path=a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:2}});
   map3d.center={lat:p.lat,lng:p.lng,altitude:0};map3d.heading=hd;map3d.tilt=38;map3d.range=2000
  }else if(classicMap){
-  var pos={lat:p.lat,lng:p.lng};classicBike.setPosition(pos);classicTravel.setPath(a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));classicMap.panTo(pos);classicMap.setZoom(14);try{classicMap.setTilt(25);classicMap.setHeading(hd)}catch(e){}
+  var pos={lat:p.lat,lng:p.lng};classicBike.setPosition(pos);classicTravel.setPath(a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));classicMap.panTo(pos);classicMap.setZoom(12);try{classicMap.setTilt(18);classicMap.setHeading(hd)}catch(e){}
  }
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%"
 }

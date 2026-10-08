@@ -15,29 +15,51 @@ function parseDuration(s){var a=String(s||"0").split(":").map(Number);if(a.lengt
 function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
 function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
 
-async function geocodeAddress(address){
+async function computeDemoRouteNewApi(start,end){
+ var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
+ var req={origin:{lat:start.lat,lng:start.lng},destination:{lat:end.lat,lng:end.lng},travelMode:"DRIVING",routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","distanceMeters","durationMillis","legs"]};
+ var result=await Route.computeRoutes(req),rt=result&&result.routes&&result.routes[0];
+ if(!rt||!rt.path||rt.path.length<2)throw new Error("Yeni Routes API rota vermedi");
+ return {
+  path:rt.path.map(function(p){return {lat:typeof p.lat==="function"?p.lat():Number(p.lat),lng:typeof p.lng==="function"?p.lng():Number(p.lng)}}),
+  distance:Number(rt.distanceMeters||0),
+  durationMs:Math.max(60000,Number(rt.durationMillis||3600000)),
+  turns:(rt.legs||[]).reduce(function(t,l){return t+((l.steps||[]).length||0)},0)
+ }
+}
+async function computeDemoRouteLegacy(start,end){
  return new Promise(function(resolve,reject){
-  var g=new google.maps.Geocoder();
-  g.geocode({address:address,region:"TR"},function(results,status){
-   if(status==="OK"&&results&&results[0]){var l=results[0].geometry.location;resolve({lat:l.lat(),lng:l.lng(),label:results[0].formatted_address||address})}
-   else reject(new Error(status||"Adres bulunamadı"))
-  })
+  try{
+   var svc=new google.maps.DirectionsService();
+   svc.route({origin:start,destination:end,travelMode:google.maps.TravelMode.DRIVING,provideRouteAlternatives:false},function(res,status){
+    if(status!=="OK"||!res||!res.routes||!res.routes[0]){reject(new Error("Directions: "+status));return}
+    var r=res.routes[0],leg=r.legs&&r.legs[0],path=r.overview_path||[];
+    if(path.length<2){reject(new Error("Directions rota izi boş"));return}
+    resolve({
+     path:path.map(function(p){return {lat:p.lat(),lng:p.lng()}}),
+     distance:Number(leg&&leg.distance&&leg.distance.value||0),
+     durationMs:Number(leg&&leg.duration&&leg.duration.value||3600)*1000,
+     turns:(leg&&leg.steps&&leg.steps.length)||0
+    })
+   })
+  }catch(e){reject(e)}
  })
 }
 async function resolveDemoRoadRoute(ride){
  if(!ride||!ride.demoGoogleRoute)return ride;
  if(Array.isArray(ride.track)&&ride.track.length>20)return ride;
  await waitForGoogle();
- var start=await geocodeAddress(ride.demoOrigin),end=await geocodeAddress(ride.demoDestination);
- var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
- var req={origin:{lat:start.lat,lng:start.lng},destination:{lat:end.lat,lng:end.lng},travelMode:"DRIVING",routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","distanceMeters","durationMillis","legs"]};
- var result=await Route.computeRoutes(req),rt=result&&result.routes&&result.routes[0];
- if(!rt||!rt.path||rt.path.length<2)throw new Error("Google yol rotası bulunamadı");
- var totalMs=Math.max(60000,Number(rt.durationMillis||3600000)),base=Date.now()-86400000,step=Math.max(500,Math.round(totalMs/Math.max(1,rt.path.length-1)));
- ride.track=rt.path.map(function(p,i){var lat=typeof p.lat==="function"?p.lat():Number(p.lat),lng=typeof p.lng==="function"?p.lng():Number(p.lng);return [lat,lng,0,base+i*step]});
- ride.km=Number(rt.distanceMeters||0)/1000;
+ var start={lat:40.8438,lng:31.1565};
+ var end={lat:40.777225,lng:30.394154};
+ var data;
+ try{data=await computeDemoRouteNewApi(start,end)}
+ catch(e){console.warn("Demo new Routes failed",e);data=await computeDemoRouteLegacy(start,end)}
+ if(!data||!data.path||data.path.length<2)throw new Error("Düzce - Çark Caddesi rota izi alınamadı");
+ var totalMs=data.durationMs,base=Date.now()-86400000,step=Math.max(500,Math.round(totalMs/Math.max(1,data.path.length-1)));
+ ride.track=data.path.map(function(p,i){return [p.lat,p.lng,0,base+i*step]});
+ ride.km=Number(data.distance||0)/1000;
  ride.duration=fmtDuration(totalMs/1000);
- ride.turns=(rt.legs||[]).reduce(function(t,l){return t+((l.steps||[]).length||0)},0);
+ ride.turns=Number(data.turns||0);
  ride.demoResolved=true;
  return ride
 }
@@ -96,7 +118,7 @@ function updateScene(progress){
 }
 function loop(ts){if(!auto)return;if(!start)start=ts;var p=((ts-start)%duration)/duration;updateScene(p);anim=requestAnimationFrame(loop)}
 async function open(ride){
- currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";$("grReplayState").textContent="Rota hazırlanıyor…";clearMaps();
+ currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Düzce → Çark Caddesi gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
   await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);
   $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);
@@ -106,7 +128,7 @@ async function open(ride){
   $("grReplayTurns").textContent=Math.round(Number(currentRide.turns||0));
   $("grReplayName").textContent=currentRide.destination||"Sürüş Tekrarı";$("grReplayDate").textContent=currentRide.date||"";
   buildOverviewMap(currentRide)
- }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";console.warn(e)}
+ }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#ff8a65;font-weight:800">Örnek rota açılamadı: '+String(e&&e.message||e).replace(/[&<>]/g,"")+'</div>';console.warn(e)}
 }
 function close(){clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
 function pauseResume(){auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';if(auto){start=0;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)}

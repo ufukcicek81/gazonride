@@ -61,13 +61,13 @@ function shareImage(){
 async function makeVideo(){
  if(!canvas.captureStream||!window.MediaRecorder){alert("Bu cihaz 3D video kaydını desteklemiyor. 3D kare paylaşımı kullanabilirsin.");return}
  var btn=$("grReplayVideo");btn.disabled=true;btn.textContent="3D video hazırlanıyor...";
- var stream=canvas.captureStream(30),mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm",rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4500000}),chunks=[];
+ var stream=canvas.captureStream(30),mime=MediaRecorder.isTypeSupported("video/mp4;codecs=avc1.42E01E")?"video/mp4;codecs=avc1.42E01E":(MediaRecorder.isTypeSupported("video/mp4")?"video/mp4":(MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm")),rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4500000}),chunks=[];
  rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
  var done=new Promise(function(resolve){rec.onstop=resolve});rec.start(250);
  var t0=performance.now(),len=8000;
  await new Promise(function(resolve){function f(now){var p=Math.min(1,(now-t0)/len);drawFrame(p,true);if(p<1)requestAnimationFrame(f);else resolve()}requestAnimationFrame(f)});
  rec.stop();await done;stream.getTracks().forEach(function(t){t.stop()});
- var blob=new Blob(chunks,{type:mime}),file=new File([blob],"GaZonRide-3D-Surus.webm",{type:mime});
+ var blob=new Blob(chunks,{type:mime}),ext=mime.indexOf("mp4")>=0?"mp4":"webm",file=new File([blob],"GaZonRide-3D-Surus."+ext,{type:mime});
  try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"GaZonRide 3D Sürüş",text:(currentRide.destination||"Sürüşüm")+" · "+Number(currentRide.km||0).toFixed(1)+" km",files:[file]});}
  else{var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=file.name;a.click();setTimeout(function(){URL.revokeObjectURL(u)},4000)}}catch(e){console.warn(e)}
  btn.disabled=false;btn.innerHTML='<span class="mi">movie</span> 3D Video Oluştur';drawFrame(.75,false)

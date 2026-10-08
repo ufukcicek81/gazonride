@@ -106,10 +106,26 @@ async function showMine(){
    await GaZonAuth.ready;
    if(GaZonAuth.state.user){
      var r=await GaZonAuth.client.from("submissions").select("*").eq("user_id",GaZonAuth.state.user.id).order("created_at",{ascending:false}).limit(50);
-     if(!r.error)q=(r.data||[]).map(function(s){return {type:s.type,status:s.status,createdAt:new Date(s.created_at).toLocaleString("tr-TR"),data:{title:s.title,description:s.description||""}}});
+     if(!r.error)q=(r.data||[]).map(function(s){return {remoteId:s.id,type:s.type,status:s.status,createdAt:new Date(s.created_at).toLocaleString("tr-TR"),data:{title:s.title,description:s.description||"",destination:s.destination||"",difficulty:s.difficulty||"Orta",track:s.track||[],photos:s.photos||[],stops:s.stops||[],ride_meta:s.ride_meta||{}}}});
    }
  }
- modal("Gönderilerim",q.length?q.map(function(s){var st=s.status==="approved"?"ONAYLANDI":s.status==="rejected"?"REDDEDİLDİ":"ONAY BEKLİYOR";return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge '+(s.status==="approved"?"approved":"pending")+'">'+st+'</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div></div>'}).join(""):'<div class="gr-empty">Henüz gönderin yok.</div>')
+ modal("Gönderilerim",q.length?q.map(function(s){var st=s.status==="approved"?"ONAYLANDI":s.status==="rejected"?"REDDEDİLDİ":"ONAY BEKLİYOR";return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge '+(s.status==="approved"?"approved":"pending")+'">'+st+'</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div>'+(s.type==="route"&&s.remoteId?'<div class="gr-admin-actions"><button class="gr-ok" data-my-edit="'+s.remoteId+'">Düzenle</button><button class="gr-no" data-my-delete="'+s.remoteId+'">Sil</button></div>':'')+'</div>'}).join(""):'<div class="gr-empty">Henüz gönderin yok.</div>');document.querySelectorAll("[data-my-edit]").forEach(function(b){b.onclick=function(){var item=q.find(function(x){return x.remoteId===b.dataset.myEdit});if(item)editOwnRoute(item)}});document.querySelectorAll("[data-my-delete]").forEach(function(b){b.onclick=function(){deleteOwnRoute(b.dataset.myDelete)}})
+}
+async function deleteOwnRoute(id){
+ if(!confirm("Bu rotayı silmek istiyor musun?"))return;
+ await GaZonAuth.ready;var r=await GaZonAuth.client.from("submissions").delete().eq("id",id).eq("user_id",GaZonAuth.state.user.id);
+ if(r.error){alert(r.error.message);return}closeModal();await syncRemoteCommunity();showMine()
+}
+function editOwnRoute(item){
+ var d=item.data||{};
+ modal("Rotayı Düzenle",'<input class="gr-field" id="grEditTitle" value="'+esc(d.title||"")+'" placeholder="Rota adı"><input class="gr-field" id="grEditDest" value="'+esc(d.destination||"")+'" placeholder="Bölge / hedef"><select class="gr-field" id="grEditDiff"><option>Kolay</option><option>Orta</option><option>Zor</option></select><textarea class="gr-field" id="grEditDesc" rows="5">'+esc(d.description||"")+'</textarea><div class="sub" style="margin-top:8px">Rota izi, mola noktaları ve mevcut fotoğraflar korunur. Kaydedince tekrar admin onayına gider.</div><button class="gr-submit" id="grSaveEdit">Değişiklikleri Kaydet</button>');
+ $("grEditDiff").value=d.difficulty||"Orta";
+ $("grSaveEdit").onclick=async function(){
+  var row={title:$("grEditTitle").value.trim(),destination:$("grEditDest").value.trim(),difficulty:$("grEditDiff").value,description:$("grEditDesc").value.trim(),status:"pending",reviewed_at:null,reviewed_by:null};
+  if(!row.title||!row.destination)return alert("Rota adı ve hedef gerekli.");
+  var r=await GaZonAuth.client.from("submissions").update(row).eq("id",item.remoteId).eq("user_id",GaZonAuth.state.user.id);
+  if(r.error){alert(r.error.message);return}closeModal();alert("Rota tekrar admin onayına gönderildi.");showMine()
+ }
 }
 function admin(){
  if(window.GaZonAuth&&GaZonAuth.configured){location.href="admin.html";return;}

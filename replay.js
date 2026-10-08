@@ -34,25 +34,25 @@ async function build3DMap(ride){
   if(!Map3DElement||!Polyline3DElement||!Marker3DElement)throw new Error("3D Maps desteklenmiyor");
   var first=a[0],second=a[1],hd=bearing(first,second);
   map3d=new Map3DElement({
-   center:{lat:first.lat,lng:first.lng,altitude:Math.max(0,first.alt||0)},
-   range:900,
-   tilt:67.5,
+   center:{lat:first.lat,lng:first.lng,altitude:0},
+   range:1250,
+   tilt:52,
    heading:hd,
    mode:"SATELLITE",
    defaultUIDisabled:true
   });
   map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
   route3d=new Polyline3DElement({
-   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:Math.max(1,p.alt||1)}}),
-   strokeColor:"#ff5a1f",strokeWidth:8,outerColor:"#ffffff",outerWidth:.18,
+   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
+   strokeColor:"#ff5a1f",strokeWidth:7,outerColor:"#ffffff",outerWidth:.12,
    altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true
   });
   travel3d=new Polyline3DElement({
-   path:[{lat:first.lat,lng:first.lng,altitude:Math.max(2,first.alt||2)}],
-   strokeColor:"#ffffff",strokeWidth:5,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true
+   path:[{lat:first.lat,lng:first.lng,altitude:2.5}],
+   strokeColor:"#ffffff",strokeWidth:4,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true
   });
   bike3d=new Marker3DElement({
-   position:{lat:first.lat,lng:first.lng,altitude:Math.max(5,first.alt||5)},
+   position:{lat:first.lat,lng:first.lng,altitude:4},
    altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true
   });
   map3d.append(route3d);map3d.append(travel3d);map3d.append(bike3d);host.append(map3d);using3d=true;
@@ -65,7 +65,7 @@ async function build3DMap(ride){
 function buildClassicMap(a,host){
  host.innerHTML="";
  var first=a[0];
- classicMap=new google.maps.Map(host,{center:{lat:first.lat,lng:first.lng},zoom:17,mapTypeId:"hybrid",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
+ classicMap=new google.maps.Map(host,{center:{lat:first.lat,lng:first.lng},zoom:16,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
  classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#ff5a1f",strokeWeight:8,strokeOpacity:.95});
  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:first.lat,lng:first.lng}],strokeColor:"#ffffff",strokeWeight:5,strokeOpacity:.95});
  classicBike=new google.maps.Marker({map:classicMap,position:{lat:first.lat,lng:first.lng},label:{text:"🏍",fontSize:"22px"},icon:{path:google.maps.SymbolPath.CIRCLE,scale:15,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#fff",strokeWeight:3}});
@@ -78,14 +78,14 @@ function updateScene(progress){
  var x=pointAt(a,progress);if(!x)return;
  var p=x.point,hd=bearing(p,x.next);
  if(using3d&&map3d){
-  bike3d.position={lat:p.lat,lng:p.lng,altitude:Math.max(5,p.alt||5)};
-  travel3d.path=a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:Math.max(2,q.alt||2)}});
-  map3d.center={lat:p.lat,lng:p.lng,altitude:Math.max(0,p.alt||0)};
-  map3d.heading=hd;map3d.tilt=67.5;map3d.range=700;
+  bike3d.position={lat:p.lat,lng:p.lng,altitude:4};
+  travel3d.path=a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:2.5}});
+  map3d.center={lat:p.lat,lng:p.lng,altitude:0};
+  map3d.heading=hd;map3d.tilt=52;map3d.range=1150;
  }else if(classicMap){
   var pos={lat:p.lat,lng:p.lng};classicBike.setPosition(pos);
   classicTravel.setPath(a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));
-  classicMap.panTo(pos);classicMap.setZoom(18);try{classicMap.setTilt(45);classicMap.setHeading(hd)}catch(e){}
+  classicMap.panTo(pos);classicMap.setZoom(17);try{classicMap.setTilt(45);classicMap.setHeading(hd)}catch(e){}
  }
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";
 }

@@ -483,7 +483,7 @@ function updateHomeProfileUI(){
  if(name)name.textContent=m.brand||p.bike||"Motosiklet";
  if(model)model.textContent=m.model||"Motor bilgilerini gir";
  if(welcome)welcome.textContent="Merhaba, "+(p.name||"Sürücü");
- if(sum)sum.textContent=(m.consumption?Number(m.consumption).toFixed(1)+" L/100 km · ":"")+(m.tank?Number(m.tank).toFixed(0)+" L depo":"Motor bilgilerini tamamla");
+ if(sum)sum.textContent=(m.consumption?Number(m.consumption).toFixed(1)+" L/100 km · ":"")+(Number(m.fuelPrice||0)>0?(m.fuelType==="motorin"?"Motorin ":"Benzin ")+Number(m.fuelPrice).toFixed(2)+" ₺/L":(m.tank?Number(m.tank).toFixed(0)+" L depo":"Motor bilgilerini tamamla"));
  if(av)av.innerHTML=p.avatar?'<img src="'+p.avatar+'" alt="Profil">':'<span class="mi">person</span>';
 }
 var fuelPriceSyncStarted=false;

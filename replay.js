@@ -3,7 +3,7 @@
 var modal,canvas,ctx,currentRide=null,anim=0,start=0,duration=9000,auto=true;
 function $(id){return document.getElementById(id)}
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(!Array.isArray(a))a=[];if(window.GaZonDemoRide)a=a.concat([window.GaZonDemoRide]);return a}catch(e){return window.GaZonDemoRide?[window.GaZonDemoRide]:[]}}
 function pts(ride){return (ride&&ride.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2&&isFinite(Number(p[0]))&&isFinite(Number(p[1]))}).map(function(p){return {lat:Number(p[0]),lon:Number(p[1]),alt:p[2]==null?null:Number(p[2]),time:p[3]||0}})}
 function fitData(a){
  var minLat=Infinity,maxLat=-Infinity,minLon=Infinity,maxLon=-Infinity,minAlt=Infinity,maxAlt=-Infinity;

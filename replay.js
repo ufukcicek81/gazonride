@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=15000,auto=false,mode="overview";
+var modal,currentRide=null,anim=0,start=0,duration=90000,auto=false,mode="overview",introDelay=2200,lastProgress=0;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
@@ -14,6 +14,11 @@ function waitForGoogle(){return new Promise(function(resolve,reject){var n=0;(fu
 function parseDuration(s){var a=String(s||"0").split(":").map(Number);if(a.length===3)return a[0]*3600+a[1]*60+a[2];if(a.length===2)return a[0]*60+a[1];return Number(a[0]||0)}
 function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
 function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
+function replayDurationMs(ride){
+ var km=Math.max(1,Number(ride&&ride.km||0));
+ var base=km*1150;
+ return Math.max(45000,Math.min(180000,base));
+}
 
 async function computeDemoRouteNewApi(start,end){
  var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
@@ -102,8 +107,9 @@ async function build3DMap(ride){
   classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",15)});
   using3d=false
  }
- mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";$("grReplayState").textContent=using3d?"3D sürüş oynatılıyor":"Eğimli haritada sürüş oynatılıyor";
- auto=true;start=0;cancelAnimationFrame(anim);anim=requestAnimationFrame(loop)
+ mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";$("grReplayState").textContent=using3d?"3D sürüş hazırlanıyor":"Eğimli haritada sürüş hazırlanıyor";
+ auto=false;start=0;lastProgress=0;cancelAnimationFrame(anim);updateScene(0);
+ setTimeout(function(){if(mode!=="3d")return;auto=true;start=0;$("grReplayState").textContent=using3d?"3D sürüş oynatılıyor":"Eğimli haritada sürüş oynatılıyor";anim=requestAnimationFrame(loop)},introDelay)
 }
 function updateScene(progress){
  var a=pts(currentRide);if(a.length<2)return;var x=pointAt(a,progress);if(!x)return;var p=x.point,hd=bearing(p,x.next);
@@ -116,7 +122,15 @@ function updateScene(progress){
  }
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%"
 }
-function loop(ts){if(!auto)return;if(!start)start=ts;var p=((ts-start)%duration)/duration;updateScene(p);anim=requestAnimationFrame(loop)}
+function loop(ts){
+ if(!auto)return;
+ if(!start)start=ts;
+ var p=Math.min(1,(ts-start)/duration);
+ if(p<lastProgress)p=lastProgress;
+ lastProgress=p;updateScene(p);
+ if(p>=1){auto=false;$("grReplayState").textContent="Sürüş tamamlandı";$("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return}
+ anim=requestAnimationFrame(loop)
+}
 async function open(ride){
  currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Düzce → Çark Caddesi gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
@@ -127,12 +141,17 @@ async function open(ride){
   $("grReplayAvg").textContent=avgSpeed(currentRide);
   $("grReplayTurns").textContent=Math.round(Number(currentRide.turns||0));
   $("grReplayName").textContent=currentRide.destination||"Sürüş Tekrarı";$("grReplayDate").textContent=currentRide.date||"";
+  duration=replayDurationMs(currentRide);lastProgress=0;
   buildOverviewMap(currentRide)
  }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#ff8a65;font-weight:800">Örnek rota açılamadı: '+String(e&&e.message||e).replace(/[&<>]/g,"")+'</div>';console.warn(e)}
 }
 function close(){clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
-function pauseResume(){auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';if(auto){start=0;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)}
-function backOverview(){auto=false;cancelAnimationFrame(anim);buildOverviewMap(currentRide)}
+function pauseResume(){
+ if(!auto&&lastProgress>=.999){lastProgress=0;start=0;updateScene(0)}
+ auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';
+ if(auto){start=performance.now()-lastProgress*duration;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)
+}
+function backOverview(){auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);buildOverviewMap(currentRide)}
 async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
 function scan(){
  document.querySelectorAll("#historyList .ride").forEach(function(row,i){if(row.querySelector("[data-gr-replay]"))return;var b=document.createElement("button");b.className="mapBtn";b.setAttribute("data-gr-replay",String(i));b.title="Sürüş Tekrarı";b.innerHTML='<span class="mi">3d_rotation</span>';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-replay"))];if(r)open(r)};row.appendChild(b)});

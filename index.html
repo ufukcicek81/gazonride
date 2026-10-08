@@ -492,7 +492,20 @@ function syncMemberRideHistory(){
   if(cloud.length){localStorage.setItem("gazon_rides",JSON.stringify(cloud));renderHistory();}
  });
 }
-function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
+function buildDemoRide(){
+ var base=Date.now()-86400000;
+ var raw=[
+  [40.8388,31.1511,147],[40.8402,31.1478,150],[40.8426,31.1440,154],[40.8455,31.1412,160],[40.8492,31.1400,166],
+  [40.8534,31.1420,172],[40.8571,31.1461,181],[40.8600,31.1515,188],[40.8622,31.1579,196],[40.8610,31.1646,201],
+  [40.8578,31.1704,194],[40.8531,31.1730,187],[40.8486,31.1718,178],[40.8444,31.1676,169],[40.8412,31.1621,160],
+  [40.8391,31.1568,152],[40.8388,31.1511,147]
+ ];
+ var tr=raw.map(function(p,i){return [p[0],p[1],p[2],base+i*95000]});
+ return {demo:true,km:18.7,duration:"00:36:20",max:91,elev:164,turns:18,date:"Örnek sürüş",track:tr,destination:"Düzce Örnek 3D Rota",routeMode:"DRIVING"};
+}
+window.GaZonDemoRide=buildDemoRide();
+function ridesForHistory(){var rs=[];try{rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(!Array.isArray(rs))rs=[]}catch(e){rs=[]}return rs.concat([window.GaZonDemoRide])}
+function renderHistory(){var rs=ridesForHistory();$("historyList").innerHTML=rs.map(function(r){return '<div class="ride'+(r.demo?' demoRide':'')+'"><div><b>'+(r.demo?'Örnek 3D · ':'')+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join("");}
 function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map&&currentPoint)setMapCenter(currentPoint,16);}
 function toggleSatellite(){if(!map)return;satellite=!satellite;map.setMapTypeId(satellite?"hybrid":"roadmap");}

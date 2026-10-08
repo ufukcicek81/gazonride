@@ -171,12 +171,42 @@ body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inse
 .guidanceBottom button{width:58px;height:58px;border-radius:50%;border:1px solid #cfd5dc;background:#fff;color:#20242a;display:grid;place-items:center}.guidanceBottom button .mi{font-size:31px}
 .guidanceSummary{text-align:center;min-width:0}.guidanceSummary b{display:block;color:#1b8b42;font-size:28px;line-height:1;font-weight:900}.guidanceSummary small{display:block;color:#6d7680;font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:390px){.guidanceRoadWrap b{font-size:21px}.guidanceTurnIcon{font-size:44px}.guidanceSummary b{font-size:24px}}
+
+/* Simple menu-first home */
+.homeSection{display:none;padding:10px 16px 28px}
+.homeHero{background:linear-gradient(135deg,#141922,#0b0e13);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.homeHero b{font-size:22px;display:block}.homeHero small{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.homeHero .homeAvatar{width:52px;height:52px;border-radius:17px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:0 0 auto}.homeHero .homeAvatar .mi{font-size:30px}
+.homeMenuGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.homeMenuBtn{min-height:112px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:19px;padding:15px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px #0000000c}
+.homeMenuBtn .mi{font-size:29px;color:var(--accent)}.homeMenuBtn b{font-size:15px}.homeMenuBtn small{display:block;font-size:9px;color:var(--muted);margin-top:3px;line-height:1.35}
+.homeMenuBtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.homeMenuBtn.primary .mi,.homeMenuBtn.primary small{color:#fff}
+.communityTop{display:flex;align-items:center;gap:10px;margin-bottom:12px}.communityTop button{width:42px;height:42px;border-radius:13px;border:1px solid var(--line);background:var(--card);color:var(--text)}.communityTop b{font-size:20px}
+body.mode-home .homeSection{display:block}
+body.mode-home .discoverSection,body.mode-home .map,body.mode-home .content,body.mode-home .actions,body.mode-home .status,body.mode-home .history,body.mode-home .navigationPanel{display:none}
+body.mode-discover .homeSection,body.mode-ride .homeSection,body.mode-navigation .homeSection,body.mode-overlay .homeSection{display:none}
+html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .communityTop button{background:#fff!important;color:#171a1f!important;border-color:var(--line)!important}
+html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="appHeader"><div class="logoWrap"><div class="logoMark"><span class="mi">two_wheeler</span></div><div class="logo">GAZON<span>RIDE</span></div></div><button class="motor" id="motorBtn"><span class="mi">two_wheeler</span><span>KTM 1290</span><span class="mi chev">expand_more</span></button></header>
+<section class="homeSection" id="homeSection">
+  <div class="homeHero"><div><b id="homeWelcome">GaZonRide</b><small>Ne yapmak istiyorsun?</small></div><div class="homeAvatar"><span class="mi">two_wheeler</span></div></div>
+  <div class="homeMenuGrid">
+    <button class="homeMenuBtn primary" id="homeNavigation"><span class="mi">navigation</span><div><b>Navigasyon</b><small>Hedef seç, rotayı aç ve SÜR.</small></div></button>
+    <button class="homeMenuBtn" id="homeRide"><span class="mi">two_wheeler</span><div><b>Sürüş</b><small>Sürüş kaydı ve 3D tekrar.</small></div></button>
+    <button class="homeMenuBtn" id="homeCommunity"><span class="mi">groups</span><div><b>Topluluk</b><small>Rotalar, molalar ve sürücüler.</small></div></button>
+    <button class="homeMenuBtn" id="homeRoutes"><span class="mi">route</span><div><b>Rotalarım</b><small>Kayıtlı sürüş ve rotalar.</small></div></button>
+    <button class="homeMenuBtn" id="homeIntercom"><span class="mi">headset_mic</span><div><b>Intercom</b><small>Grup sürüşünde konuş.</small></div></button>
+    <button class="homeMenuBtn" id="homeGroups"><span class="mi">group_add</span><div><b>Gruplarım</b><small>Grup oluştur veya katıl.</small></div></button>
+    <button class="homeMenuBtn" id="homeProfile"><span class="mi">person</span><div><b>Profilim</b><small>Üyelik, motosiklet ve istatistikler.</small></div></button>
+    <button class="homeMenuBtn" id="homeAdmin"><span class="mi">admin_panel_settings</span><div><b>Admin</b><small>Onay kuyruğu ve yönetim.</small></div></button>
+  </div>
+</section>
 <section class="discoverSection" id="discoverSection">
+  <div class="communityTop"><button id="communityBack"><span class="mi">arrow_back</span></button><b>Topluluk</b></div>
   <div class="discoverSearch"><span class="mi">search</span><input id="discoverSearch" placeholder="Rota, mekan veya sürücü ara..."></div>
   <div class="discoverTabs">
     <button class="chip active" data-discover="discover">Keşfet</button><button class="chip" data-discover="routes">Rotalar</button><button class="chip" data-discover="places">Mekanlar</button><button class="chip" data-discover="riders">Sürücüler</button>
@@ -264,7 +294,7 @@ body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inse
   <div><span class="mi">headset_mic</span></div><div class="vMain"><b id="voiceDockTitle">Intercom aktif</b><small id="voiceDockSub">Grup bağlantısı sürüyor</small></div>
   <button id="voiceDockMic"><span class="mi">mic</span></button>
 </div><nav class="bottom">
-<button class="navBtn active" data-page="discover"><b><span class="mi">explore</span></b>Keşfet</button>
+<button class="navBtn active" data-page="home"><b><span class="mi">home</span></b>Ana Sayfa</button>
 <button class="navBtn" data-page="navigation"><b><span class="mi">map</span></b>Navigasyon</button>
 <button class="navBtn navCenter" data-page="ride"><b><span class="mi">two_wheeler</span></b>Sürüş</button>
 <button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
@@ -825,7 +855,8 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
 function nav(page,button){
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
  closeScreen();
- if(page==="discover"){setMode("discover");}
+ if(page==="home"){setMode("home");}
+ else if(page==="discover"){setMode("discover");}
  else if(page==="navigation"){setMode("navigation");startGPS();}
  else if(page==="ride"){setMode("ride");}
  else {setMode("overlay");showScreen(page);}
@@ -872,6 +903,15 @@ function boot(){
    var b=document.querySelector('[data-page="profile"]');nav("profile",b);
  });
 
+ $("homeNavigation").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
+ $("homeRide").addEventListener("click",function(){var b=document.querySelector('[data-page="ride"]');nav("ride",b);});
+ $("homeCommunity").addEventListener("click",function(){setMode("discover");document.querySelectorAll(".navBtn").forEach(function(n){n.classList.remove("active")});});
+ $("communityBack").addEventListener("click",function(){var b=document.querySelector('[data-page="home"]');nav("home",b);});
+ $("homeRoutes").addEventListener("click",function(){setMode("overlay");showScreen("routes");});
+ $("homeIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
+ $("homeGroups").addEventListener("click",function(){setMode("overlay");showScreen("groups");});
+ $("homeProfile").addEventListener("click",function(){var b=document.querySelector('[data-page="profile"]');nav("profile",b);});
+ $("homeAdmin").addEventListener("click",function(){if(window.GaZonAuth&&window.GaZonAuth.openAdmin)window.GaZonAuth.openAdmin();else if(window.GaZonRideSocial&&window.GaZonRideSocial.admin)window.GaZonRideSocial.admin();});
  $("quickNav").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
  $("quickIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
  setupNavAutocomplete();
@@ -886,7 +926,8 @@ function boot(){
  $("guidanceMore").addEventListener("click",function(){alert(activeNavLabel+"\n"+$("guidanceRemain").textContent);});
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();
- setMode("discover");
+ setMode("home");
+ try{var hp=JSON.parse(localStorage.getItem("gazon_profile")||"{}");if(hp.name)$("homeWelcome").textContent="Merhaba, "+hp.name;}catch(e){}
  startGPS();
  
 }

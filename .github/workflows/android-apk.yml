@@ -1,4 +1,5 @@
 name: Build GazonRide Android APK
+# key-rotation-rebuild-20261008
 permissions:
   contents: write
 

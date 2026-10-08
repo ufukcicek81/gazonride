@@ -391,5 +391,16 @@ public class MainActivity extends Activity {
         }
         super.onDestroy();
     }
-    @Override public void onBackPressed(){if(webView.canGoBack())webView.goBack();else super.onBackPressed();}
+    @Override public void onBackPressed(){
+        if(webView==null){super.onBackPressed();return;}
+        webView.evaluateJavascript(
+            "(function(){try{return !!(window.GaZonBack&&window.GaZonBack())}catch(e){return false}})()",
+            value -> {
+                boolean handled="true".equalsIgnoreCase(String.valueOf(value));
+                if(handled) return;
+                if(webView.canGoBack()) webView.goBack();
+                else MainActivity.super.onBackPressed();
+            }
+        );
+    }
 }

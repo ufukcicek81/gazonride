@@ -11,13 +11,7 @@
  await GaZonAuth.ready;
  if(!GaZonAuth.state.user)return;
  if(GaZonAuth.state.role!=="admin"){
-   app.innerHTML='<div class="denied"><h2>Admin hesabını etkinleştir</h2><div class="muted">İlk kurulumdaysan bu hesabı GaZonRide yöneticisi yapabilirsin. Sistem yalnızca hiç admin yoksa ilk hesabı kabul eder.</div><button class="adminClaim" id="claimAdmin">Bu Hesabı İlk Admin Yap</button><div class="muted danger" id="claimMsg"></div></div>';
-   document.getElementById("claimAdmin").onclick=async function(){
-     this.disabled=true;document.getElementById("claimMsg").textContent="Kontrol ediliyor...";
-     try{var ok=await GaZonAuth.claimFirstAdmin();if(ok)location.reload();else document.getElementById("claimMsg").textContent="Sistemde zaten bir admin hesabı var."}
-     catch(e){document.getElementById("claimMsg").textContent=e.message||"Admin yetkisi verilemedi."}
-     this.disabled=false;
-   };
+   app.innerHTML='<div class="denied"><h2>Admin yetkisi gerekli</h2><div class="muted">Bu hesap GaZonRide yönetici hesabı değil.</div></div>';
    return;
  }
  var client=GaZonAuth.client,users=[],subs=[];

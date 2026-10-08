@@ -9,9 +9,11 @@
 <link rel="apple-touch-icon" sizes="192x192" href="android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008">
 <link rel="manifest" href="gazonride-v2.json?v=20261009">
 <title>GazonRide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-social11">
-<link rel="stylesheet" href="replay.css?v=20261008-r2">
+<link rel="stylesheet" href="social.css?v=20261008-social12">
+<link rel="stylesheet" href="replay.css?v=20261008-r3">
 <script>
 (function(){
   var saved=localStorage.getItem("gazon_theme")||"system", q=new URLSearchParams(location.search).get("theme"), dark;
@@ -21,11 +23,27 @@
   else dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
   window.__gazonInitialTheme=dark?"dark":"light";
   document.documentElement.classList.add(dark?"theme-dark":"theme-light");
+  document.documentElement.classList.add("icons-loading");
+  function revealMaterialIcons(){
+    document.documentElement.classList.add("icons-ready");
+    document.documentElement.classList.remove("icons-loading");
+  }
+  if(document.fonts&&document.fonts.load){
+    document.fonts.load("22px 'Material Symbols Rounded'").then(function(){
+      if(document.fonts.check("22px 'Material Symbols Rounded'")) revealMaterialIcons();
+      else setTimeout(revealMaterialIcons,1200);
+    }).catch(function(){ setTimeout(revealMaterialIcons,1800); });
+  }else{
+    window.addEventListener("load",revealMaterialIcons,{once:true});
+  }
 })();
 </script>
 <style>
 :root{--red:#ff5a1f;--accent:#ff5a1f;--bg:#080a0e;--card:#12151b;--card2:#181c23;--line:#2b3039;--muted:#949ca8;--text:#fff;--soft:#0d1015;color-scheme:dark light}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}
+.mi{width:1em;max-width:1em;height:1em;overflow:hidden;white-space:nowrap;flex:0 0 1em}
+html.icons-loading:not(.icons-ready) .mi{visibility:hidden!important;color:transparent!important}
+html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 body{min-height:100vh}.app{max-width:540px;margin:auto;padding-bottom:92px}
 header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 12px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950;line-height:1}.logo span{color:var(--red)}
 .motor{border:1px solid var(--line);background:#171b22;color:#fff;border-radius:22px;padding:9px 12px;font-size:11px}

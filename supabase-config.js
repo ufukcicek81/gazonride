@@ -1,2 +1,2 @@
-window.GAZONRIDE_SUPABASE_URL="https://isrcaoulynycmwnxofgn.supabase.co";
-window.GAZONRIDE_SUPABASE_KEY="sb_publishable_2lHpVrZEgHmPjWD8kOEuLA_Fz6gzZEe";
+window.GAZONRIDE_SUPABASE_URL="https://tfjukimsvcywkklkhotr.supabase.co";
+window.GAZONRIDE_SUPABASE_KEY="sb_publishable_XGsnAcqzOrIAqWCI3NM_8g_RM1He7f_";

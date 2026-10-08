@@ -10,7 +10,7 @@
 <link rel="manifest" href="gazonride-v2.json?v=20261009">
 <title>GazonRide</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-social3">
+<link rel="stylesheet" href="social.css?v=20261008-social10">
 <link rel="stylesheet" href="replay.css?v=20261008-r2">
 <script>
 (function(){
@@ -688,6 +688,52 @@ function exitGuidanceMode(){
  var hud=$("guidanceHud");if(hud)hud.style.display="";
  try{if(map){map.setTilt(0);map.setHeading(0);}}catch(e){}
 }
+async function openCommunityRouteNavigation(item){
+ var t=(item&&item.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2&&isFinite(Number(p[0]))&&isFinite(Number(p[1]))});
+ if(t.length<2){$("status").textContent="Bu topluluk rotasında kullanılabilir rota izi yok.";return;}
+ var navBtn=document.querySelector('[data-page="navigation"]');if(navBtn)nav("navigation",navBtn);else setMode("navigation");
+ startGPS();
+ if(!currentPoint){$("status").textContent="GPS konumu bekleniyor. Konum gelince Rotayı Sür'e tekrar bas.";return;}
+ if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor. Birkaç saniye sonra tekrar dene.";return;}
+ $("status").textContent="Topluluk rotası navigasyona hazırlanıyor...";
+ try{
+  var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
+  var startPt={lat:Number(t[0][0]),lng:Number(t[0][1])},endPt={lat:Number(t[t.length-1][0]),lng:Number(t[t.length-1][1])};
+  var candidates=[{idx:-1,wp:{location:startPt,vehicleStopover:true},name:"Rota başlangıcı"}];
+  var sampleCount=6;
+  for(var i=1;i<=sampleCount;i++){
+   var idx=Math.min(t.length-2,Math.max(1,Math.round((i/(sampleCount+1))*(t.length-1)))),p=t[idx];
+   candidates.push({idx:idx,wp:{location:{lat:Number(p[0]),lng:Number(p[1])},via:true},name:"Rota izi"});
+  }
+  (Array.isArray(item.stops)?item.stops:[]).slice(0,5).forEach(function(s){
+   var idx=isFinite(Number(s.trackIndex))?Number(s.trackIndex):Math.round((Number(s.percent||50)/100)*(t.length-1));
+   candidates.push({idx:idx,wp:{location:{lat:Number(s.lat),lng:Number(s.lon)},vehicleStopover:true},name:s.name||"Mola"});
+  });
+  candidates.sort(function(a,b){return a.idx-b.idx});
+  var seen={},inter=[];
+  candidates.forEach(function(x){
+   var loc=x.wp.location,key=Number(loc.lat).toFixed(5)+","+Number(loc.lng).toFixed(5);
+   if(!seen[key]&&inter.length<10){seen[key]=1;inter.push(x.wp)}
+  });
+  var inTurkey=currentPoint.lat>=35.5&&currentPoint.lat<=42.5&&currentPoint.lon>=25&&currentPoint.lon<=45.5,mode=inTurkey?"DRIVING":"TWO_WHEELER";
+  var req={origin:{lat:currentPoint.lat,lng:currentPoint.lon},destination:endPt,intermediates:inter,travelMode:mode,routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","legs","viewport","distanceMeters","durationMillis"]};
+  var result;
+  try{result=await Route.computeRoutes(req)}catch(e){if(mode==="TWO_WHEELER"){req.travelMode="DRIVING";mode="DRIVING";result=await Route.computeRoutes(req)}else throw e}
+  var rt=result&&result.routes&&result.routes[0];if(!rt||!rt.path||!rt.path.length)throw new Error("noroute");
+  var pts=rt.path.map(function(x){return {lat:typeof x.lat==="function"?x.lat():Number(x.lat),lon:typeof x.lng==="function"?x.lng():Number(x.lng)}});
+  if(navRoute)navRoute.setMap(null);
+  navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon}}),strokeColor:"#ff5a1f",strokeWeight:8,strokeOpacity:.98});
+  if(rt.viewport)map.fitBounds(rt.viewport,42);else fitPolyline(navRoute);
+  navSteps=[];
+  (rt.legs||[]).forEach(function(leg){(leg.steps||[]).forEach(function(st){navSteps.push({distance:Number(st.distanceMeters||0),instruction:{maneuver:st.maneuver||"",instructions:st.instructions||""},end:st.endLocation?{lat:Number(st.endLocation.lat),lon:Number(st.endLocation.lng)}:null})})});
+  navStepIndex=0;navTotalKm=Number(rt.distanceMeters||0)/1000;navTotalSec=Math.max(0,Number(rt.durationMillis||0)/1000);navActive=false;navReady=true;activeNavLabel=(item&&item.title)||"Topluluk Rotası";activeRouteMode=mode;
+  $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel;renderNavStep();
+  navStartedRide=false;var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat';driveBtn.style.display="block"}
+  $("status").textContent="Topluluk rotası hazır. Başlangıç noktası, rota izi ve mola yerleri navigasyona eklendi.";
+ }catch(e){console.warn("Community route",e);$("status").textContent="Topluluk rotası navigasyona dönüştürülemedi."}
+}
+window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation};
+
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
  navActive=true;
@@ -981,7 +1027,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-social9"></script>
+<script src="social.js?v=20261008-social10"></script>
 <script src="replay.js?v=20261008-r3"></script>
 </body>
 </html>

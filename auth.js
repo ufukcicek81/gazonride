@@ -53,6 +53,47 @@ async function login(email,password){
  var r=await client.auth.signInWithPassword({email:email,password:password});
  if(r.error)throw r.error;await applySession(r.data.session);return r.data.user;
 }
+async function socialLogin(provider){
+ if(!configured)throw new Error("Supabase bağlantısı hazır değil.");
+ provider=String(provider||"").toLowerCase();
+ if(["google","apple"].indexOf(provider)<0)throw new Error("Desteklenmeyen giriş yöntemi.");
+ var isAndroid=!!(window.AndroidBridge&&typeof window.AndroidBridge.openOAuth==="function");
+ var redirectTo=isAndroid?"gazonride://auth/callback":location.href;
+ var r=await client.auth.signInWithOAuth({provider:provider,options:{redirectTo:redirectTo,skipBrowserRedirect:isAndroid}});
+ if(r.error)throw r.error;
+ if(isAndroid&&r.data&&r.data.url)window.AndroidBridge.openOAuth(r.data.url);
+ return r.data;
+}
+async function completeOAuthCallback(callbackUrl){
+ if(!configured||!callbackUrl)return false;
+ try{
+  var u=new URL(callbackUrl),hash=new URLSearchParams((u.hash||"").replace(/^#/,"")),query=u.searchParams;
+  var err=hash.get("error_description")||query.get("error_description")||hash.get("error")||query.get("error");
+  if(err)throw new Error(decodeURIComponent(err));
+  var access=hash.get("access_token"),refresh=hash.get("refresh_token");
+  if(access&&refresh){
+   var sr=await client.auth.setSession({access_token:access,refresh_token:refresh});
+   if(sr.error)throw sr.error;
+   await applySession(sr.data.session);
+   location.replace("index.html");
+   return true;
+  }
+  var code=query.get("code");
+  if(code){
+   var er=await client.auth.exchangeCodeForSession(code);
+   if(er.error)throw er.error;
+   await applySession(er.data.session);
+   location.replace("index.html");
+   return true;
+  }
+  throw new Error("OAuth dönüş bilgisi bulunamadı.");
+ }catch(e){
+  console.error("OAuth callback",e);
+  try{localStorage.setItem("gazon_oauth_error",e.message||String(e));}catch(_){}
+  location.replace("login.html?oauth_error=1");
+  return false;
+ }
+}
 async function logout(){if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
 async function saveProfile(name,bike){
  if(!state.user)throw new Error("Oturum bulunamadı.");
@@ -72,5 +113,5 @@ else{
  client.auth.onAuthStateChange(function(event,session){setTimeout(function(){applySession(session)},0)});
  client.auth.getSession().then(function(r){applySession(r.data.session)}).catch(function(e){console.error(e);if(!resolved){resolved=true;resolveReady(state)}});
 }
-window.GaZonAuth={configured:configured,state:state,ready:ready,client:client,register:register,login:login,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
+window.GaZonAuth={configured:configured,state:state,ready:ready,client:client,register:register,login:login,socialLogin:socialLogin,completeOAuthCallback:completeOAuthCallback,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
 })();

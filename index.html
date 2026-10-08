@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
 <link rel="stylesheet" href="social.css?v=20261008-social12">
-<link rel="stylesheet" href="replay.css?v=20261008-r3">
+<link rel="stylesheet" href="replay.css?v=20261008-r4">
 <script>
 (function(){
   var saved=localStorage.getItem("gazon_theme")||"system", q=new URLSearchParams(location.search).get("theme"), dark;
@@ -429,7 +429,8 @@ async function initMap(){
 }
 function setPolyline(poly,pts){if(!poly)return;poly.setPath((pts||[]).map(function(p){return Array.isArray(p)?{lat:p[0],lng:p[1]}:{lat:p.lat,lng:p.lon!=null?p.lon:p.lng};}));}
 function fitPolyline(poly){if(!map||!poly)return;var path=poly.getPath(),b=new google.maps.LatLngBounds();path.forEach(function(p){b.extend(p);});if(!b.isEmpty())map.fitBounds(b,40);}
-function setMapCenter(p,zoom){if(!map)return;map.setCenter({lat:p.lat,lng:p.lon});if(zoom)map.setZoom(zoom);}
+function setMapCenter(p,zoom){if(!map||!p)return;map.setCenter({lat:p.lat,lng:p.lon});if(zoom)map.setZoom(zoom);}
+window.GaZonMapContext={getCurrentPoint:function(){return currentPoint?{lat:currentPoint.lat,lon:currentPoint.lon}:null},centerCurrent:function(zoom){if(currentPoint)setMapCenter(currentPoint,zoom||16);else startGPS()}};
 function applyPosition(pos){
  var c=pos.coords,p={lat:c.latitude,lon:c.longitude},ts=Number(pos.timestamp||c.timestamp||Date.now());currentPoint=p;if(navActive)updateNavigation(p);
  $("location").innerHTML='<span class="mi">location_on</span><span>'+p.lat.toFixed(5)+", "+p.lon.toFixed(5)+"</span>";
@@ -1092,8 +1093,8 @@ function nav(page,button){
  closeScreen();
  if(page==="home"){setMode("home");}
  else if(page==="discover"){setMode("discover");}
- else if(page==="navigation"){setMode("navigation");startGPS();}
- else if(page==="ride"){setMode("ride");}
+ else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
+ else if(page==="ride"){setMode("ride");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
  else {setMode("overlay");showScreen(page);}
 }
 function boot(){
@@ -1101,7 +1102,7 @@ function boot(){
  var mapReady=false;
  initMap().then(function(ok){
    mapReady=ok;
-   if(ok&&currentPoint)setTimeout(function(){setMapCenter(currentPoint);},300);
+   if(ok){startGPS();if(currentPoint)setTimeout(function(){setMapCenter(currentPoint,16);},200);}
  }).catch(function(e){console.warn("Google Maps init",e);});
  if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){
   try{var raw=window.AndroidBridge.getBufferedPoints(),bg=JSON.parse(raw||"[]");
@@ -1172,6 +1173,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 </script>
 <script src="social.js?v=20261008-social11"></script>
-<script src="replay.js?v=20261008-r3"></script>
+<script src="replay.js?v=20261008-r4"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ async function social(provider){
  catch(e){msg.textContent=(provider==="google"?"Google":"Apple")+" girişi başlatılamadı: "+(e.message||e);msg.className="msg error";msg.style.display="block"}
 }
 document.getElementById("googleLogin").onclick=function(){social("google")};
-document.getElementById("appleLogin").onclick=function(){social("apple")};
+var appleBtn=document.getElementById("appleLogin");if(window.GAZONRIDE_APPLE_ENABLED){appleBtn.onclick=function(){social("apple")};}else{appleBtn.style.display="none";}
 var qs=new URLSearchParams(location.search);if(qs.get("oauth_error")){try{msg.textContent=localStorage.getItem("gazon_oauth_error")||"Sosyal giriş tamamlanamadı.";localStorage.removeItem("gazon_oauth_error")}catch(e){msg.textContent="Sosyal giriş tamamlanamadı."}msg.className="msg error";msg.style.display="block"}
 submit.onclick=async function(){msg.style.display="none";var email=document.getElementById("email").value.trim(),pass=document.getElementById("password").value;if(!email||pass.length<6){msg.textContent="E-posta ve en az 6 karakter şifre gerekli.";msg.className="msg error";msg.style.display="block";return}submit.disabled=true;try{if(mode==="register"){var rr=await GaZonAuth.register(email,pass,document.getElementById("name").value.trim(),document.getElementById("bike").value.trim());if(rr.needsVerification){msg.textContent="Üyelik oluşturuldu. E-postana gelen doğrulama bağlantısına dokun, sonra giriş yap.";msg.className="msg";msg.style.display="block"}else location.href="index.html"}else await GaZonAuth.login(email,pass)}catch(e){msg.textContent=e.message||"İşlem tamamlanamadı.";msg.className="msg error";msg.style.display="block"}finally{submit.disabled=false}};
 })();

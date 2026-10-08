@@ -36,8 +36,7 @@ async function applySession(session){
  var page=pathName();
  if(!state.user&&page!=="login.html")redirectLogin();
  if(state.user&&page==="login.html"){
-   var qs=new URLSearchParams(location.search),n=qs.get("next");
-   location.replace(n||"index.html");
+   var qs=new URLSearchParams(location.search);if(qs.get("recovery")!=="1"){var n=qs.get("next");location.replace(n||"index.html");}
  }
 }
 async function register(email,password,name,bike){
@@ -94,6 +93,17 @@ async function completeOAuthCallback(callbackUrl){
   return false;
  }
 }
+async function resetPassword(email){
+ if(!configured)throw new Error("Supabase bağlantısı hazır değil.");
+ var redirect=new URL("login.html?recovery=1",location.href).href;
+ var r=await client.auth.resetPasswordForEmail(email,{redirectTo:redirect});
+ if(r.error)throw r.error;return true;
+}
+async function updatePassword(password){
+ if(!configured)throw new Error("Supabase bağlantısı hazır değil.");
+ var r=await client.auth.updateUser({password:password});
+ if(r.error)throw r.error;return true;
+}
 async function logout(){if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
 async function saveProfile(name,bike){
  if(!state.user)throw new Error("Oturum bulunamadı.");
@@ -113,5 +123,5 @@ else{
  client.auth.onAuthStateChange(function(event,session){setTimeout(function(){applySession(session)},0)});
  client.auth.getSession().then(function(r){applySession(r.data.session)}).catch(function(e){console.error(e);if(!resolved){resolved=true;resolveReady(state)}});
 }
-window.GaZonAuth={configured:configured,state:state,ready:ready,client:client,register:register,login:login,socialLogin:socialLogin,completeOAuthCallback:completeOAuthCallback,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
+window.GaZonAuth={configured:configured,state:state,ready:ready,client:client,register:register,login:login,socialLogin:socialLogin,completeOAuthCallback:completeOAuthCallback,resetPassword:resetPassword,updatePassword:updatePassword,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
 })();

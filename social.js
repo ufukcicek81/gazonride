@@ -1,6 +1,16 @@
 (function(){
 "use strict";
 var K_PENDING="gazon_pending_submissions_v2",K_ROUTES="gazon_community_routes_v2",K_PLACES="gazon_community_places_v2",K_FAVS="gazon_favorites_v1",K_RIDERS="gazon_riders_v1";
+var GAZON_ROUTES=[
+ {routeKey:"duzce-aktas-kurugol",title:"Aktaş Şelalesi · Kurugöl Kanyonu",destination:"Aktaş Şelalesi, Akçakoca, Düzce",lat:41.1057,lon:31.1537,km:23,duration:"45 dk",difficulty:"Kolay",tag:"DOĞA & ŞELALE",description:"Akçakoca çevresinde kısa, manzaralı ve doğa ağırlıklı motosiklet rotası."},
+ {routeKey:"duzce-yedigoller",title:"Düzce · Yedigöller",destination:"Yedigöller Milli Parkı, Bolu",lat:40.9406,lon:31.7481,km:92,duration:"2 sa 15 dk",difficulty:"Orta",tag:"ORMAN & VİRAJ",description:"Orman yolları, serin hava ve bol viraj isteyenler için."},
+ {routeKey:"sile-agva-kandira",title:"Şile · Ağva · Kandıra",destination:"Ağva, Şile, İstanbul",lat:41.1386,lon:29.8567,km:145,duration:"3 sa",difficulty:"Orta",tag:"SAHİL & VİRAJ",description:"Şile köyleri, Ağva ve Kandıra hattında yeşil ve virajlı klasik kaçış rotası."},
+ {routeKey:"kapidag-erdek",title:"Kapıdağ Yarımadası",destination:"Erdek, Balıkesir",lat:40.4844,lon:27.7936,km:118,duration:"3 sa",difficulty:"Orta",tag:"VİRAJLI & MANZARALI",description:"Erdek, Narlı ve Kapıdağ çevresinde deniz, orman ve viraj kombinasyonu."},
+ {routeKey:"ucmakdere-sarkoy",title:"Uçmakdere · Şarköy",destination:"Uçmakdere, Şarköy, Tekirdağ",lat:40.8118,lon:27.4244,km:105,duration:"2 sa 20 dk",difficulty:"Orta",tag:"DENİZ & VİRAJ",description:"Marmara kıyısında manzara ve viraj seven sürücüler için popüler rota."},
+ {routeKey:"yalova-armutlu-gemlik",title:"Yalova · Çınarcık · Armutlu",destination:"Armutlu, Yalova",lat:40.5191,lon:28.8297,km:126,duration:"2 sa 45 dk",difficulty:"Orta",tag:"DENİZ & ORMAN",description:"Çınarcık-Armutlu-Gemlik hattında deniz ve orman eşliğinde sürüş."},
+ {routeKey:"igneada-demirkoy",title:"İğneada · Demirköy",destination:"İğneada, Demirköy, Kırklareli",lat:41.8567,lon:27.9887,km:120,duration:"2 sa 30 dk",difficulty:"Orta",tag:"TRAKYA & ORMAN",description:"Demirköy ve İğneada çevresinde güzel asfalt, orman ve uzun virajlar."},
+ {routeKey:"artvin-savsat-ardahan",title:"Artvin · Şavşat · Ardahan",destination:"Şavşat, Artvin",lat:41.2449,lon:42.3613,km:210,duration:"5 sa",difficulty:"Zor",tag:"DAĞ & MANZARA",description:"Borçka, Şavşat ve Karagöl çevresinde Türkiye'nin en etkileyici uzun motosiklet rotalarından."}
+];
 function $(id){return document.getElementById(id)}
 function read(k){try{var v=JSON.parse(localStorage.getItem(k)||"[]");return Array.isArray(v)?v:[]}catch(e){return[]}}
 function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
@@ -8,6 +18,71 @@ function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){retur
 function rideMeta(r){return {km:Number(r&&r.km||0),duration:r&&r.duration||"00:00",max:Number(r&&r.max||0),date:r&&r.date||"",destination:r&&r.destination||""}}
 function rideLabel(r,i){var m=rideMeta(r);return (r&&r.destination?r.destination:"Sürüş "+(i+1))+" · "+m.km.toFixed(1)+" km · "+m.duration}
 function normalizeTrack(track){return (Array.isArray(track)?track:[]).filter(function(p){return Array.isArray(p)&&p.length>=2&&isFinite(Number(p[0]))&&isFinite(Number(p[1]))})}
+function havKm(a,b){
+ var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p;
+ var q=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)*Math.sin(dLon/2);
+ return 2*R*Math.asin(Math.sqrt(q))
+}
+function currentLoc(){
+ try{var p=window.GaZonMapContext&&GaZonMapContext.getCurrentPoint?GaZonMapContext.getCurrentPoint():null;return p&&isFinite(p.lat)&&isFinite(p.lon)?p:null}catch(e){return null}
+}
+function routeCenter(r){
+ if(isFinite(Number(r.lat))&&isFinite(Number(r.lon)))return {lat:Number(r.lat),lon:Number(r.lon)};
+ var t=normalizeTrack(r.track);if(t.length){var p=t[Math.floor(t.length/2)];return {lat:Number(p[0]),lon:Number(p[1])}}
+ return null
+}
+function routeDistance(r){var here=currentLoc(),center=routeCenter(r);return here&&center?havKm(here,center):null}
+function safeRouteKey(r,kind,i){
+ if(kind==="gazon")return "gazon:"+r.routeKey;
+ if(kind==="user")return "user:"+(r.submissionId||r.title||i);
+ return "mine:"+(r.date||i)
+}
+function myRoutes(){
+ return read("gazon_rides").filter(function(r){return !r.demo}).map(function(r,i){
+  var t=normalizeTrack(r.track),mid=t.length?t[Math.floor(t.length/2)]:null;
+  return {title:r.destination||("Sürüş "+(i+1)),destination:r.destination||"",description:"Kendi sürüş kaydın",track:r.track||[],ride_meta:rideMeta(r),difficulty:"Sürüş",createdAt:r.date||"",lat:mid?Number(mid[0]):null,lon:mid?Number(mid[1]):null}
+ })
+}
+async function showRouteComments(route,kind,index){
+ if(!(window.GaZonAuth&&GaZonAuth.configured)){alert("Yorum yapmak için giriş yapmalısın.");return}
+ await GaZonAuth.ready;if(!GaZonAuth.state.user){location.href="login.html?next="+encodeURIComponent(location.href);return}
+ var key=safeRouteKey(route,kind,index),client=GaZonAuth.client;
+ modal("Rota Yorumları",'<div class="gr-comment-route"><b>'+esc(route.title||"Rota")+'</b><small>'+esc(route.description||"")+'</small></div><div id="grComments"><div class="gr-empty">Yorumlar yükleniyor…</div></div><div class="gr-comment-compose"><textarea class="gr-field" id="grCommentBody" rows="3" maxlength="600" placeholder="Bu rota hakkında yorum yaz..."></textarea><button class="gr-submit" id="grCommentSend">Yorumu Gönder</button></div>');
+ async function load(){
+  var q=await client.from("route_comments").select("*").eq("route_key",key).order("created_at",{ascending:false}).limit(100),box=$("grComments");
+  if(!box)return;if(q.error){box.innerHTML='<div class="gr-empty">Yorumlar alınamadı.</div>';return}
+  box.innerHTML=(q.data||[]).length?(q.data||[]).map(function(z){return '<div class="gr-comment"><div class="gr-comment-avatar">'+(z.avatar_url?'<img src="'+esc(z.avatar_url)+'" alt="">':'<span class="mi">person</span>')+'</div><div><b>'+esc(z.author_name||"Sürücü")+'</b><p>'+esc(z.body||"")+'</p><small>'+new Date(z.created_at).toLocaleString("tr-TR")+'</small></div></div>'}).join(""):'<div class="gr-empty">Henüz yorum yok. İlk yorumu sen yap.</div>'
+ }
+ await load();
+ $("grCommentSend").onclick=async function(){
+  var body=$("grCommentBody").value.trim();if(!body)return;
+  this.disabled=true;
+  var pr=GaZonAuth.state.profile||{},r=await client.from("route_comments").insert({route_key:key,user_id:GaZonAuth.state.user.id,author_name:pr.name||"GaZonRide sürücüsü",avatar_url:pr.avatar_url||null,body:body});
+  this.disabled=false;if(r.error){alert(r.error.message);return}$("grCommentBody").value="";await load()
+ }
+}
+function routeTile(r,kind,i){
+ var d=routeDistance(r),dist=d==null?"":'<span class="gr-route-near"><span class="mi">near_me</span>'+Math.round(d)+' km yakınında</span>';
+ var meta=r.ride_meta||{},km=Number(meta.km||r.km||0),dur=meta.duration||r.duration||"—";
+ return '<article class="gr-route-tile" data-kind="'+kind+'"><div class="gr-route-visual"><div class="gr-route-badge">'+esc(kind==="gazon"?"GAZONRIDE ÖNERİSİ":kind==="user"?"KULLANICI ROTASI":"ROTAM")+'</div><div class="gr-route-title">'+esc(r.title||"Rota")+'</div></div><div class="gr-route-tile-body"><b>'+esc(r.tag||r.difficulty||"Motosiklet Rotası")+'</b><div class="gr-route-tile-meta"><span>'+km.toFixed(km?0:0)+' km</span><span>'+esc(dur)+'</span><span>'+esc(r.difficulty||"Rota")+'</span></div>'+dist+'<p>'+esc(r.description||"")+'</p><div class="gr-route-tile-actions"><button data-route-open="'+kind+':'+i+'"><span class="mi">navigation</span> Rotayı Aç</button><button data-route-comments="'+kind+':'+i+'"><span class="mi">chat_bubble</span> Yorumlar</button></div></div></article>'
+}
+function routeListFor(kind){
+ if(kind==="gazon")return GAZON_ROUTES.slice().sort(function(a,b){var da=routeDistance(a),db=routeDistance(b);if(da==null||db==null)return 0;return da-db});
+ if(kind==="user")return read(K_ROUTES).slice().sort(function(a,b){var da=routeDistance(a),db=routeDistance(b);if(da==null||db==null)return 0;return da-db});
+ return myRoutes()
+}
+function renderRouteHub(kind){
+ kind=kind||"gazon";var box=$("grRouteHubList");if(!box)return;
+ document.querySelectorAll("[data-route-source]").forEach(function(b){b.classList.toggle("active",b.dataset.routeSource===kind)});
+ var list=routeListFor(kind);
+ box.innerHTML=list.length?list.map(function(r,i){return routeTile(r,kind,i)}).join(""):'<div class="gr-empty">Bu bölümde henüz rota yok.</div>';
+ document.querySelectorAll("[data-route-open]").forEach(function(b){b.onclick=function(){
+  var p=b.dataset.routeOpen.split(":"),arr=routeListFor(p[0]),r=arr[Number(p[1])];if(!r)return;
+  if(r.track&&normalizeTrack(r.track).length>1&&window.GaZonNavigation&&GaZonNavigation.openCommunityRoute)GaZonNavigation.openCommunityRoute(r);else openNavigation(r)
+ }});
+ document.querySelectorAll("[data-route-comments]").forEach(function(b){b.onclick=function(){var p=b.dataset.routeComments.split(":"),arr=routeListFor(p[0]),r=arr[Number(p[1])];if(r)showRouteComments(r,p[0],Number(p[1]))}});
+}
+
 async function compressPhoto(file){
  return new Promise(function(resolve,reject){
   var img=new Image(),u=URL.createObjectURL(file);
@@ -259,7 +334,7 @@ function syncRemoteCommunity(){
    }
    var pr=await GaZonAuth.client.from("profiles").select("id,name,bike,avatar_url").order("created_at",{ascending:false}).limit(100);
    if(!pr.error)write(K_RIDERS,pr.data||[]);
-   render();
+   render();var active=document.querySelector("[data-route-source].active");renderRouteHub(active?active.dataset.routeSource:"gazon");
   }
   await pull();
   try{
@@ -272,14 +347,14 @@ function syncRemoteCommunity(){
 }
 function install(){
  var host=document.querySelector(".discoverSection");if(!host||$("grSocial"))return;
- var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-social-head"><div><b>GaZonRide Topluluğu</b><small>Rota · mola · sürücüler</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions gr-social-actions-3"><button class="gr-social-btn primary" id="grAddPost"><span class="mi">add_photo_alternate</span>Fotoğraf Paylaş</button><button class="gr-social-btn" id="grAddRoute"><span class="mi">add_road</span>Rota Ekle</button><button class="gr-social-btn" id="grAddPlace"><span class="mi">add_location_alt</span>Mola Yeri</button></div><div class="gr-social-tabs"><button class="gr-social-tab active" data-gr-tab="feed">Akış</button><button class="gr-social-tab" data-gr-tab="routes">Rotalar</button><button class="gr-social-tab" data-gr-tab="places">Molalar</button><button class="gr-social-tab" data-gr-tab="riders">Sürücüler</button><button class="gr-social-tab" id="grAdmin">Admin</button></div><div class="gr-social-list" id="grSocialList"></div>';
+ var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-route-hub"><div class="gr-route-hub-head"><div><b>Motosiklet Rotaları</b><small>Konumuna göre yakın rotalar önce gösterilir</small></div></div><div class="gr-route-source-tabs"><button class="active" data-route-source="gazon">GazonRide Önerileri</button><button data-route-source="user">Kullanıcı Rotaları</button><button data-route-source="mine">Rotalarım</button></div><div class="gr-route-hub-list" id="grRouteHubList"></div></div><div class="gr-social-head"><div><b>GaZonRide Topluluğu</b><small>Fotoğraf · rota · mola · sürücüler</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions gr-social-actions-3"><button class="gr-social-btn primary" id="grAddPost"><span class="mi">add_photo_alternate</span>Fotoğraf Paylaş</button><button class="gr-social-btn" id="grAddRoute"><span class="mi">add_road</span>Rota Ekle</button><button class="gr-social-btn" id="grAddPlace"><span class="mi">add_location_alt</span>Mola Yeri</button></div><div class="gr-social-tabs"><button class="gr-social-tab active" data-gr-tab="feed">Akış</button><button class="gr-social-tab" data-gr-tab="routes">Rotalar</button><button class="gr-social-tab" data-gr-tab="places">Molalar</button><button class="gr-social-tab" data-gr-tab="riders">Sürücüler</button><button class="gr-social-tab" id="grAdmin">Admin</button></div><div class="gr-social-list" id="grSocialList"></div>';
  var quick=host.querySelector(".quickRow");if(quick)quick.insertAdjacentElement("afterend",wrap);else host.prepend(wrap);
  var m=document.createElement("div");m.id="grSocialModal";m.className="gr-modal";document.body.appendChild(m);
- $("grAddPost").onclick=postForm;$("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;var ab=$("grAdmin");if(ab)ab.style.display="none";if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){if(ab)ab.style.display=GaZonAuth.state.role==="admin"?"inline-block":"none"});
+ $("grAddPost").onclick=postForm;$("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;document.querySelectorAll("[data-route-source]").forEach(function(b){b.onclick=function(){renderRouteHub(b.dataset.routeSource)}});renderRouteHub("gazon");var ab=$("grAdmin");if(ab)ab.style.display="none";if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){if(ab)ab.style.display=GaZonAuth.state.role==="admin"?"inline-block":"none"});
  document.querySelectorAll("[data-gr-tab]").forEach(function(b){b.onclick=function(){document.querySelectorAll(".gr-social-tab").forEach(function(x){x.classList.remove("active")});b.classList.add("active");render(b.dataset.grTab)}});
  render();
  syncRemoteCommunity();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonRideSocial={render:render,postForm:postForm,routeForm:routeForm,placeForm:placeForm,admin:admin,mine:showMine,close:closeModal};
+window.GaZonRideSocial={render:render,renderRouteHub:renderRouteHub,postForm:postForm,routeForm:routeForm,placeForm:placeForm,admin:admin,mine:showMine,close:closeModal};
 })();

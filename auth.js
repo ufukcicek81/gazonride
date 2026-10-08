@@ -8,24 +8,34 @@ var state={configured:configured,user:null,profile:null,role:"member"};
 
 function pathName(){return (location.pathname.split("/").pop()||"index.html").toLowerCase()}
 function redirectLogin(){if(pathName()==="login.html")return;var next=encodeURIComponent(location.href);location.replace("login.html?next="+next)}
-function saveLocalProfile(p){if(!p)return;localStorage.setItem("gazon_profile",JSON.stringify({name:p.name||"GaZonRide sürücüsü",bike:p.bike||"Motosiklet"}))}
+function saveLocalProfile(p){
+ if(!p)return;
+ var old={};try{old=JSON.parse(localStorage.getItem("gazon_profile")||"{}")||{}}catch(e){}
+ var out=Object.assign({},old,{name:p.name||old.name||"GaZonRide sürücüsü",bike:p.bike||old.bike||"Motosiklet"});
+ if(p.avatar_url)out.avatar=p.avatar_url;
+ if(p.motor_data)out.motor=Object.assign({},old.motor||{},p.motor_data);
+ localStorage.setItem("gazon_profile",JSON.stringify(out))
+}
 function syncUi(){
  var p=state.profile||{},w=document.getElementById("homeWelcome");if(w)w.textContent=p.name?"Merhaba, "+p.name:"GaZonRide";
  var adminBtn=document.getElementById("homeAdmin");if(adminBtn)adminBtn.style.display=state.role==="admin"?"flex":"none";
- var motor=document.getElementById("motorBtn");if(motor&&p.bike)motor.innerHTML='<span class="mi">two_wheeler</span><span>'+String(p.bike).replace(/[<>]/g,"")+'</span><span class="mi chev">expand_more</span>';
+ var mn=document.getElementById("motorName"),mm=document.getElementById("motorModel"),md=p.motor_data||{};
+ if(mn)mn.textContent=md.brand||((p.bike||"Motosiklet").split(" ")[0]||"Motosiklet");
+ if(mm)mm.textContent=md.model||String(p.bike||"").replace(String(mn&&mn.textContent||""),"").trim()||"Motor bilgilerini gir";
+ if(typeof window.updateHomeProfileUI==="function")window.updateHomeProfileUI();
 }
 async function ensureProfile(user){
  var meta=user.user_metadata||{},fallback={id:user.id,name:meta.name||"GaZonRide sürücüsü",bike:meta.bike||"Motosiklet"};
- var res=await client.from("profiles").select("id,name,bike,avatar_url").eq("id",user.id).maybeSingle();
+ var res=await client.from("profiles").select("id,name,bike,avatar_url,motor_data").eq("id",user.id).maybeSingle();
  if(res.error)throw res.error;
  if(!res.data){
-   var ins=await client.from("profiles").insert(fallback).select("id,name,bike,avatar_url").single();
+   var ins=await client.from("profiles").insert(fallback).select("id,name,bike,avatar_url,motor_data").single();
    if(ins.error)throw ins.error;
    res.data=ins.data;
  }
  var adm=await client.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
  var role=adm.data?"admin":"member";
- state.profile={uid:user.id,email:user.email||"",name:res.data.name||fallback.name,bike:res.data.bike||fallback.bike,avatar_url:res.data.avatar_url||"",role:role};
+ state.profile={uid:user.id,email:user.email||"",name:res.data.name||fallback.name,bike:res.data.bike||fallback.bike,avatar_url:res.data.avatar_url||"",motor_data:res.data.motor_data||{},role:role};
  state.role=role;saveLocalProfile(state.profile);syncUi();return state.profile;
 }
 async function applySession(session){
@@ -107,7 +117,7 @@ async function updatePassword(password){
 async function logout(){if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
 async function saveProfile(name,bike){
  if(!state.user)throw new Error("Oturum bulunamadı.");
- var r=await client.from("profiles").update({name:name,bike:bike,updated_at:new Date().toISOString()}).eq("id",state.user.id).select("id,name,bike,avatar_url").single();
+ var r=await client.from("profiles").update({name:name,bike:bike,updated_at:new Date().toISOString()}).eq("id",state.user.id).select("id,name,bike,avatar_url,motor_data").single();
  if(r.error)throw r.error;state.profile=Object.assign({},state.profile,r.data);saveLocalProfile(state.profile);syncUi();return state.profile;
 }
 async function claimFirstAdmin(){

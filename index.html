@@ -84,7 +84,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .feedText{font-size:11px;line-height:1.5;margin-top:9px;color:var(--text)}
 .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0}.quickBtn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:13px;font-size:12px;font-weight:900}.quickBtn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
 .navigationPanel{display:none;padding:14px 16px 24px}.navigationPanel.active{display:block}.navOriginCompact{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.navOriginCompact>div{display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center;min-width:0}.navOriginCompact .mi{grid-row:1/3;font-size:18px;color:var(--accent)}.navOriginCompact b{font-size:11px}.navOriginCompact small{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.navOriginCompact button{border:0;background:var(--soft);color:var(--text);border-radius:10px;padding:8px 10px;font-size:10px;font-weight:900}.navOriginEditor{display:none;margin-bottom:8px}.navOriginEditor.active{display:block}.navPointLabel{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;color:var(--muted);margin:9px 2px 5px}.navPointLabel .mi{font-size:15px}.navSearchRow{display:flex;gap:8px}.navSearchRow{position:relative}.navSearchRow .input{margin:0}.navSearchRow button{border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;padding:0 16px}.navSuggest{position:absolute;z-index:1800;left:0;right:66px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 14px 35px #0005;display:none;max-height:300px;overflow-y:auto}.navSuggest.active{display:block}.navSuggest button{width:100%;display:block;text-align:left;background:var(--card);color:var(--text);border:0;border-bottom:1px solid var(--line);padding:13px 14px;font-weight:700;font-size:13px}.navSuggest button:last-child{border-bottom:0}
-.navChoices{display:none;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.navChoices.active{display:flex}.navChoices::-webkit-scrollbar{display:none}.navChoice{min-width:150px;flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:11px;text-align:left}.navChoice.active{border:2px solid var(--accent);background:var(--soft)}.navChoice b{display:block;font-size:13px}.navChoice span{display:block;font-size:10px;color:var(--muted);margin-top:3px}.navChoice em{display:inline-block;font-style:normal;font-size:8px;font-weight:900;color:var(--accent);margin-top:5px}
+.navChoices{display:none!important}.navChoices::-webkit-scrollbar{display:none}.navChoice{min-width:150px;flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:11px;text-align:left}.navChoice.active{border:2px solid var(--accent);background:var(--soft)}.navChoice b{display:block;font-size:13px}.navChoice span{display:block;font-size:10px;color:var(--muted);margin-top:3px}.navChoice em{display:inline-block;font-style:normal;font-size:8px;font-weight:900;color:var(--accent);margin-top:5px}
 .navInstruction{display:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px}.navInstruction.active{display:block}.navTurn{font-size:21px;font-weight:950}.navInfo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.navInfo div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px}.navInfo b{display:block;font-size:17px}.navInfo small{color:var(--muted);font-size:8px}
 .voiceDock{position:fixed;z-index:1300;left:50%;transform:translateX(-50%);bottom:78px;width:min(500px,calc(100% - 24px));background:rgba(13,16,21,.94);backdrop-filter:blur(18px);border:1px solid #39404a;border-radius:18px;padding:9px 10px;display:none;align-items:center;gap:9px;box-shadow:0 10px 30px #0008}.voiceDock.active{display:flex}.voiceDock .vMain{flex:1;min-width:0}.voiceDock b{display:block;font-size:11px}.voiceDock small{font-size:9px;color:#aab1bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.voiceDock button{width:44px;height:44px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:18px}
 .navCenter b{width:48px;height:48px;border-radius:50%;display:grid!important;place-items:center;margin:-18px auto 2px!important;background:var(--accent);color:#fff;font-size:22px!important;box-shadow:0 7px 22px #ff5a1f66}
@@ -344,7 +344,7 @@ body.mode-discover #discoverSection>.quickRow{display:flex!important}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navManualMapUntil=0;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -434,7 +434,10 @@ function loadGoogleMaps(){
 async function initMap(){
  try{
   await loadGoogleMaps();
-  map=new google.maps.Map($("map"),{center:{lat:39,lng:35},zoom:6,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
+  map=new google.maps.Map($("map"),{center:{lat:39,lng:35},zoom:6,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false,zoomControl:false});
+  var mapEl=$("map"),holdManualMap=function(){if(navActive)navManualMapUntil=Date.now()+18000};
+  if(mapEl){["touchstart","pointerdown","wheel"].forEach(function(ev){mapEl.addEventListener(ev,holdManualMap,{passive:true})})}
+  map.addListener("dragstart",holdManualMap);
   route=new google.maps.Polyline({map:map,path:[],strokeColor:"#ff5a1f",strokeWeight:5,strokeOpacity:.95});
   geocoder=new google.maps.Geocoder();
   placesService=new google.maps.places.PlacesService(map);
@@ -457,7 +460,7 @@ function applyPosition(pos){
    var markerIcon=navActive?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:lastHeading||0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
    if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:markerIcon,zIndex:999});}
    else{marker.setPosition(gp);marker.setIcon(markerIcon);}
-   if(navActive){map.panTo(gp);if(map.getZoom()<17)map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
+   if(navActive&&Date.now()>navManualMapUntil){map.panTo(gp);try{if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
  }
  if(map&&!riding&&!navActive)setMapCenter(p,16);
  if(riding){
@@ -779,10 +782,10 @@ function fitAllAlternativeRoutes(){
 }
 function selectAlternativeRoute(i){
  var d=navAlternatives[i];if(!d)return;navSelectedAlternative=i;
- navAlternativePolylines.forEach(function(p,j){p.setOptions({strokeColor:j===i?"#ff5a1f":"#66717f",strokeWeight:j===i?9:6,strokeOpacity:j===i?.98:.72,zIndex:j===i?30:10})});
+ navAlternativePolylines.forEach(function(p,j){p.setOptions({strokeColor:j===i?"#ff5a1f":"#718096",strokeWeight:j===i?9:7,strokeOpacity:j===i?.98:.88,zIndex:j===i?30:12})});
  navAlternativeMarkers.forEach(function(m,j){try{m.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:j===i?16:14,fillColor:j===i?"#ff5a1f":"#66717f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3});m.setLabel({text:String(j+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"})}catch(e){}});
  navRoute=navAlternativePolylines[i]||navRoute;navPathPoints=d.pts.slice();navSteps=d.steps;navStepIndex=0;navTotalKm=d.km;navTotalSec=d.sec;navReady=true;
- document.querySelectorAll(".navChoice").forEach(function(b,j){b.classList.toggle("active",j===i)});
+ 
  $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel||"Seçilen rota";renderNavStep();
  var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.style.display="block";driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat'}
 }
@@ -875,7 +878,7 @@ async function planNavigation(){
 
    navAlternatives=found.slice(0,6);
    navAlternativePolylines=navAlternatives.map(function(rd,i){
-    var p=new google.maps.Polyline({map:map,path:rd.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:i===0?"#ff5a1f":"#66717f",strokeWeight:i===0?9:6,strokeOpacity:i===0?.98:.72,zIndex:i===0?30:10,clickable:true});
+    var p=new google.maps.Polyline({map:map,path:rd.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:i===0?"#ff5a1f":"#718096",strokeWeight:i===0?9:7,strokeOpacity:i===0?.98:.88,zIndex:i===0?30:12,clickable:true});
     google.maps.event.addListener(p,"click",function(){selectAlternativeRoute(i)});return p
    });
    navAlternativeMarkers=navAlternatives.map(function(rd,i){
@@ -885,9 +888,10 @@ async function planNavigation(){
    navRoute=navAlternativePolylines[0];
    activeNavLabel=d.label||q;activeRouteMode=mode;activeNavDestination={lat:Number(d.lat),lon:Number(d.lon)};navActive=false;navReady=true;navOffRouteCount=0;
    fitAllAlternativeRoutes();
-   renderAlternativeChoices();selectAlternativeRoute(0);
+   var choices=$("navChoices");if(choices){choices.innerHTML="";choices.classList.remove("active")}
+   selectAlternativeRoute(0);
    navStartedRide=false;
-   $("status").textContent=navAlternatives.length>1?navAlternatives.length+" farklı rota haritada gösteriliyor. Çizgiye veya numaraya dokunup seç.":"Bu hedef için farklı bir rota bulunamadı.";
+   $("status").textContent=navAlternatives.length>1?navAlternatives.length+" alternatif yol haritada çizildi. Gri bir rotaya dokunarak seçebilirsin.":"Bu hedef için farklı bir rota bulunamadı.";
  }catch(err){
    console.warn("Route compute failed",err);
    $("status").textContent="Rota oluşturulamadı. Hedefi listeden seçip tekrar dene.";
@@ -942,7 +946,8 @@ function updateGuidanceHud(p){
 function enterGuidanceMode(){
  document.body.classList.add("guidance-active");
  var hud=$("guidanceHud");if(hud)hud.style.display="block";
- if(map&&currentPoint){map.setCenter({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
+ navManualMapUntil=0;
+ if(map&&currentPoint){map.setCenter({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(16);try{map.setTilt(0);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
  updateGuidanceHud(currentPoint);
 }
 function exitGuidanceMode(){
@@ -1004,7 +1009,7 @@ async function openCommunityRouteNavigation(item,autoStart){
   if(autoStart){setTimeout(function(){if(navReady)startPlannedNavigation()},180)}
  }catch(e){console.warn("Community route",e);$("status").textContent="Topluluk rotası navigasyona dönüştürülemedi."}
 }
-window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation};
+window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,recenter:function(){navManualMapUntil=0;if(map&&currentPoint){map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(16)}}};
 
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
@@ -1044,7 +1049,7 @@ function updateNavigation(p){
  if(offKm>0.10){navOffRouteCount++}else if(offKm<0.065){navOffRouteCount=0}
  if(navOffRouteCount>=3&&!navRecalculating)recalculateNavigation();
  updateGuidanceHud(p);
- if(map){map.panTo({lat:p.lat,lng:p.lon});if(map.getZoom()<17)map.setZoom(18);try{map.setTilt(45);if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
+ if(map&&Date.now()>navManualMapUntil){map.panTo({lat:p.lat,lng:p.lon});try{if(lastHeading)map.setHeading(lastHeading);}catch(e){}}
 }
 function stopNavigation(){
  navActive=false;navReady=false;navSteps=[];navStepIndex=0;activeNavDestination=null;navPathPoints=[];navOffRouteCount=0;navRecalculating=false;

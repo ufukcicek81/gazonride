@@ -3,6 +3,7 @@ package com.gazonride.app;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.os.Bundle;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
@@ -12,8 +13,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.JavascriptInterface;
 import android.content.Intent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,6 +27,7 @@ import android.view.WindowManager;
 import android.view.View;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.provider.Settings;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -38,6 +44,18 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences prefs;
     private String pendingOAuthUrl = null;
     private PermissionRequest pendingWebPermission = null;
+
+    private long updateDownloadId = -1L;
+    private Uri pendingInstallUri = null;
+    private boolean downloadReceiverRegistered = false;
+
+    private final BroadcastReceiver updateDownloadReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (!DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) return;
+            long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L);
+            if (id == updateDownloadId) handleDownloadedApk(id);
+        }
+    };
 
     public class AndroidBridge {
         @JavascriptInterface public void startRide(){
@@ -81,6 +99,10 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+        updateDownloadId=prefs.getLong("update_download_id",-1L);
+        String pendingUri=prefs.getString("pending_install_uri",null);
+        if(pendingUri!=null&&!pendingUri.isEmpty()) pendingInstallUri=Uri.parse(pendingUri);
+        registerUpdateDownloadReceiver();
         captureOAuthIntent(getIntent());
         // GaZonRide is used as a motorcycle navigation screen: keep display awake
         // while the application is in the foreground.
@@ -210,17 +232,112 @@ public class MainActivity extends Activity {
                         .setTitle("GazonRide güncellemesi")
                         .setMessage("Yeni Android sürümü hazır. Güncellemek ister misin?")
                         .setNegativeButton("Daha sonra",null)
-                        .setPositiveButton("Güncelle", (d,w)->{
-                            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(openUrl))); }
-                            catch(Exception e){ Toast.makeText(this,"Güncelleme sayfası açılamadı.",Toast.LENGTH_LONG).show(); }
-                        }).show());
+                        .setPositiveButton("Güncelle", (d,w)-> startNativeUpdateDownload(openUrl))
+                        .show());
                 }
             }catch(Exception ignored){} finally { if(c!=null)c.disconnect(); }
         }).start();
     }
 
+
+    private void registerUpdateDownloadReceiver(){
+        if(downloadReceiverRegistered) return;
+        IntentFilter filter=new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if(Build.VERSION.SDK_INT>=33) registerReceiver(updateDownloadReceiver,filter,Context.RECEIVER_EXPORTED);
+        else registerReceiver(updateDownloadReceiver,filter);
+        downloadReceiverRegistered=true;
+    }
+
+    private void startNativeUpdateDownload(String apkUrl){
+        try{
+            DownloadManager dm=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
+            if(dm==null) throw new IllegalStateException("DownloadManager unavailable");
+            DownloadManager.Request req=new DownloadManager.Request(Uri.parse(apkUrl));
+            req.setTitle("GaZonRide güncellemesi");
+            req.setDescription("Yeni sürüm indiriliyor");
+            req.setMimeType("application/vnd.android.package-archive");
+            req.setAllowedOverMetered(true);
+            req.setAllowedOverRoaming(true);
+            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            updateDownloadId=dm.enqueue(req);
+            prefs.edit().putLong("update_download_id",updateDownloadId).apply();
+            Toast.makeText(this,"Güncelleme indiriliyor. Bitince kurulum açılacak.",Toast.LENGTH_LONG).show();
+        }catch(Exception e){
+            try{
+                startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(apkUrl)));
+            }catch(Exception ignored){
+                Toast.makeText(this,"Güncelleme indirilemedi.",Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void handleDownloadedApk(long id){
+        DownloadManager dm=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
+        if(dm==null) return;
+        Cursor cursor=null;
+        try{
+            cursor=dm.query(new DownloadManager.Query().setFilterById(id));
+            if(cursor==null||!cursor.moveToFirst()) return;
+            int status=cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+            if(status==DownloadManager.STATUS_SUCCESSFUL){
+                Uri apkUri=dm.getUriForDownloadedFile(id);
+                prefs.edit().remove("update_download_id").apply();
+                updateDownloadId=-1L;
+                if(apkUri!=null) installDownloadedApk(apkUri);
+                else Toast.makeText(this,"APK indirildi ama dosya açılamadı.",Toast.LENGTH_LONG).show();
+            }else if(status==DownloadManager.STATUS_FAILED){
+                int reason=cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
+                prefs.edit().remove("update_download_id").apply();
+                updateDownloadId=-1L;
+                Toast.makeText(this,"Güncelleme indirilemedi ("+reason+").",Toast.LENGTH_LONG).show();
+            }
+        }catch(Exception e){
+            Toast.makeText(this,"Güncelleme dosyası kontrol edilemedi.",Toast.LENGTH_LONG).show();
+        }finally{
+            if(cursor!=null) cursor.close();
+        }
+    }
+
+    private boolean canInstallDownloadedApks(){
+        return Build.VERSION.SDK_INT<26 || getPackageManager().canRequestPackageInstalls();
+    }
+
+    private void installDownloadedApk(Uri apkUri){
+        pendingInstallUri=apkUri;
+        if(Build.VERSION.SDK_INT>=26 && !canInstallDownloadedApks()){
+            prefs.edit().putString("pending_install_uri",apkUri.toString()).apply();
+            try{
+                Intent settingsIntent=new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName()));
+                startActivity(settingsIntent);
+                Toast.makeText(this,"GaZonRide güncellemesi için 'Bu kaynaktan izin ver' seçeneğini aç.",Toast.LENGTH_LONG).show();
+            }catch(Exception e){
+                Toast.makeText(this,"Uygulama yükleme izni açılamadı.",Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        try{
+            Intent install=new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(apkUri,"application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_ACTIVITY_NEW_TASK);
+            prefs.edit().remove("pending_install_uri").apply();
+            pendingInstallUri=null;
+            startActivity(install);
+        }catch(Exception e){
+            Toast.makeText(this,"APK kurulum ekranı açılamadı.",Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override protected void onPause(){super.onPause();prefs.edit().putBoolean("background",true).apply();}
-    @Override protected void onResume(){super.onResume();prefs.edit().putBoolean("background",false).apply(); if(webView!=null) webView.evaluateJavascript("if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){try{var bg=JSON.parse(window.AndroidBridge.getBufferedPoints()||'[]');if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}}catch(e){}",null);}
+    @Override protected void onResume(){
+        super.onResume();
+        prefs.edit().putBoolean("background",false).apply();
+        if(pendingInstallUri==null){
+            String pending=prefs.getString("pending_install_uri",null);
+            if(pending!=null&&!pending.isEmpty()) pendingInstallUri=Uri.parse(pending);
+        }
+        if(pendingInstallUri!=null && canInstallDownloadedApks()) installDownloadedApk(pendingInstallUri);
+        if(webView!=null) webView.evaluateJavascript("if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){try{var bg=JSON.parse(window.AndroidBridge.getBufferedPoints()||'[]');if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}}catch(e){}",null);
+    }
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
         if(requestCode==LOCATION_REQ&&webView!=null)webView.reload();
@@ -230,6 +347,13 @@ public class MainActivity extends Activity {
             }else pendingWebPermission.deny();
             pendingWebPermission=null;
         }
+    }
+    @Override protected void onDestroy(){
+        if(downloadReceiverRegistered){
+            try{unregisterReceiver(updateDownloadReceiver);}catch(Exception ignored){}
+            downloadReceiverRegistered=false;
+        }
+        super.onDestroy();
     }
     @Override public void onBackPressed(){if(webView.canGoBack())webView.goBack();else super.onBackPressed();}
 }

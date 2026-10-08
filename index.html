@@ -197,7 +197,7 @@ html.theme-dark{color-scheme:dark}
       <div><b id="navEta">—</b><small>TAHMİNİ SÜRE</small></div>
       <div><b id="navNext">—</b><small>SONRAKİ MANEVRA</small></div>
     </div>
-    <button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
+    <button class="screenBtn" id="navDrive" style="background:var(--accent);color:#fff;border-color:var(--accent);font-size:16px;font-weight:950"><span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat</button><button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
   </div>
 </section>
 
@@ -227,7 +227,7 @@ html.theme-dark{color-scheme:dark}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -509,7 +509,8 @@ async function planNavigation(){
    navStepIndex=0;
    navTotalKm=Number(rt.distanceMeters||0)/1000;
    navTotalSec=Math.max(0,Number(rt.durationMillis||0)/1000);
-   navActive=true;
+   navActive=false;
+   navReady=true;
    activeNavLabel=d.label||q;
    activeRouteMode=mode;
 
@@ -519,13 +520,24 @@ async function planNavigation(){
    $("navRoad").textContent=d.label||q;
    renderNavStep();
 
-   if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
-   $("status").textContent=mode==="DRIVING"?"Rota açıldı ve sürüş kaydı başladı. Türkiye için sürüş rotası kullanılıyor.":"Motosiklet rotası açıldı ve sürüş kaydı başladı.";
+   navStartedRide=false;
+   var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat';driveBtn.style.display="block";}
+   $("status").textContent="Rota hazır. SÜR butonuna basınca navigasyon ve sürüş kaydı birlikte başlayacak.";
  }catch(err){
    console.warn("Route compute failed",err);
    $("status").textContent="Rota oluşturulamadı. Hedefi listeden seçip tekrar dene.";
  }
  finally{$("navGo").innerHTML='<span class="mi">navigation</span>';}
+}
+function startPlannedNavigation(){
+ if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
+ navActive=true;
+ navReady=false;
+ if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
+ requestWakeLock();
+ var b=$("navDrive");if(b){b.disabled=true;b.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">navigation</span>Navigasyon Aktif';}
+ $("status").textContent="Navigasyon ve sürüş kaydı birlikte başladı.";
+ if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});
 }
 function renderNavStep(){
  var s=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))];
@@ -544,9 +556,10 @@ function updateNavigation(p){
  if(map)map.panTo({lat:p.lat,lng:p.lon});
 }
 function stopNavigation(){
- navActive=false;navSteps=[];navStepIndex=0;
+ navActive=false;navReady=false;navSteps=[];navStepIndex=0;
  if(navRoute){navRoute.setMap(null);navRoute=null;}
  $("navInstruction").classList.remove("active");
+ var db=$("navDrive");if(db){db.disabled=false;db.style.display="block";db.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat';}
  if(navStartedRide&&riding){
    navStartedRide=false;
    finishRide();
@@ -742,6 +755,7 @@ function boot(){
  setupNavAutocomplete();
  $("navGo").addEventListener("click",planNavigation);
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
+ $("navDrive").addEventListener("click",startPlannedNavigation);
  $("navStop").addEventListener("click",stopNavigation);
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();

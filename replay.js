@@ -1,6 +1,7 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=12000,auto=true;
+var modal,currentRide=null,anim=0,start=0,duration=15000,auto=false,mode="overview";
+var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
 function $(id){return document.getElementById(id)}
@@ -8,119 +9,117 @@ function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")
 function pts(ride){return (ride&&ride.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2&&isFinite(Number(p[0]))&&isFinite(Number(p[1]))}).map(function(p){return {lat:Number(p[0]),lng:Number(p[1]),alt:p[2]==null?0:Number(p[2]),time:p[3]||0}})}
 function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lng-a.lng)*p;return (Math.atan2(Math.sin(dl)*Math.cos(y2),Math.cos(y1)*Math.sin(y2)-Math.sin(y1)*Math.cos(y2)*Math.cos(dl))*180/Math.PI+360)%360}
 function interpolate(a,b,t){return {lat:a.lat+(b.lat-a.lat)*t,lng:a.lng+(b.lng-a.lng)*t,alt:(a.alt||0)+((b.alt||0)-(a.alt||0))*t}}
-function pointAt(a,p){
- if(!a.length)return null;
- var f=Math.max(0,Math.min(1,p))*(a.length-1),i=Math.min(a.length-2,Math.floor(f)),t=f-i;
- if(a.length===1)return a[0];
- return {point:interpolate(a[i],a[i+1],t),i:i,next:a[i+1]};
-}
-function waitForGoogle(){
+function pointAt(a,p){if(!a.length)return null;if(a.length===1)return {point:a[0],i:0,next:a[0]};var f=Math.max(0,Math.min(1,p))*(a.length-1),i=Math.min(a.length-2,Math.floor(f)),t=f-i;return {point:interpolate(a[i],a[i+1],t),i:i,next:a[i+1]}}
+function waitForGoogle(){return new Promise(function(resolve,reject){var n=0;(function tick(){if(window.google&&google.maps&&google.maps.importLibrary)return resolve();if(++n>100)return reject(new Error("Google Maps hazır değil"));setTimeout(tick,100)})()})}
+function parseDuration(s){var a=String(s||"0").split(":").map(Number);if(a.length===3)return a[0]*3600+a[1]*60+a[2];if(a.length===2)return a[0]*60+a[1];return Number(a[0]||0)}
+function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
+
+async function geocodeAddress(address){
  return new Promise(function(resolve,reject){
-  var n=0;(function tick(){if(window.google&&google.maps&&google.maps.importLibrary)return resolve();if(++n>80)return reject(new Error("Google Maps hazır değil"));setTimeout(tick,100)})();
+  var g=new google.maps.Geocoder();
+  g.geocode({address:address,region:"TR"},function(results,status){
+   if(status==="OK"&&results&&results[0]){var l=results[0].geometry.location;resolve({lat:l.lat(),lng:l.lng(),label:results[0].formatted_address||address})}
+   else reject(new Error(status||"Adres bulunamadı"))
+  })
  })
 }
-function clearMap(){
- cancelAnimationFrame(anim);anim=0;start=0;
+async function resolveDemoRoadRoute(ride){
+ if(!ride||!ride.demoGoogleRoute)return ride;
+ if(Array.isArray(ride.track)&&ride.track.length>20)return ride;
+ await waitForGoogle();
+ var start=await geocodeAddress(ride.demoOrigin),end=await geocodeAddress(ride.demoDestination);
+ var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
+ var req={origin:{lat:start.lat,lng:start.lng},destination:{lat:end.lat,lng:end.lng},travelMode:"DRIVING",routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","distanceMeters","durationMillis","legs"]};
+ var result=await Route.computeRoutes(req),rt=result&&result.routes&&result.routes[0];
+ if(!rt||!rt.path||rt.path.length<2)throw new Error("Google yol rotası bulunamadı");
+ var totalMs=Math.max(60000,Number(rt.durationMillis||3600000)),base=Date.now()-86400000,step=Math.max(500,Math.round(totalMs/Math.max(1,rt.path.length-1)));
+ ride.track=rt.path.map(function(p,i){var lat=typeof p.lat==="function"?p.lat():Number(p.lat),lng=typeof p.lng==="function"?p.lng():Number(p.lng);return [lat,lng,0,base+i*step]});
+ ride.km=Number(rt.distanceMeters||0)/1000;
+ ride.duration=fmtDuration(totalMs/1000);
+ ride.turns=(rt.legs||[]).reduce(function(t,l){return t+((l.steps||[]).length||0)},0);
+ ride.demoResolved=true;
+ return ride
+}
+function clearMaps(){
+ cancelAnimationFrame(anim);anim=0;start=0;auto=false;
  var host=$("grReplayMap");if(host)host.innerHTML="";
+ overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
  map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
+}
+function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
+function buildOverviewMap(ride){
+ var a=pts(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
+ host.innerHTML="";
+ overviewMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:10,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
+ overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1});
+ startMarker=new google.maps.Marker({map:overviewMap,position:{lat:a[0].lat,lng:a[0].lng},icon:makeDotIcon("#27c46b",8),title:"Başlangıç"});
+ var e=a[a.length-1];
+ endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#d9272e",9),title:"Varış"});
+ var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
+ mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent="Gerçek yol rotası";
 }
 async function build3DMap(ride){
  var a=pts(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
- clearMap();
- await waitForGoogle();
- try{
-  var lib=await google.maps.importLibrary("maps3d");
-  var Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement;
-  if(!Map3DElement||!Polyline3DElement||!Marker3DElement)throw new Error("3D Maps desteklenmiyor");
-  var first=a[0],second=a[1],hd=bearing(first,second);
-  map3d=new Map3DElement({
-   center:{lat:first.lat,lng:first.lng,altitude:0},
-   range:1250,
-   tilt:52,
-   heading:hd,
-   mode:"SATELLITE",
-   defaultUIDisabled:true
-  });
-  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
-  route3d=new Polyline3DElement({
-   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
-   strokeColor:"#ff5a1f",strokeWidth:7,outerColor:"#ffffff",outerWidth:.12,
-   altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true
-  });
-  travel3d=new Polyline3DElement({
-   path:[{lat:first.lat,lng:first.lng,altitude:2.5}],
-   strokeColor:"#ffffff",strokeWidth:4,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true
-  });
-  bike3d=new Marker3DElement({
-   position:{lat:first.lat,lng:first.lng,altitude:4},
-   altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true
-  });
-  map3d.append(route3d);map3d.append(travel3d);map3d.append(bike3d);host.append(map3d);using3d=true;
-  return true;
- }catch(e){
-  console.warn("Maps 3D fallback",e);
-  return buildClassicMap(a,host);
- }
-}
-function buildClassicMap(a,host){
  host.innerHTML="";
- var first=a[0];
- classicMap=new google.maps.Map(host,{center:{lat:first.lat,lng:first.lng},zoom:16,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
- classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#ff5a1f",strokeWeight:8,strokeOpacity:.95});
- classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:first.lat,lng:first.lng}],strokeColor:"#ffffff",strokeWeight:5,strokeOpacity:.95});
- classicBike=new google.maps.Marker({map:classicMap,position:{lat:first.lat,lng:first.lng},label:{text:"🏍",fontSize:"22px"},icon:{path:google.maps.SymbolPath.CIRCLE,scale:15,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#fff",strokeWeight:3}});
- try{classicMap.setTilt(45)}catch(e){}
- var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});classicMap.fitBounds(b,45);
- using3d=false;return true;
+ try{
+  var lib=await google.maps.importLibrary("maps3d"),Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement;
+  if(!Map3DElement||!Polyline3DElement||!Marker3DElement)throw new Error("3D desteklenmiyor");
+  var first=a[0],second=a[1];
+  map3d=new Map3DElement({center:{lat:first.lat,lng:first.lng,altitude:0},range:1100,tilt:50,heading:bearing(first,second),mode:"HYBRID",defaultUIDisabled:true});
+  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
+  route3d=new Polyline3DElement({path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:1.5}}),strokeColor:"#d9272e",strokeWidth:7,outerColor:"#ffffff",outerWidth:.1,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true});
+  travel3d=new Polyline3DElement({path:[{lat:first.lat,lng:first.lng,altitude:2}],strokeColor:"#ffffff",strokeWidth:4,altitudeMode:"RELATIVE_TO_GROUND",drawsOccludedSegments:true});
+  bike3d=new Marker3DElement({position:{lat:first.lat,lng:first.lng,altitude:3},altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true});
+  map3d.append(route3d);map3d.append(travel3d);map3d.append(bike3d);host.append(map3d);using3d=true
+ }catch(e){
+  console.warn("3D fallback",e);
+  classicMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:17,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
+  classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:7,strokeOpacity:1});
+  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#fff",strokeWeight:4,strokeOpacity:.95});
+  classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",15)});
+  using3d=false
+ }
+ mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";$("grReplayState").textContent=using3d?"3D sürüş oynatılıyor":"Eğimli haritada sürüş oynatılıyor";
+ auto=true;start=0;cancelAnimationFrame(anim);anim=requestAnimationFrame(loop)
 }
 function updateScene(progress){
- var a=pts(currentRide);if(a.length<2)return;
- var x=pointAt(a,progress);if(!x)return;
- var p=x.point,hd=bearing(p,x.next);
+ var a=pts(currentRide);if(a.length<2)return;var x=pointAt(a,progress);if(!x)return;var p=x.point,hd=bearing(p,x.next);
  if(using3d&&map3d){
-  bike3d.position={lat:p.lat,lng:p.lng,altitude:4};
-  travel3d.path=a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:2.5}});
-  map3d.center={lat:p.lat,lng:p.lng,altitude:0};
-  map3d.heading=hd;map3d.tilt=52;map3d.range=1150;
+  bike3d.position={lat:p.lat,lng:p.lng,altitude:3};
+  travel3d.path=a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:2}});
+  map3d.center={lat:p.lat,lng:p.lng,altitude:0};map3d.heading=hd;map3d.tilt=50;map3d.range=950
  }else if(classicMap){
-  var pos={lat:p.lat,lng:p.lng};classicBike.setPosition(pos);
-  classicTravel.setPath(a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));
-  classicMap.panTo(pos);classicMap.setZoom(17);try{classicMap.setTilt(45);classicMap.setHeading(hd)}catch(e){}
+  var pos={lat:p.lat,lng:p.lng};classicBike.setPosition(pos);classicTravel.setPath(a.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));classicMap.panTo(pos);classicMap.setZoom(17);try{classicMap.setTilt(45);classicMap.setHeading(hd)}catch(e){}
  }
- var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";
+ var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%"
 }
-function loop(ts){
- if(!auto)return;
- if(!start)start=ts;
- var p=((ts-start)%duration)/duration;updateScene(p);anim=requestAnimationFrame(loop)
-}
+function loop(ts){if(!auto)return;if(!start)start=ts;var p=((ts-start)%duration)/duration;updateScene(p);anim=requestAnimationFrame(loop)}
 async function open(ride){
- currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";
- $("grReplayKm").textContent=Number(ride.km||0).toFixed(1)+" km";
- $("grReplayTime").textContent=ride.duration||"00:00";
- $("grReplayMax").textContent=Math.round(Number(ride.max||0))+" km/s";
- $("grReplayName").textContent=ride.destination||"Sürüş Tekrarı";
- $("grReplayDate").textContent=ride.date||"";
- $("grReplayState").textContent="3D harita hazırlanıyor…";
- try{await build3DMap(ride);$("grReplayState").textContent=using3d?"Google Maps 3D · canlı kamera":"Google Harita · eğimli kamera";auto=true;start=0;cancelAnimationFrame(anim);anim=requestAnimationFrame(loop)}
- catch(e){$("grReplayState").textContent="3D harita açılamadı";console.warn(e)}
+ currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";$("grReplayState").textContent="Rota hazırlanıyor…";clearMaps();
+ try{
+  await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);
+  $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);
+  $("grReplayTime").textContent=currentRide.duration||"00:00";
+  $("grReplayMax").textContent=Math.round(Number(currentRide.max||0));
+  $("grReplayAvg").textContent=avgSpeed(currentRide);
+  $("grReplayTurns").textContent=Math.round(Number(currentRide.turns||0));
+  $("grReplayName").textContent=currentRide.destination||"Sürüş Tekrarı";$("grReplayDate").textContent=currentRide.date||"";
+  buildOverviewMap(currentRide)
+ }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";console.warn(e)}
 }
-function close(){auto=false;cancelAnimationFrame(anim);clearMap();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
-function toggle(){auto=!auto;$("grReplayPlay").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Oynat';if(auto){start=0;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)}
-async function shareRide(){
- var t=(currentRide.destination||"GaZonRide 3D Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");
- try{if(navigator.share){await navigator.share({title:"GaZonRide 3D Sürüş",text:t});return}}catch(e){}
- if(navigator.clipboard)try{await navigator.clipboard.writeText(t);alert("Sürüş bilgisi kopyalandı.")}catch(e){}
-}
+function close(){clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
+function pauseResume(){auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';if(auto){start=0;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)}
+function backOverview(){auto=false;cancelAnimationFrame(anim);buildOverviewMap(currentRide)}
+async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
 function scan(){
- document.querySelectorAll("#historyList .ride").forEach(function(row,i){if(row.querySelector("[data-gr-replay]"))return;var b=document.createElement("button");b.className="mapBtn";b.setAttribute("data-gr-replay",String(i));b.title="3D Sürüş Tekrarı";b.innerHTML='<span class="mi">3d_rotation</span>';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-replay"))];if(r)open(r)};row.appendChild(b)});
- document.querySelectorAll("#screen [data-route]").forEach(function(routeBtn){var card=routeBtn.closest(".screenCard");if(!card||card.querySelector("[data-gr-screen-replay]"))return;var i=Number(routeBtn.getAttribute("data-route")),b=document.createElement("button");b.className="screenBtn";b.setAttribute("data-gr-screen-replay",String(i));b.innerHTML='<span class="mi" style="vertical-align:-5px">3d_rotation</span> 3D Sürüş Tekrarı';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-screen-replay"))];if(r)open(r)};routeBtn.insertAdjacentElement("afterend",b)});
+ document.querySelectorAll("#historyList .ride").forEach(function(row,i){if(row.querySelector("[data-gr-replay]"))return;var b=document.createElement("button");b.className="mapBtn";b.setAttribute("data-gr-replay",String(i));b.title="Sürüş Tekrarı";b.innerHTML='<span class="mi">3d_rotation</span>';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-replay"))];if(r)open(r)};row.appendChild(b)});
+ document.querySelectorAll("#screen [data-route]").forEach(function(routeBtn){var card=routeBtn.closest(".screenCard");if(!card||card.querySelector("[data-gr-screen-replay]"))return;var i=Number(routeBtn.getAttribute("data-route")),b=document.createElement("button");b.className="screenBtn";b.setAttribute("data-gr-screen-replay",String(i));b.innerHTML='<span class="mi" style="vertical-align:-5px">3d_rotation</span> Sürüş Tekrarı';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-screen-replay"))];if(r)open(r)};routeBtn.insertAdjacentElement("afterend",b)})
 }
 function install(){
  modal=document.createElement("div");modal.id="grReplay";modal.className="gr-replay";
- modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>3D Sürüş Tekrarı</b><small id="grReplayState">Google Maps 3D</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><div class="gr-replay-overlay"><div class="gr-replay-stat"><b id="grReplayKm">0 km</b><small>MESAFE</small></div><div class="gr-replay-stat"><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div class="gr-replay-stat"><b id="grReplayMax">0 km/s</b><small>MAX HIZ</small></div></div><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-replay-controls"><button id="grReplayPlay"><span class="mi">pause</span> Duraklat</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Rotayı Paylaş</button></div><div class="gr-replay-note">3D tekrar gerçek Google haritası üzerinde rota izini takip eder. Desteklenen cihazlarda 3D binalar ve arazi, diğer cihazlarda eğimli Google harita görünümü kullanılır.</div></div>';
- document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay").onclick=toggle;$("grReplayShare").onclick=shareRide;
- new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> 3D Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>Manevra / viraj</span><b id="grReplayTurns">0</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Paylaş</button></div></div>';
+ document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonReplay={open:open,scan:scan};

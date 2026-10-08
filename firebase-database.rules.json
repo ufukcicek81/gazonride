@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL'))",
+        ".write": "auth != null && (auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL' || (auth.uid === $uid && ((!data.exists() && newData.child('role').val() === 'member') || newData.child('role').val() === data.child('role').val())))"
+      }
+    },
+    "submissions": {
+      ".indexOn": ["authorUid", "status"],
+      "$id": {
+        ".read": "auth != null && (data.child('authorUid').val() === auth.uid || (auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL'))",
+        ".write": "auth != null && ((!data.exists() && newData.child('authorUid').val() === auth.uid && newData.child('status').val() === 'pending') || (auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL'))"
+      }
+    },
+    "community": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL'"
+    }
+  }
+}

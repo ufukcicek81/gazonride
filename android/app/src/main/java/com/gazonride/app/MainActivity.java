@@ -12,6 +12,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.content.Intent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -44,6 +45,8 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences prefs;
     private String pendingOAuthUrl = null;
     private PermissionRequest pendingWebPermission = null;
+    private ValueCallback<Uri[]> pendingFileChooser = null;
+    private static final int FILE_CHOOSER_REQ = 44;
 
     private long updateDownloadId = -1L;
     private Uri pendingInstallUri = null;
@@ -134,6 +137,21 @@ public class MainActivity extends Activity {
                         requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},MIC_REQ);
                     } else request.grant(request.getResources());
                 });
+            }
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams){
+                if(pendingFileChooser!=null) pendingFileChooser.onReceiveValue(null);
+                pendingFileChooser=filePathCallback;
+                try{
+                    Intent intent=fileChooserParams.createIntent();
+                    intent.setType("image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);
+                    startActivityForResult(Intent.createChooser(intent,"Fotoğraf seç"),FILE_CHOOSER_REQ);
+                    return true;
+                }catch(Exception e){
+                    pendingFileChooser=null;
+                    Toast.makeText(MainActivity.this,"Fotoğraf seçici açılamadı.",Toast.LENGTH_LONG).show();
+                    return false;
+                }
             }
         });
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
@@ -338,6 +356,24 @@ public class MainActivity extends Activity {
         if(pendingInstallUri!=null && canInstallDownloadedApks()) installDownloadedApk(pendingInstallUri);
         if(webView!=null) webView.evaluateJavascript("if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){try{var bg=JSON.parse(window.AndroidBridge.getBufferedPoints()||'[]');if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}}catch(e){}",null);
     }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode==FILE_CHOOSER_REQ && pendingFileChooser!=null){
+            Uri[] result=null;
+            if(resultCode==Activity.RESULT_OK){
+                if(data!=null && data.getClipData()!=null){
+                    int count=data.getClipData().getItemCount();
+                    result=new Uri[count];
+                    for(int i=0;i<count;i++) result[i]=data.getClipData().getItemAt(i).getUri();
+                }else if(data!=null && data.getData()!=null){
+                    result=new Uri[]{data.getData()};
+                }
+            }
+            pendingFileChooser.onReceiveValue(result);
+            pendingFileChooser=null;
+        }
+    }
+
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
         if(requestCode==LOCATION_REQ&&webView!=null)webView.reload();

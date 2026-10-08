@@ -208,7 +208,7 @@ body.mode-home .discoverSection,body.mode-home .map,body.mode-home .content,body
 body.mode-discover .homeSection,body.mode-ride .homeSection,body.mode-navigation .homeSection,body.mode-overlay .homeSection{display:none}
 html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .communityTop button{background:#fff!important;color:#171a1f!important;border-color:var(--line)!important}
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
-.profileAvatarWrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}.profileAvatar{width:82px;height:82px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center}.profileAvatar img{width:100%;height:100%;object-fit:cover}.profileAvatar .mi{font-size:38px;color:var(--accent)}.avatarPick{flex:1}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
+.profileAvatarWrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}.profileAvatar{width:82px;height:82px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center}.profileAvatar img{width:100%;height:100%;object-fit:cover}.profileAvatar .mi{font-size:38px;color:var(--accent)}.avatarPick{flex:1}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.fuelPriceLive{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}.fuelPriceLive small{display:block;color:var(--muted);font-size:8px;letter-spacing:1px}.fuelPriceLive b{display:block;font-size:18px;margin-top:2px}.fuelPriceLive span{display:block;color:var(--muted);font-size:8px;margin-top:2px}.fuelPriceLive button{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);display:grid;place-items:center}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
 /* Community cleanup */
 body.mode-discover #discoverSection>.discoverSearch,
 body.mode-discover #discoverSection>.discoverTabs,
@@ -435,7 +435,7 @@ function fitPolyline(poly){if(!map||!poly)return;var path=poly.getPath(),b=new g
 function setMapCenter(p,zoom){if(!map||!p)return;map.setCenter({lat:p.lat,lng:p.lon});if(zoom)map.setZoom(zoom);}
 window.GaZonMapContext={getCurrentPoint:function(){return currentPoint?{lat:currentPoint.lat,lon:currentPoint.lon}:null},centerCurrent:function(zoom){if(currentPoint)setMapCenter(currentPoint,zoom||16);else startGPS()}};
 function applyPosition(pos){
- var c=pos.coords,p={lat:c.latitude,lon:c.longitude},ts=Number(pos.timestamp||c.timestamp||Date.now());currentPoint=p;if(navActive)updateNavigation(p);
+ var c=pos.coords,p={lat:c.latitude,lon:c.longitude},ts=Number(pos.timestamp||c.timestamp||Date.now());currentPoint=p;if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive)updateNavigation(p);
  $("location").innerHTML='<span class="mi">location_on</span><span>'+p.lat.toFixed(5)+", "+p.lon.toFixed(5)+"</span>";
  $("gps").textContent="GPS bağlı";
  $("accuracy").textContent="Konum doğruluğu: ±"+Math.round(c.accuracy||0)+" m";
@@ -472,7 +472,7 @@ function startGPS(){
  navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
 }
 function getRiderProfile(){
- var d={name:"GaZonRide sürücüsü",bike:"KTM 1290",avatar:"",motor:{brand:"KTM",model:"1290 Super Adventure",year:"",engine:"1290",tank:23,consumption:5.5,fuelPrice:0,odometer:0}};
+ var d={name:"GaZonRide sürücüsü",bike:"KTM 1290",avatar:"",motor:{brand:"KTM",model:"1290 Super Adventure",year:"",engine:"1290",tank:23,consumption:5.5,fuelType:"benzin",fuelPrice:0,fuelCity:"",fuelSource:"",fuelUpdatedAt:"",odometer:0}};
  try{var p=JSON.parse(localStorage.getItem("gazon_profile")||"{}");if(p&&typeof p==="object"){Object.assign(d,p);d.motor=Object.assign({},d.motor,p.motor||{});}}catch(e){}
  if(!d.bike)d.bike=[d.motor.brand,d.motor.model].filter(Boolean).join(" ")||"Motosiklet";
  return d
@@ -485,6 +485,53 @@ function updateHomeProfileUI(){
  if(welcome)welcome.textContent="Merhaba, "+(p.name||"Sürücü");
  if(sum)sum.textContent=(m.consumption?Number(m.consumption).toFixed(1)+" L/100 km · ":"")+(m.tank?Number(m.tank).toFixed(0)+" L depo":"Motor bilgilerini tamamla");
  if(av)av.innerHTML=p.avatar?'<img src="'+p.avatar+'" alt="Profil">':'<span class="mi">person</span>';
+}
+var fuelPriceSyncStarted=false;
+async function resolveFuelCity(){
+ if(!currentPoint||!window.google||!google.maps)return "";
+ try{
+  var g=geocoder||new google.maps.Geocoder();
+  return await new Promise(function(resolve){
+   g.geocode({location:{lat:currentPoint.lat,lng:currentPoint.lon},language:"tr",region:"TR"},function(results,status){
+    if(status!=="OK"||!results||!results.length){resolve("");return}
+    var comps=results[0].address_components||[],city="";
+    comps.forEach(function(a){if((a.types||[]).indexOf("administrative_area_level_1")>=0)city=a.long_name});
+    resolve(city||"")
+   })
+  })
+ }catch(e){return ""}
+}
+async function refreshCurrentFuelPrice(force){
+ var p=getRiderProfile(),m=p.motor||{},type=m.fuelType==="motorin"?"motorin":"benzin",city=await resolveFuelCity();
+ var cache={};try{cache=JSON.parse(localStorage.getItem("gazon_fuel_price_v1")||"{}")||{}}catch(e){}
+ var fresh=cache.city===city&&Date.now()-Number(cache.time||0)<21600000&&Number(cache[type]||0)>0;
+ if(!force&&fresh){
+  m.fuelPrice=Number(cache[type]);m.fuelCity=city;m.fuelSource=cache.source||"Petrol Ofisi";m.fuelUpdatedAt=cache.updatedAt||"";
+  p.motor=m;saveRiderProfileLocal(p);updateFuelPriceUi();return m.fuelPrice
+ }
+ if(!(window.GaZonAuth&&GaZonAuth.configured)){if(Number(cache[type]||0)>0){m.fuelPrice=Number(cache[type]);p.motor=m;saveRiderProfileLocal(p)}updateFuelPriceUi();return Number(m.fuelPrice||0)}
+ try{
+  await GaZonAuth.ready;if(!GaZonAuth.state.user)return Number(m.fuelPrice||0);
+  if(!city)throw new Error("İl belirlenemedi");
+  var r=await GaZonAuth.client.functions.invoke("fuel-price",{body:{city:city}});
+  if(r.error)throw r.error;
+  var d=r.data||{},price=Number(d[type]||0);
+  if(!price)throw new Error("Güncel fiyat alınamadı");
+  cache={city:city,benzin:Number(d.benzin||0),motorin:Number(d.motorin||0),source:d.source||"Petrol Ofisi",updatedAt:d.updatedAt||new Date().toISOString(),time:Date.now()};
+  localStorage.setItem("gazon_fuel_price_v1",JSON.stringify(cache));
+  m.fuelPrice=price;m.fuelCity=city;m.fuelSource=cache.source;m.fuelUpdatedAt=cache.updatedAt;p.motor=m;saveRiderProfileLocal(p);
+  try{await GaZonAuth.client.from("profiles").update({motor_data:m}).eq("id",GaZonAuth.state.user.id)}catch(_){}
+  updateFuelPriceUi();return price
+ }catch(e){
+  console.warn("fuel price",e);
+  if(Number(cache[type]||0)>0){m.fuelPrice=Number(cache[type]);m.fuelCity=cache.city||city;m.fuelSource=(cache.source||"Son kayıt")+" · önbellek";m.fuelUpdatedAt=cache.updatedAt||"";p.motor=m;saveRiderProfileLocal(p)}
+  updateFuelPriceUi();return Number(m.fuelPrice||0)
+ }
+}
+function updateFuelPriceUi(){
+ var p=getRiderProfile(),m=p.motor||{},el=$("currentFuelPrice"),meta=$("currentFuelMeta");
+ if(el)el.textContent=Number(m.fuelPrice||0)>0?Number(m.fuelPrice).toFixed(2)+" ₺/L":"Fiyat bekleniyor";
+ if(meta)meta.textContent=(m.fuelCity?m.fuelCity+" · ":"")+(m.fuelSource||"Güncel fiyat otomatik alınır");
 }
 function fuelEstimate(km,p){
  p=p||getRiderProfile();var m=p.motor||{},cons=Number(m.consumption||0),price=Number(m.fuelPrice||0),liters=cons>0?Number(km||0)*cons/100:0;
@@ -1115,13 +1162,16 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
    '<div class="statRow" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(0)+'</b><span class="sub">Toplam km</span></div><div class="statBox"><b>'+Math.round(rs.reduce(function(a,r){return a+Number(r.turns||0)},0))+'</b><span class="sub">Viraj</span></div></div>'+
    '<div class="fuelSummary"><div><b>'+Number(m.consumption||0).toFixed(1)+'</b><small>L/100 KM</small></div><div><b>'+fuelL.toFixed(1)+' L</b><small>TAHMİNİ YAKIT</small></div><div><b>'+fuelC.toFixed(0)+' ₺</b><small>TAHMİNİ MALİYET</small></div></div>'+
    '<div class="screenCard" style="margin-top:10px"><b>Sürücü Bilgileri</b><input class="input" id="profileName" value="'+String(p.name||"").replace(/"/g,"&quot;")+'" placeholder="Ad soyad"></div>'+
-   '<div class="screenCard"><b>Motosiklet Bilgileri</b><div class="motorFormGrid"><input class="input" id="motorBrand" value="'+String(m.brand||"").replace(/"/g,"&quot;")+'" placeholder="Marka"><input class="input" id="motorModelInput" value="'+String(m.model||"").replace(/"/g,"&quot;")+'" placeholder="Model"><input class="input" id="motorYear" value="'+String(m.year||"").replace(/"/g,"&quot;")+'" inputmode="numeric" placeholder="Model yılı"><input class="input" id="motorEngine" value="'+String(m.engine||"").replace(/"/g,"&quot;")+'" placeholder="Motor hacmi (cc)"><input class="input" id="motorTank" value="'+String(m.tank||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Depo (L)"><input class="input" id="motorOdo" value="'+String(m.odometer||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Kilometre sayacı"><input class="input" id="motorConsumption" value="'+String(m.consumption||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Ort. tüketim L/100 km"><input class="input" id="motorFuelPrice" value="'+String(m.fuelPrice||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Yakıt litre fiyatı ₺"></div><div class="sub" style="margin-top:9px">Tüketim ve litre fiyatına göre yeni sürüşlerde yakıt ve maliyet otomatik hesaplanır.</div><button class="screenBtn" id="saveProfile">Bilgileri Kaydet</button></div>'+
+   '<div class="screenCard"><b>Motosiklet Bilgileri</b><div class="motorFormGrid"><input class="input" id="motorBrand" value="'+String(m.brand||"").replace(/"/g,"&quot;")+'" placeholder="Marka"><input class="input" id="motorModelInput" value="'+String(m.model||"").replace(/"/g,"&quot;")+'" placeholder="Model"><input class="input" id="motorYear" value="'+String(m.year||"").replace(/"/g,"&quot;")+'" inputmode="numeric" placeholder="Model yılı"><input class="input" id="motorEngine" value="'+String(m.engine||"").replace(/"/g,"&quot;")+'" placeholder="Motor hacmi (cc)"><input class="input" id="motorTank" value="'+String(m.tank||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Depo (L)"><input class="input" id="motorOdo" value="'+String(m.odometer||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Kilometre sayacı"><input class="input" id="motorConsumption" value="'+String(m.consumption||"").replace(/"/g,"&quot;")+'" inputmode="decimal" placeholder="Ort. tüketim L/100 km"><select class="input" id="motorFuelType"><option value="benzin" '+((m.fuelType||"benzin")==="benzin"?"selected":"")+'>Benzin</option><option value="motorin" '+(m.fuelType==="motorin"?"selected":"")+'>Motorin / Mazot</option></select></div><div class="fuelPriceLive"><div><small>GÜNCEL YAKIT FİYATI</small><b id="currentFuelPrice">'+(Number(m.fuelPrice||0)>0?Number(m.fuelPrice).toFixed(2)+" ₺/L":"Fiyat bekleniyor")+'</b><span id="currentFuelMeta">'+(m.fuelCity?String(m.fuelCity).replace(/</g,"&lt;")+" · ":"")+(m.fuelSource||"Konumuna göre otomatik")+'</span></div><button type="button" id="refreshFuelPrice"><span class="mi">refresh</span></button></div><div class="sub" style="margin-top:9px">Yakıt fiyatı bulunduğun ile göre otomatik güncellenir. Sürüş maliyeti bu fiyatla hesaplanır.</div><button class="screenBtn" id="saveProfile">Bilgileri Kaydet</button></div>'+
    '<div class="screenCard"><div class="menuRow" data-profile-action="routes"><span class="mi">route</span><b>Rota kayıtlarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="groups"><span class="mi">groups</span><b>Gruplarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="favorites"><span class="mi">favorite</span><b>Favorilerim</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="stats"><span class="mi">bar_chart</span><b>Sürüş istatistikleri</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="contributions"><span class="mi">upload</span><b>Topluluk katkılarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="admin"><span class="mi">admin_panel_settings</span><b>Admin</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="settings"><span class="mi">settings</span><b>Ayarlar</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="logout"><span class="mi">logout</span><b>Çıkış Yap</b><span class="mi arrow">chevron_right</span></div></div>';
    x.querySelector("#closeScreen").onclick=closeScreen;
    x.querySelector("#profileAvatarInput").onchange=async function(){var file=this.files&&this.files[0];if(!file)return;$("status").textContent="Profil fotoğrafı yükleniyor...";var url=await uploadProfileAvatar(file);if(url)x.querySelector("#profileAvatarView").innerHTML='<img src="'+url+'" alt="Profil fotoğrafı">';$("status").textContent="Profil fotoğrafı kaydedildi."};
+   x.querySelector("#refreshFuelPrice").onclick=async function(){this.disabled=true;$("currentFuelPrice").textContent="Güncelleniyor…";await refreshCurrentFuelPrice(true);this.disabled=false};
+   x.querySelector("#motorFuelType").onchange=async function(){var pp=getRiderProfile();pp.motor=pp.motor||{};pp.motor.fuelType=this.value;saveRiderProfileLocal(pp);await refreshCurrentFuelPrice(false)};
+   setTimeout(function(){refreshCurrentFuelPrice(false)},100);
    x.querySelector("#saveProfile").onclick=async function(){
      var pp=getRiderProfile();pp.name=x.querySelector("#profileName").value.trim()||"GaZonRide sürücüsü";
-     pp.motor={brand:x.querySelector("#motorBrand").value.trim(),model:x.querySelector("#motorModelInput").value.trim(),year:x.querySelector("#motorYear").value.trim(),engine:x.querySelector("#motorEngine").value.trim(),tank:Number(String(x.querySelector("#motorTank").value).replace(",","."))||0,odometer:Number(String(x.querySelector("#motorOdo").value).replace(",","."))||0,consumption:Number(String(x.querySelector("#motorConsumption").value).replace(",","."))||0,fuelPrice:Number(String(x.querySelector("#motorFuelPrice").value).replace(",","."))||0};
+     var oldm=pp.motor||{};pp.motor={brand:x.querySelector("#motorBrand").value.trim(),model:x.querySelector("#motorModelInput").value.trim(),year:x.querySelector("#motorYear").value.trim(),engine:x.querySelector("#motorEngine").value.trim(),tank:Number(String(x.querySelector("#motorTank").value).replace(",","."))||0,odometer:Number(String(x.querySelector("#motorOdo").value).replace(",","."))||0,consumption:Number(String(x.querySelector("#motorConsumption").value).replace(",","."))||0,fuelType:x.querySelector("#motorFuelType").value||"benzin",fuelPrice:Number(oldm.fuelPrice||0),fuelCity:oldm.fuelCity||"",fuelSource:oldm.fuelSource||"",fuelUpdatedAt:oldm.fuelUpdatedAt||""};
      pp.bike=[pp.motor.brand,pp.motor.model].filter(Boolean).join(" ")||"Motosiklet";saveRiderProfileLocal(pp);$("status").textContent="Profil kaydediliyor...";
      try{if(window.GaZonAuth&&GaZonAuth.configured){await GaZonAuth.saveProfile(pp.name,pp.bike);await GaZonAuth.ready;if(GaZonAuth.state.user)await GaZonAuth.client.from("profiles").update({motor_data:pp.motor,avatar_url:pp.avatar||null}).eq("id",GaZonAuth.state.user.id)}$("status").textContent="Profil ve motosiklet bilgileri kaydedildi.";showScreen("profile")}catch(e){$("status").textContent="Profil kaydedilemedi: "+(e.message||e)}
    };

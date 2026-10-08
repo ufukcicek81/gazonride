@@ -300,7 +300,7 @@ html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#
 <button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
 <button class="navBtn" data-page="profile"><b><span class="mi">person</span></b>Profil</button>
 </nav>
-<script src="gazonride-config.js"></script><script src="firebase-config.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="auth.js?v=20261008-a1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="gazonride-config.js"></script><script src="firebase-config.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="auth.js?v=20261008-a2"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -444,7 +444,17 @@ function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING"};
- if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
+ if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory(); if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(function(){if(GaZonAuth.state.user)GaZonAuth.db().ref("userData/"+GaZonAuth.state.user.uid+"/rides").push(ride).catch(function(e){console.warn("ride cloud save",e)});});}
+}
+function syncMemberRideHistory(){
+ if(!(window.GaZonAuth&&GaZonAuth.configured))return;
+ GaZonAuth.ready.then(function(){
+  if(!GaZonAuth.state.user)return;
+  GaZonAuth.db().ref("userData/"+GaZonAuth.state.user.uid+"/rides").limitToLast(20).once("value").then(function(s){
+   var o=s.val()||{},cloud=Object.keys(o).map(function(k){return o[k]}).reverse(),local=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
+   if(cloud.length&&!local.length){localStorage.setItem("gazon_rides",JSON.stringify(cloud.slice(0,20)));renderHistory();}
+  }).catch(function(e){console.warn("ride cloud load",e)});
+ });
 }
 function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
 function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
@@ -835,7 +845,7 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
    var p=JSON.parse(localStorage.getItem("gazon_profile")||'{"name":"GaZonRide sürücüsü","bike":"KTM 1290"}'),rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),km=rs.reduce(function(a,r){return a+Number(r.km||0)},0);
    x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜCÜ PROFİLİ</div><div class="screenTitle">Profilim</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div><div class="profileHero"><div><div class="profileName">'+p.name+'</div><div class="profileBike">'+p.bike+' · GaZonRide</div></div></div><div class="statRow" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px"><div class="statBox"><b>'+rs.length+'</b><span class="sub">Sürüş</span></div><div class="statBox"><b>'+km.toFixed(0)+'</b><span class="sub">Toplam km</span></div><div class="statBox"><b>'+Math.round(rs.reduce(function(a,r){return a+Number(r.turns||0)},0))+'</b><span class="sub">Viraj</span></div></div><div class="screenCard"><div class="menuRow" data-profile-action="bike"><span class="mi">two_wheeler</span><b>Motosikletim · '+p.bike+'</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="routes"><span class="mi">route</span><b>Rota kayıtlarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="groups"><span class="mi">groups</span><b>Gruplarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="favorites"><span class="mi">favorite</span><b>Favorilerim</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="stats"><span class="mi">bar_chart</span><b>Sürüş istatistikleri</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="intercom"><span class="mi">headset_mic</span><b>Intercom geçmişi</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="contributions"><span class="mi">upload</span><b>Topluluk katkılarım</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="admin"><span class="mi">admin_panel_settings</span><b>Admin onay kuyruğu</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="settings"><span class="mi">settings</span><b>Ayarlar</b><span class="mi arrow">chevron_right</span></div><div class="menuRow" data-profile-action="logout"><span class="mi">logout</span><b>Çıkış Yap</b><span class="mi arrow">chevron_right</span></div></div><div class="screenCard"><b>Profili Düzenle</b><input class="input" id="profileName" value="'+p.name.replace(/"/g,"&quot;")+'" placeholder="Adınız"><input class="input" id="profileBike" value="'+p.bike.replace(/"/g,"&quot;")+'" placeholder="Motosiklet"><button class="screenBtn" id="saveProfile">Kaydet</button></div>';
    x.querySelector("#closeScreen").onclick=closeScreen;
-   x.querySelector("#saveProfile").onclick=function(){localStorage.setItem("gazon_profile",JSON.stringify({name:x.querySelector("#profileName").value||"GaZonRide sürücüsü",bike:x.querySelector("#profileBike").value||"Motosiklet"}));var mb=$("motorBtn");if(mb)mb.innerHTML='<span class="mi">two_wheeler</span><span>'+x.querySelector("#profileBike").value+'</span><span class="mi chev">expand_more</span>'; $("status").textContent="Profil kaydedildi.";};
+   x.querySelector("#saveProfile").onclick=function(){var pp={name:x.querySelector("#profileName").value||"GaZonRide sürücüsü",bike:x.querySelector("#profileBike").value||"Motosiklet"};localStorage.setItem("gazon_profile",JSON.stringify(pp));var mb=$("motorBtn");if(mb)mb.innerHTML='<span class="mi">two_wheeler</span><span>'+pp.bike+'</span><span class="mi chev">expand_more</span>';$("status").textContent="Profil kaydedildi.";if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(function(){if(GaZonAuth.state.user)GaZonAuth.db().ref("users/"+GaZonAuth.state.user.uid).update({name:pp.name,bike:pp.bike});});}};
    x.querySelectorAll("[data-profile-action]").forEach(function(row){row.onclick=function(){
      var a=row.getAttribute("data-profile-action");
      if(a==="bike"){x.querySelector("#profileBike").focus();x.querySelector("#profileBike").scrollIntoView({behavior:"smooth",block:"center"});}
@@ -875,6 +885,7 @@ function boot(){
   }catch(e){}
  }
  renderHistory();
+ syncMemberRideHistory();
  $("startBtn").addEventListener("click",function(){if(riding)finishRide();else startRide();});
  $("shareBtn").addEventListener("click",shareRide);
  $("locBtn").addEventListener("click",locate);
@@ -935,7 +946,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-social4"></script>
+<script src="social.js?v=20261008-social5"></script>
 <script src="replay.js?v=20261008-r2"></script>
 </body>
 </html>

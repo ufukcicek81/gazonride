@@ -1,0 +1,24 @@
+/* GaZonRide Social Community */
+.gr-social{padding:2px 16px 22px}
+.gr-social-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 10px}
+.gr-social-head b{font-size:17px}.gr-social-head small{color:var(--muted);font-size:10px}
+.gr-social-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.gr-social-btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:13px 10px;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;gap:7px}
+.gr-social-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.gr-social-tabs{display:flex;gap:7px;overflow:auto;scrollbar-width:none;margin-bottom:10px}.gr-social-tabs::-webkit-scrollbar{display:none}
+.gr-social-tab{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:8px 12px;font-size:10px;font-weight:850}
+.gr-social-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.gr-social-list{display:grid;gap:9px}
+.gr-post{border:1px solid var(--line);background:var(--card);border-radius:17px;padding:12px}
+.gr-post-head{display:flex;align-items:center;gap:9px}.gr-post-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card2);border:1px solid var(--line)}
+.gr-post-head b{font-size:12px}.gr-post-head small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.gr-post-title{font-size:15px;font-weight:950;margin-top:11px}.gr-post-text{font-size:11px;color:var(--text);line-height:1.45;margin-top:5px}.gr-post-meta{font-size:9px;color:var(--muted);margin-top:6px}
+.gr-post-actions{display:flex;gap:7px;margin-top:10px}.gr-post-actions button{border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:11px;padding:8px 10px;font-size:10px;font-weight:800}
+.gr-badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:8px;font-weight:900;margin-left:5px}.gr-badge.pending{background:#fff3cd;color:#7a5700}.gr-badge.approved{background:#e7f7ec;color:#176b33}
+.gr-modal{position:fixed;z-index:5000;inset:0;background:rgba(0,0,0,.72);display:none;padding:calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px);overflow:auto}
+.gr-modal.active{display:block}.gr-modal-card{width:min(520px,100%);margin:0 auto;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:0 20px 60px #0008}
+.gr-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.gr-modal-head b{font-size:20px}.gr-close{border:1px solid var(--line);background:var(--card);color:var(--text);width:40px;height:40px;border-radius:12px}
+.gr-field{width:100%;margin-top:8px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:12px;outline:none;font:inherit}
+textarea.gr-field{resize:vertical}.gr-submit{width:100%;margin-top:10px;border:0;border-radius:13px;padding:13px;background:var(--accent);color:#fff;font-weight:900}.gr-secondary{background:var(--card);border:1px solid var(--line);color:var(--text)}
+.gr-admin-item{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px;margin-top:9px}.gr-admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.gr-admin-actions button{border:0;border-radius:10px;padding:10px;font-weight:900}.gr-ok{background:#218c4d;color:#fff}.gr-no{background:#303640;color:#fff}
+.gr-empty{border:1px dashed var(--line);border-radius:14px;padding:15px;color:var(--muted);font-size:11px;text-align:center}

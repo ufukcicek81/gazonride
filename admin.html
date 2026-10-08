@@ -24,13 +24,29 @@
  function render(){
    var pending=subs.filter(function(x){return x.status==="pending"}),approved=subs.filter(function(x){return x.status==="approved"});
    app.innerHTML='<div class="grid"><div class="stat"><b>'+users.length+'</b><small>Üye</small></div><div class="stat"><b>'+pending.length+'</b><small>Onay bekleyen</small></div><div class="stat"><b>'+approved.length+'</b><small>Onaylanan</small></div></div><h3>Onay Kuyruğu</h3>'+
-   (pending.length?pending.map(function(s){var photos=Array.isArray(s.photos)?s.photos:[],stops=Array.isArray(s.stops)?s.stops:[],meta=s.ride_meta||{};return '<div class="card"><b>'+esc(s.title)+'</b> <span class="tag">'+esc(s.type==="route"?"Rota":"Mola")+'</span><div class="muted">'+esc(s.author_name)+' · '+esc(s.bike)+'</div><p style="font-size:12px">'+esc(s.description||"")+'</p>'+(s.type==="route"?'<div class="muted">'+Number(meta.km||0).toFixed(1)+' km · '+esc(meta.duration||"—")+' · '+stops.length+' mola · '+photos.length+' fotoğraf</div>':'')+(photos.length?'<div style="display:grid;grid-template-columns:repeat('+Math.min(3,photos.length)+',1fr);gap:5px;margin-top:8px">'+photos.slice(0,3).map(function(u){return '<img src="'+esc(u)+'" style="width:100%;height:110px;object-fit:cover;border-radius:10px">'}).join("")+'</div>':'')+(stops.length?'<div class="muted" style="margin-top:7px">'+stops.map(function(x){return '☕ '+esc(x.name||"Mola")}).join(' · ')+'</div>':'')+'<div class="actions"><button class="ok" data-ok="'+s.id+'">Onayla</button><button class="no" data-no="'+s.id+'">Reddet</button></div></div>'}).join(""):'<div class="empty">Onay bekleyen gönderi yok.</div>')+
+   (pending.length?pending.map(function(s){var photos=Array.isArray(s.photos)?s.photos:[],stops=Array.isArray(s.stops)?s.stops:[],meta=s.ride_meta||{};return '<div class="card"><b>'+esc(s.title)+'</b> <span class="tag">'+esc(s.type==="route"?"Rota":"Mola")+'</span><div class="muted">'+esc(s.author_name)+' · '+esc(s.bike)+'</div><p style="font-size:12px">'+esc(s.description||"")+'</p>'+(s.type==="route"?'<div class="muted">'+Number(meta.km||0).toFixed(1)+' km · '+esc(meta.duration||"—")+' · '+stops.length+' mola · '+photos.length+' fotoğraf</div>':'')+(photos.length?'<div style="display:grid;grid-template-columns:repeat('+Math.min(3,photos.length)+',1fr);gap:5px;margin-top:8px">'+photos.slice(0,3).map(function(u){return '<img src="'+esc(u)+'" style="width:100%;height:110px;object-fit:cover;border-radius:10px">'}).join("")+'</div>':'')+(stops.length?'<div class="muted" style="margin-top:7px">'+stops.map(function(x){return '☕ '+esc(x.name||"Mola")}).join(' · ')+'</div>':'')+'<div class="actions"><button class="ok" data-ok="'+s.id+'">Onayla</button><button class="btn" data-edit="'+s.id+'">Düzenle</button><button class="no" data-no="'+s.id+'">Reddet</button></div></div>'}).join(""):'<div class="empty">Onay bekleyen gönderi yok.</div>')+
+   '<h3 style="margin-top:22px">Onaylanmış Rotalar</h3>'+approved.filter(function(x){return x.type==="route"}).map(function(s){return '<div class="card"><b>'+esc(s.title)+'</b><div class="muted">'+esc(s.author_name)+' · '+esc(s.destination||"")+'</div><div class="actions"><button class="btn" data-edit="'+s.id+'">Düzenle</button><button class="no" data-delete="'+s.id+'">Sil</button></div></div>'}).join("")+
    '<h3 style="margin-top:22px">Üyeler</h3>'+users.slice(0,50).map(function(u){return '<div class="card"><b>'+esc(u.name||"Üye")+'</b><div class="muted">'+esc(u.email||"")+' · '+esc(u.bike||"Motosiklet")+'</div></div>'}).join("");
    app.querySelectorAll("[data-ok]").forEach(function(b){b.onclick=function(){review(b.dataset.ok,"approved")}});
+   app.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){editSubmission(b.dataset.edit)}});
    app.querySelectorAll("[data-no]").forEach(function(b){b.onclick=function(){review(b.dataset.no,"rejected")}});
+   app.querySelectorAll("[data-delete]").forEach(function(b){b.onclick=function(){deleteSubmission(b.dataset.delete)}});
  }
  async function review(id,status){
    var r=await client.from("submissions").update({status:status,reviewed_at:new Date().toISOString(),reviewed_by:GaZonAuth.state.user.id}).eq("id",id);
+   if(r.error){alert(r.error.message);return}await load();
+ }
+ async function deleteSubmission(id){
+   if(!confirm("Bu rotayı tamamen silmek istiyor musun?"))return;
+   var r=await client.from("submissions").delete().eq("id",id);if(r.error){alert(r.error.message);return}await load();
+ }
+ async function editSubmission(id){
+   var s=subs.find(function(x){return x.id===id});if(!s)return;
+   var title=prompt("Rota adı",s.title||"");if(title===null)return;
+   var destination=prompt("Hedef / bölge",s.destination||"");if(destination===null)return;
+   var description=prompt("Açıklama",s.description||"");if(description===null)return;
+   var difficulty=prompt("Zorluk: Kolay / Orta / Zor",s.difficulty||"Orta");if(difficulty===null)return;
+   var r=await client.from("submissions").update({title:title.trim(),destination:destination.trim(),description:description.trim(),difficulty:difficulty.trim()||"Orta"}).eq("id",id);
    if(r.error){alert(r.error.message);return}await load();
  }
  try{await load()}catch(e){app.innerHTML='<div class="denied"><h2>Admin verileri yüklenemedi</h2><div class="muted danger">'+esc(e.message||e)+'</div></div>'}

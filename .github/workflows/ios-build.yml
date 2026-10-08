@@ -1,0 +1,24 @@
+name: Validate GaZonRide iOS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build iOS Simulator
+        working-directory: ios
+        run: |
+          xcodebuild             -project GaZonRide.xcodeproj             -scheme GaZonRide             -sdk iphonesimulator             -configuration Debug             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             build

@@ -267,6 +267,30 @@ function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lon-a.lon)*p
 function angleDiff(a,b){var d=Math.abs(a-b)%360;return d>180?360-d:d;}
 function updateTurns(){if(track.length<3)return;var n=track.length-1,a=track[n-2],b=track[n-1],c=track[n],d1=hav({lat:a[0],lon:a[1]},{lat:b[0],lon:b[1]}),d2=hav({lat:b[0],lon:b[1]},{lat:c[0],lon:c[1]});if(d1<0.015||d2<0.015)return;var turn=angleDiff(bearing({lat:a[0],lon:a[1]},{lat:b[0],lon:b[1]}),bearing({lat:b[0],lon:b[1]},{lat:c[0],lon:c[1]}));if(turn>=25&&turn<=160){var last=track._lastTurn||0;if(n-last>=4){turnCount++;track._lastTurn=n;$("turns").textContent=turnCount;}}}
 function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m=m%60;return h?String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0"):String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+function showMapsDiagnostic(msg){
+ try{
+  window.__gazonMapsError=String(msg||"Google Maps hatası");
+  var old=document.getElementById("mapsDiagnostic");
+  if(!old){
+   old=document.createElement("div");old.id="mapsDiagnostic";
+   old.style.cssText="position:fixed;z-index:99999;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 72px);background:#b3261e;color:#fff;padding:12px 14px;border-radius:14px;font:700 12px/1.35 system-ui;box-shadow:0 8px 30px #0005";
+   document.body.appendChild(old);
+  }
+  old.textContent="Google Maps hata kodu: "+window.__gazonMapsError;
+ }catch(e){}
+}
+(function(){
+ var originalError=console.error;
+ console.error=function(){
+  try{
+   var msg=Array.prototype.map.call(arguments,function(x){return String(x);}).join(" ");
+   var m=msg.match(/([A-Za-z]+MapError)/);
+   if(m||msg.indexOf("Google Maps JavaScript API error")>=0)showMapsDiagnostic(m?m[1]:msg.slice(0,180));
+  }catch(e){}
+  return originalError.apply(console,arguments);
+ };
+ window.gm_authFailure=function(){showMapsDiagnostic(window.__gazonMapsError||"gm_authFailure");};
+})();
 function loadGoogleMaps(){
  return new Promise(function(resolve,reject){
   if(window.google&&google.maps){googleReady=true;resolve();return;}

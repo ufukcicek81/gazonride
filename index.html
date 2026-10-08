@@ -466,7 +466,11 @@ async function planNavigation(){
  if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor, birkaç saniye sonra tekrar dene.";return;}
  $("navGo").innerHTML='<span class="mi">hourglass_top</span>';
  try{
-   var input=$("navDestination"),d;\n   if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};\n   else d=await geocodeGoogle(q);\n   clearNavSuggestions();\n   var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
+   var input=$("navDestination"),d;
+   if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};
+   else d=await geocodeGoogle(q);
+   clearNavSuggestions();
+   var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
    var body={origin:{location:{latLng:{latitude:currentPoint.lat,longitude:currentPoint.lon}}},destination:{location:{latLng:{latitude:d.lat,longitude:d.lon}}},travelMode:"TWO_WHEELER",routingPreference:"TRAFFIC_AWARE",languageCode:"tr-TR",units:"METRIC",polylineQuality:"HIGH_QUALITY",polylineEncoding:"ENCODED_POLYLINE"};
    var rr=await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":key,"X-Goog-FieldMask":"routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.navigationInstruction,routes.legs.steps.polyline.encodedPolyline"},body:JSON.stringify(body)});
    if(!rr.ok)throw new Error("routes-"+rr.status);
@@ -655,8 +659,9 @@ function boot(){
 
  $("quickNav").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
  $("quickIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
+ setupNavAutocomplete();
  $("navGo").addEventListener("click",planNavigation);
- $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter")planNavigation();});
+ $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
  $("navStop").addEventListener("click",stopNavigation);
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();

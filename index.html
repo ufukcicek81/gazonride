@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-r5">
+<link rel="stylesheet" href="social.css?v=20261008-r6">
 <link rel="stylesheet" href="replay.css?v=20261008-r6">
 <script>
 (function(){
@@ -209,6 +209,7 @@ body.mode-discover .homeSection,body.mode-ride .homeSection,body.mode-navigation
 html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .communityTop button{background:#fff!important;color:#171a1f!important;border-color:var(--line)!important}
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
 .profileAvatarWrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}.profileAvatar{width:82px;height:82px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center}.profileAvatar img{width:100%;height:100%;object-fit:cover}.profileAvatar .mi{font-size:38px;color:var(--accent)}.avatarPick{flex:1}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.fuelPriceLive{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}.fuelPriceLive small{display:block;color:var(--muted);font-size:8px;letter-spacing:1px}.fuelPriceLive b{display:block;font-size:18px;margin-top:2px}.fuelPriceLive span{display:block;color:var(--muted);font-size:8px;margin-top:2px}.fuelPriceLive button{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);display:grid;place-items:center}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
+.gr-distance-main{display:flex;align-items:baseline;gap:7px;margin:2px 0 8px}.gr-distance-main small{font-size:7px;letter-spacing:.8px;color:var(--muted);font-weight:900}.gr-distance-main b{font-size:22px;color:var(--text)}.gr-route-tag{display:block!important}.gr-social-actions-simple{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.gr-social-actions-simple .gr-social-btn{min-height:44px}.gr-route-visual[style]{background-color:#17212c!important}
 /* Community cleanup */
 body.mode-discover #discoverSection>.communityTop,
 body.mode-discover #discoverSection>.routesBlock,
@@ -949,13 +950,22 @@ function exitGuidanceMode(){
  var hud=$("guidanceHud");if(hud)hud.style.display="";
  try{if(map){map.setTilt(0);map.setHeading(0);}}catch(e){}
 }
-async function openCommunityRouteNavigation(item){
+async function waitCommunityNavReady(){
+ var until=Date.now()+10000;
+ startGPS();
+ while(Date.now()<until){
+  if(currentPoint&&googleReady)return true;
+  await new Promise(function(r){setTimeout(r,250)})
+ }
+ return !!(currentPoint&&googleReady)
+}
+async function openCommunityRouteNavigation(item,autoStart){
  var t=(item&&item.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2&&isFinite(Number(p[0]))&&isFinite(Number(p[1]))});
  if(t.length<2){$("status").textContent="Bu topluluk rotasında kullanılabilir rota izi yok.";return;}
  var navBtn=document.querySelector('[data-page="navigation"]');if(navBtn)nav("navigation",navBtn);else setMode("navigation");
- startGPS();
- if(!currentPoint){$("status").textContent="GPS konumu bekleniyor. Konum gelince Rotayı Sür'e tekrar bas.";return;}
- if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor. Birkaç saniye sonra tekrar dene.";return;}
+ $("status").textContent="Konum ve harita hazırlanıyor...";
+ var ready=await waitCommunityNavReady();
+ if(!ready){$("status").textContent="Konum veya Google Haritalar hazır olmadı. Konum iznini kontrol et.";return;}
  $("status").textContent="Topluluk rotası navigasyona hazırlanıyor...";
  try{
   var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
@@ -991,6 +1001,7 @@ async function openCommunityRouteNavigation(item){
   $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel;renderNavStep();
   navStartedRide=false;var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat';driveBtn.style.display="block"}
   $("status").textContent="Topluluk rotası hazır. Başlangıç noktası, rota izi ve mola yerleri navigasyona eklendi.";
+  if(autoStart){setTimeout(function(){if(navReady)startPlannedNavigation()},180)}
  }catch(e){console.warn("Community route",e);$("status").textContent="Topluluk rotası navigasyona dönüştürülemedi."}
 }
 window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation};
@@ -1316,7 +1327,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-r5"></script>
+<script src="social.js?v=20261008-r6"></script>
 <script src="replay.js?v=20261008-r11"></script>
 </body>
 </html>

@@ -610,12 +610,32 @@ function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · 
 function locate(){if(!navigator.geolocation)return;startGPS();if(map&&currentPoint)setMapCenter(currentPoint,16);}
 function toggleSatellite(){if(!map)return;satellite=!satellite;map.setMapTypeId(satellite?"hybrid":"roadmap");}
 
-function setMode(mode){
+var gazonHistoryApplying=false,gazonCurrentMode="";
+function applyModeOnly(mode){
  document.body.classList.remove("mode-home","mode-discover","mode-ride","mode-navigation","mode-overlay");
  document.body.classList.add("mode-"+mode);
- if(mode==="navigation"||mode==="ride"){setTimeout(function(){if(map&&currentPoint)setMapCenter(currentPoint);},120);}
+ gazonCurrentMode=mode;
+ if(mode!=="overlay"){var sx=$("screen");if(sx){sx.classList.remove("active");sx.innerHTML=""}}
+ if(mode==="navigation"||mode==="ride"){setTimeout(function(){if(map&&currentPoint)setMapCenter(currentPoint);},120)}
  window.scrollTo({top:0,behavior:"smooth"});
 }
+function setMode(mode){
+ var first=!(history.state&&history.state.gazon===1);
+ if(first){
+  history.replaceState({gazon:1,mode:mode},"",location.href);
+ }else if(!gazonHistoryApplying&&gazonCurrentMode&&gazonCurrentMode!==mode){
+  history.pushState({gazon:1,mode:mode},"",location.href);
+ }
+ applyModeOnly(mode);
+}
+window.addEventListener("popstate",function(e){
+ gazonHistoryApplying=true;
+ var mode=e.state&&e.state.gazon===1?e.state.mode:"discover";
+ if(!mode)mode="discover";
+ applyModeOnly(mode);
+ if(mode==="discover")setDiscoverFilter("discover");
+ gazonHistoryApplying=false;
+});
 async function requestWakeLock(){
  try{if("wakeLock" in navigator){wakeLock=await navigator.wakeLock.request("screen");}}catch(e){}
 }
@@ -1201,6 +1221,16 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
  }
  x.scrollIntoView({behavior:"smooth"});
 }
+window.GaZonBack=function(){
+ if(document.getElementById("grSocialModal")&&document.getElementById("grSocialModal").classList.contains("active")){
+  if(window.GaZonRideSocial&&GaZonRideSocial.close)GaZonRideSocial.close();return true;
+ }
+ if(document.getElementById("screen")&&document.getElementById("screen").classList.contains("active")){
+  history.back();return true;
+ }
+ if(gazonCurrentMode!=="discover"){history.back();return true}
+ return false;
+};
 function nav(page,button){
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
  closeScreen();

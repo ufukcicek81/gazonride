@@ -8,6 +8,12 @@
         ".write": "auth != null && (auth.token.email_verified === true && auth.token.email === 'YOUR_ADMIN_EMAIL' || (auth.uid === $uid && ((!data.exists() && newData.child('role').val() === 'member') || newData.child('role').val() === data.child('role').val())))"
       }
     },
+    "userData": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
     "submissions": {
       ".indexOn": ["authorUid", "status"],
       "$id": {

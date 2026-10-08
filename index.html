@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-r3">
+<link rel="stylesheet" href="social.css?v=20261008-r4">
 <link rel="stylesheet" href="replay.css?v=20261008-r6">
 <script>
 (function(){
@@ -210,13 +210,14 @@ html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .commu
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
 .profileAvatarWrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}.profileAvatar{width:82px;height:82px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center}.profileAvatar img{width:100%;height:100%;object-fit:cover}.profileAvatar .mi{font-size:38px;color:var(--accent)}.avatarPick{flex:1}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.fuelPriceLive{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}.fuelPriceLive small{display:block;color:var(--muted);font-size:8px;letter-spacing:1px}.fuelPriceLive b{display:block;font-size:18px;margin-top:2px}.fuelPriceLive span{display:block;color:var(--muted);font-size:8px;margin-top:2px}.fuelPriceLive button{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);display:grid;place-items:center}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
 /* Community cleanup */
-body.mode-discover #discoverSection>.discoverSearch,
-body.mode-discover #discoverSection>.discoverTabs,
-body.mode-discover #discoverSection>.quickRow,
+body.mode-discover #discoverSection>.communityTop,
 body.mode-discover #discoverSection>.routesBlock,
 body.mode-discover #discoverSection>.placesBlock,
 body.mode-discover #discoverSection>.communityBlock,
 body.mode-discover #discoverEmpty{display:none!important}
+body.mode-discover #discoverSection>.discoverSearch,
+body.mode-discover #discoverSection>.discoverTabs,
+body.mode-discover #discoverSection>.quickRow{display:flex!important}
 </style>
 </head>
 <body>
@@ -360,16 +361,25 @@ try{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",
 function setThemePreference(pref){localStorage.setItem("gazon_theme",pref);applyAppTheme();}
 function setDiscoverFilter(type){
  document.querySelectorAll(".chip[data-discover]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-discover")===type);});
- var groups={routes:document.querySelectorAll(".routesBlock"),places:document.querySelectorAll(".placesBlock"),riders:document.querySelectorAll(".communityBlock")};
- Object.keys(groups).forEach(function(k){groups[k].forEach(function(el){el.style.display=(type==="discover"||type===k)?"":"none";});});
- $("discoverEmpty").style.display="none";
+ var social=document.getElementById("grSocial"),hub=social&&social.querySelector(".gr-route-hub"),head=social&&social.querySelector(".gr-social-head"),actions=social&&social.querySelector(".gr-social-actions"),tabs=social&&social.querySelector(".gr-social-tabs");
+ if(hub)hub.style.display=(type==="discover"||type==="routes")?"":"none";
+ if(head)head.style.display=type==="routes"?"none":"flex";
+ if(actions)actions.style.display=type==="routes"?"none":"grid";
+ if(tabs)tabs.style.display=type==="routes"?"none":"flex";
+ if(window.GaZonRideSocial){
+   if(type==="routes"){GaZonRideSocial.renderRouteHub&&GaZonRideSocial.renderRouteHub("gazon")}
+   else if(type==="places"){GaZonRideSocial.render&&GaZonRideSocial.render("places")}
+   else if(type==="riders"){GaZonRideSocial.render&&GaZonRideSocial.render("riders")}
+   else{GaZonRideSocial.render&&GaZonRideSocial.render("feed");GaZonRideSocial.renderRouteHub&&GaZonRideSocial.renderRouteHub("gazon")}
+ }
+ var e=$("discoverEmpty");if(e)e.style.display="none";
 }
 function runDiscoverSearch(){
  var q=($("discoverSearch").value||"").trim().toLocaleLowerCase("tr-TR"),visible=0;
- document.querySelectorAll(".routeCard,.placeCard,.feedCard").forEach(function(el){
+ document.querySelectorAll(".gr-route-tile,.gr-post,.routeCard,.placeCard,.feedCard").forEach(function(el){
    var ok=!q||el.textContent.toLocaleLowerCase("tr-TR").indexOf(q)>=0;el.style.display=ok?"":"none";if(ok)visible++;
  });
- $("discoverEmpty").style.display=visible?"none":"block";
+ var e=$("discoverEmpty");if(e)e.style.display=visible?"none":"block";
 }
 function showSimpleScreen(title,html){
  var x=$("screen");setMode("overlay");x.classList.add("active");
@@ -1277,7 +1287,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-r3"></script>
+<script src="social.js?v=20261008-r4"></script>
 <script src="replay.js?v=20261008-r11"></script>
 </body>
 </html>

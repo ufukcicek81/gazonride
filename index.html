@@ -55,7 +55,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .mapBtn{background:#080a0ee8;border:1px solid #3a3f48;color:#fff;border-radius:13px;padding:10px;font-size:11px}
 .content{padding:20px 16px}.ey{font-size:10px;letter-spacing:2px;color:var(--red);font-weight:900;margin-bottom:11px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px}.full{grid-column:1/-1}
-.big{font-size:29px;font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:4px}
+.big{font-size:29px;font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:4px}.fuelInline{display:flex;align-items:baseline;gap:5px}.fuelInline input{width:78px;border:0;background:transparent;color:var(--text);font-size:25px;font-weight:900;outline:none;padding:0}.fuelInline span{font-size:10px;color:var(--muted);font-weight:800}
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;padding:0 16px}.btn{border-radius:17px;padding:16px;font-weight:900;font-size:14px}.dark{background:#191d24;color:#fff;border:1px solid #343943}.red{background:var(--red);color:#fff;border:0}
 .status{margin:12px 16px;padding:12px;border-radius:14px;background:#10131a;border:1px solid var(--line);color:#a5acb6;font-size:11px;text-align:center}
 .history{padding:20px 16px}.ride{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px;display:flex;justify-content:space-between}.ride small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
@@ -319,6 +319,8 @@ body.mode-discover #discoverEmpty{display:none!important}
 <div class="card"><div class="big" id="avg">0</div><div class="sub">Ortalama hız · km/sa</div></div>
 <div class="card"><div class="big" id="max">0</div><div class="sub">Maksimum hız · km/sa</div></div>
 <div class="card"><div class="big" id="elev">0</div><div class="sub">Tırmanış · m</div></div><div class="card"><div class="big" id="turns">0</div><div class="sub">Toplam viraj</div></div>
+<div class="card"><div class="fuelInline"><input id="rideConsumptionInput" inputmode="decimal" placeholder="0.0"><span>L/100</span></div><div class="sub">Anlık / ort. tüketim</div></div>
+<div class="card"><div class="big" id="liveFuelUsed">0.00 L</div><div class="sub">Tahmini kullanılan yakıt</div></div>
 <div class="card full"><b id="gps">GPS aranıyor...</b><div class="sub" id="accuracy">Konum doğruluğu: —</div></div>
 </div></section>
 <div class="actions"><button class="btn dark" id="shareBtn"><span class="mi" style="vertical-align:middle;font-size:18px">share</span> Paylaş</button><button class="btn red" id="startBtn"><span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Sürüşü Başlat</button></div>
@@ -460,7 +462,7 @@ lastGpsTs=ts;
    lastPoint=p;
    var sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$("speed").textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$("max").textContent=Math.round(maxSpeed);
    if(c.altitude!=null){$("altitude").textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$("elev").textContent=Math.round(totalClimb);}
-   var hours=(Date.now()-startTime)/3600000;$("avg").textContent=hours?Math.round(totalKm/hours):0;
+   var hours=(Date.now()-startTime)/3600000;$("avg").textContent=hours?Math.round(totalKm/hours):0;var ci=$("rideConsumptionInput"),cons=ci?Number(String(ci.value||"0").replace(",",".")):Number((getRiderProfile().motor||{}).consumption||0);var lf=$("liveFuelUsed");if(lf)lf.textContent=((totalKm*cons/100)||0).toFixed(2)+" L";
  }
 }
 function startGPS(){
@@ -506,14 +508,14 @@ function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
  riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;
  if(route)route.setPath([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
- $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
+ $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';var lf=$("liveFuelUsed");if(lf)lf.textContent="0.00 L";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
  timer=setInterval(function(){$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000));},1000);
  watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000}); if(window.AndroidBridge&&window.AndroidBridge.startRide)try{window.AndroidBridge.startRide();}catch(e){}
 }
 function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
- var rp=getRiderProfile(),fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{}};
+ var rp=getRiderProfile(),ci=$("rideConsumptionInput"),cv=ci?Number(String(ci.value||"0").replace(",",".")):0;if(cv>0){rp.motor=rp.motor||{};rp.motor.consumption=cv;saveRiderProfileLocal(rp)}var fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{}};
  if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,20)));renderHistory();
  if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track,fuel_liters:ride.fuelLiters,fuel_cost:ride.fuelCost,fuel_consumption:ride.fuelConsumption,motor:ride.motor});if(r.error)console.warn("ride cloud save",r.error);});}
 }
@@ -1217,6 +1219,7 @@ function boot(){
  requestWakeLock();
  setMode("home");
  updateHomeProfileUI();
+ var rci=$("rideConsumptionInput");if(rci){var rp0=getRiderProfile();rci.value=Number((rp0.motor||{}).consumption||0)||"";rci.addEventListener("change",function(){var rp1=getRiderProfile(),v=Number(String(this.value||"0").replace(",","."));rp1.motor=rp1.motor||{};rp1.motor.consumption=v>0?v:0;saveRiderProfileLocal(rp1)})}
  if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){try{var cp=GaZonAuth.state.profile;if(cp){var lp=getRiderProfile();if(cp.name)lp.name=cp.name;if(cp.bike)lp.bike=cp.bike;if(cp.avatar_url)lp.avatar=cp.avatar_url;if(cp.motor_data)lp.motor=Object.assign({},lp.motor,cp.motor_data);saveRiderProfileLocal(lp)}}catch(e){}});
  startGPS();
  

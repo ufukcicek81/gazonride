@@ -227,7 +227,7 @@ html.theme-dark{color-scheme:dark}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -326,7 +326,7 @@ function applyPosition(pos){
  if(map){var gp={lat:p.lat,lng:p.lon};if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}});}else marker.setPosition(gp);}
  if(map&&!riding)setMapCenter(p,16);
  if(riding){
-   track.push([p.lat,p.lon]);updateTurns();setPolyline(route,track);
+   track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),Date.now()]);updateTurns();setPolyline(route,track);
    if(track.length>1)map.panTo({lat:p.lat,lng:p.lon});
    if(lastPoint){
  var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(Date.now()-lastGpsTs)/1000):1;
@@ -358,7 +358,7 @@ function startRide(){
 function finishRide(){
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
- var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track};
+ var ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING"};
  if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,10)));renderHistory();
 }
 function renderHistory(){var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");$("historyList").innerHTML=rs.length?rs.map(function(r){return '<div class="ride"><div><b>'+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small></div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join(""):'<div class="sub">Henüz kayıtlı sürüş yok.</div>';}
@@ -470,21 +470,61 @@ async function planNavigation(){
    if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};
    else d=await geocodeGoogle(q);
    clearNavSuggestions();
-   var key=window.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
-   var body={origin:{location:{latLng:{latitude:currentPoint.lat,longitude:currentPoint.lon}}},destination:{location:{latLng:{latitude:d.lat,longitude:d.lon}}},travelMode:"TWO_WHEELER",routingPreference:"TRAFFIC_AWARE",languageCode:"tr-TR",units:"METRIC",polylineQuality:"HIGH_QUALITY",polylineEncoding:"ENCODED_POLYLINE"};
-   var rr=await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":key,"X-Goog-FieldMask":"routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.navigationInstruction,routes.legs.steps.polyline.encodedPolyline"},body:JSON.stringify(body)});
-   if(!rr.ok)throw new Error("routes-"+rr.status);
-   var data=await rr.json(),rt=data.routes&&data.routes[0];if(!rt)throw new Error("noroute");
-   var pts=google.maps.geometry.encoding.decodePath(rt.polyline.encodedPolyline).map(function(x){return {lat:x.lat(),lon:x.lng()};});
+
+   var routesLib=await google.maps.importLibrary("routes");
+   var Route=routesLib.Route;
+   var inTurkey=currentPoint.lat>=35.5&&currentPoint.lat<=42.5&&currentPoint.lon>=25&&currentPoint.lon<=45.5;
+   var mode=inTurkey?"DRIVING":"TWO_WHEELER";
+   var req={
+     origin:{lat:currentPoint.lat,lng:currentPoint.lon},
+     destination:{lat:d.lat,lng:d.lon},
+     travelMode:mode,
+     routingPreference:"TRAFFIC_AWARE",
+     polylineQuality:"HIGH_QUALITY",
+     fields:["path","legs","viewport","distanceMeters","durationMillis"]
+   };
+   var result;
+   try{result=await Route.computeRoutes(req);}
+   catch(routeErr){
+     if(mode==="TWO_WHEELER"){req.travelMode="DRIVING";mode="DRIVING";result=await Route.computeRoutes(req);}
+     else throw routeErr;
+   }
+   var rt=result&&result.routes&&result.routes[0];
+   if(!rt||!rt.path||!rt.path.length)throw new Error("noroute");
+
+   var pts=rt.path.map(function(x){
+     var lat=typeof x.lat==="function"?x.lat():Number(x.lat);
+     var lng=typeof x.lng==="function"?x.lng():Number(x.lng);
+     return {lat:lat,lon:lng};
+   });
    if(navRoute)navRoute.setMap(null);
-   navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon};}),strokeColor:"#ff5a1f",strokeWeight:7,strokeOpacity:.95});
-   fitPolyline(navRoute);
-   navSteps=((rt.legs&&rt.legs[0]&&rt.legs[0].steps)||[]).map(function(s){var ep=s.polyline&&s.polyline.encodedPolyline?google.maps.geometry.encoding.decodePath(s.polyline.encodedPolyline):[];var last=ep.length?ep[ep.length-1]:null;return {distance:Number(s.distanceMeters||0),duration:s.staticDuration||"",instruction:s.navigationInstruction||{},end:last?{lat:last.lat(),lon:last.lng()}:null};});
-   navStepIndex=0;navTotalKm=Number(rt.distanceMeters||0)/1000;navTotalSec=parseFloat(String(rt.duration||"0s"));navActive=true;
-   $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";
-   $("navRoad").textContent=d.label;renderNavStep();
-   $("status").textContent="Google motosiklet navigasyonu başladı. Intercom aynı anda kullanılabilir.";
- }catch(e){console.warn(e);$("status").textContent="Google rota oluşturulamadı. Hedefi daha açık yazıp tekrar dene.";}
+   navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon};}),strokeColor:"#ff5a1f",strokeWeight:7,strokeOpacity:.96});
+   if(rt.viewport)map.fitBounds(rt.viewport,42);else fitPolyline(navRoute);
+
+   var leg=rt.legs&&rt.legs[0],steps=(leg&&leg.steps)||[];
+   navSteps=steps.map(function(st){
+     var end=st.endLocation?{lat:Number(st.endLocation.lat),lon:Number(st.endLocation.lng)}:null;
+     return {distance:Number(st.distanceMeters||0),instruction:{maneuver:st.maneuver||"",instructions:st.instructions||""},end:end};
+   });
+   navStepIndex=0;
+   navTotalKm=Number(rt.distanceMeters||0)/1000;
+   navTotalSec=Math.max(0,Number(rt.durationMillis||0)/1000);
+   navActive=true;
+   activeNavLabel=d.label||q;
+   activeRouteMode=mode;
+
+   $("navInstruction").classList.add("active");
+   $("navKm").textContent=navTotalKm.toFixed(1);
+   $("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";
+   $("navRoad").textContent=d.label||q;
+   renderNavStep();
+
+   if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
+   $("status").textContent=mode==="DRIVING"?"Rota açıldı ve sürüş kaydı başladı. Türkiye için sürüş rotası kullanılıyor.":"Motosiklet rotası açıldı ve sürüş kaydı başladı.";
+ }catch(err){
+   console.warn("Route compute failed",err);
+   $("status").textContent="Rota oluşturulamadı. Hedefi listeden seçip tekrar dene.";
+ }
  finally{$("navGo").innerHTML='<span class="mi">navigation</span>';}
 }
 function renderNavStep(){
@@ -507,7 +547,11 @@ function stopNavigation(){
  navActive=false;navSteps=[];navStepIndex=0;
  if(navRoute){navRoute.setMap(null);navRoute=null;}
  $("navInstruction").classList.remove("active");
- $("status").textContent="Navigasyon kapatıldı.";
+ if(navStartedRide&&riding){
+   navStartedRide=false;
+   finishRide();
+   $("status").textContent="Navigasyon ve sürüş kaydı tamamlandı.";
+ }else $("status").textContent="Navigasyon kapatıldı.";
 }
 
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay"))setMode("discover");window.scrollTo({top:0,behavior:"smooth"});}

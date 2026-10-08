@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-r4">
+<link rel="stylesheet" href="social.css?v=20261008-r5">
 <link rel="stylesheet" href="replay.css?v=20261008-r6">
 <script>
 (function(){
@@ -333,7 +333,7 @@ body.mode-discover #discoverSection>.quickRow{display:flex!important}
   <div><span class="mi">headset_mic</span></div><div class="vMain"><b id="voiceDockTitle">Intercom aktif</b><small id="voiceDockSub">Grup bağlantısı sürüyor</small></div>
   <button id="voiceDockMic"><span class="mi">mic</span></button>
 </div><nav class="bottom">
-<button class="navBtn active" data-page="home"><b><span class="mi">home</span></b>Ana Sayfa</button>
+<button class="navBtn active" data-page="discover"><b><span class="mi">home</span></b>Keşfet</button>
 <button class="navBtn" data-page="navigation"><b><span class="mi">map</span></b>Navigasyon</button>
 <button class="navBtn navCenter" data-page="ride"><b><span class="mi">two_wheeler</span></b>Sürüş</button>
 <button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
@@ -1028,7 +1028,7 @@ function stopNavigation(){
  }else $("status").textContent="Navigasyon kapatıldı.";
 }
 
-function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay"))setMode("home");window.scrollTo({top:0,behavior:"smooth"});}
+function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay")){setMode("discover");setDiscoverFilter("discover")}window.scrollTo({top:0,behavior:"smooth"});}
 var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
 var VOICE_WS="wss://gazonride-voice.onrender.com";
 function voiceId(){return "rider-"+Math.random().toString(36).slice(2,9);}
@@ -1204,8 +1204,7 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var 
 function nav(page,button){
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
  closeScreen();
- if(page==="home"){setMode("home");}
- else if(page==="discover"){setMode("discover");}
+ if(page==="home"||page==="discover"){setMode("discover");setDiscoverFilter("discover");}
  else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
  else if(page==="ride"){setMode("ride");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
  else {setMode("overlay");showScreen(page);}
@@ -1256,8 +1255,8 @@ function boot(){
 
  $("homeNavigation").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
  $("homeRide").addEventListener("click",function(){var b=document.querySelector('[data-page="ride"]');nav("ride",b);});
- $("homeCommunity").addEventListener("click",function(){setMode("discover");document.querySelectorAll(".navBtn").forEach(function(n){n.classList.remove("active")});});
- $("communityBack").addEventListener("click",function(){var b=document.querySelector('[data-page="home"]');nav("home",b);});
+ $("homeCommunity").addEventListener("click",function(){var b=document.querySelector('[data-page="discover"]');nav("discover",b);});
+ $("communityBack").addEventListener("click",function(){var b=document.querySelector('[data-page="discover"]');nav("discover",b);});
  $("homeRoutes").addEventListener("click",function(){setMode("overlay");showScreen("routes");});
  $("homeIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
  $("homeGroups").addEventListener("click",function(){setMode("overlay");showScreen("groups");});
@@ -1277,7 +1276,7 @@ function boot(){
  $("guidanceMore").addEventListener("click",function(){alert(activeNavLabel+"\n"+$("guidanceRemain").textContent);});
  $("voiceDockMic").addEventListener("click",toggleMic);
  requestWakeLock();
- setMode("home");
+ setMode("discover");setDiscoverFilter("discover");
  updateHomeProfileUI();
  var rci=$("rideConsumptionInput");if(rci){var rp0=getRiderProfile();rci.value=Number((rp0.motor||{}).consumption||0)||"";rci.addEventListener("change",function(){var rp1=getRiderProfile(),v=Number(String(this.value||"0").replace(",","."));rp1.motor=rp1.motor||{};rp1.motor.consumption=v>0?v:0;saveRiderProfileLocal(rp1)})}
  if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){try{var cp=GaZonAuth.state.profile;if(cp){var lp=getRiderProfile();if(cp.name)lp.name=cp.name;if(cp.bike)lp.bike=cp.bike;if(cp.avatar_url)lp.avatar=cp.avatar_url;if(cp.motor_data)lp.motor=Object.assign({},lp.motor,cp.motor_data);saveRiderProfileLocal(lp)}}catch(e){}});
@@ -1287,7 +1286,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-r4"></script>
+<script src="social.js?v=20261008-r5"></script>
 <script src="replay.js?v=20261008-r11"></script>
 </body>
 </html>

@@ -14,7 +14,17 @@ function modal(title,body){
  m.onclick=function(e){if(e.target===m)closeModal()}
 }
 function closeModal(){var m=$("grSocialModal");if(m)m.classList.remove("active");document.body.style.overflow=""}
-function submission(type,data){var q=read(K_PENDING),p=profile();q.unshift({id:"GR"+Date.now(),type:type,author:p.name||"Sürücü",bike:p.bike||"Motosiklet",createdAt:new Date().toLocaleString("tr-TR"),data:data});write(K_PENDING,q);render();return q[0]}
+async function submission(type,data){
+ var q=read(K_PENDING),p=profile(),item={id:"GR"+Date.now(),type:type,status:"pending",author:p.name||"Sürücü",bike:p.bike||"Motosiklet",createdAt:new Date().toLocaleString("tr-TR"),data:data};
+ q.unshift(item);write(K_PENDING,q);render();
+ if(window.GaZonAuth&&GaZonAuth.configured){
+   await GaZonAuth.ready;
+   if(!GaZonAuth.state.user){location.href="login.html?next="+encodeURIComponent(location.href);return item;}
+   var u=GaZonAuth.state.user,pr=GaZonAuth.state.profile||{},ref=GaZonAuth.db().ref("submissions").push();
+   await ref.set({type:type,status:"pending",authorUid:u.uid,authorName:pr.name||u.displayName||"Sürücü",bike:pr.bike||"Motosiklet",createdAt:firebase.database.ServerValue.TIMESTAMP,data:data});
+ }
+ return item
+}
 function openNavigation(item){
  var b=document.querySelector('[data-page="navigation"]');if(b)b.click();
  setTimeout(function(){var inp=$("navDestination");if(!inp)return;inp.value=item.destination||item.title||"";if(item.lat!=null&&item.lon!=null){inp.dataset.lat=String(item.lat);inp.dataset.lon=String(item.lon);inp.dataset.label=item.title||""}inp.focus();var go=$("navGo");if(go)setTimeout(function(){go.click()},120)},120)
@@ -22,18 +32,19 @@ function openNavigation(item){
 function routeForm(){
  var rides=read("gazon_rides"),last=rides[0];
  modal("Rota Ekle",'<div class="sub">Rota önce admin onayına gider. Onaylandıktan sonra toplulukta görünür.</div><input class="gr-field" id="grRouteTitle" placeholder="Rota adı"><input class="gr-field" id="grRouteDest" placeholder="Hedef / bölge (örn. Akçakoca)"><select class="gr-field" id="grRouteDiff"><option>Kolay</option><option selected>Orta</option><option>Zor</option></select><textarea class="gr-field" id="grRouteDesc" rows="4" placeholder="Rota açıklaması, yol durumu, viraj, manzara..."></textarea>'+(last?'<div class="sub" style="margin-top:9px">Son kayıtlı sürüş '+Number(last.km||0).toFixed(1)+' km. Rota izi de gönderiye eklenecek.</div>':'<div class="sub" style="margin-top:9px">Henüz kayıtlı sürüş yok. Rota yine hedef adıyla gönderilebilir.</div>')+'<button class="gr-submit" id="grSendRoute">Admin Onayına Gönder</button>');
- $("grSendRoute").onclick=function(){var title=$("grRouteTitle").value.trim(),dest=$("grRouteDest").value.trim();if(!title||!dest)return alert("Rota adı ve hedef gerekli.");submission("route",{title:title,destination:dest,difficulty:$("grRouteDiff").value,description:$("grRouteDesc").value.trim(),track:last&&last.track?last.track:[]});closeModal();alert("Rota admin onayına gönderildi.");showMine()}
+ $("grSendRoute").onclick=async function(){var title=$("grRouteTitle").value.trim(),dest=$("grRouteDest").value.trim();if(!title||!dest)return alert("Rota adı ve hedef gerekli.");await submission("route",{title:title,destination:dest,difficulty:$("grRouteDiff").value,description:$("grRouteDesc").value.trim(),track:last&&last.track?last.track:[]});closeModal();alert("Rota admin onayına gönderildi.");showMine()}
 }
 function placeForm(){
  modal("Mola Yeri Ekle",'<div class="sub">Mola noktasını mevcut GPS konumunla ekleyebilirsin.</div><input class="gr-field" id="grPlaceTitle" placeholder="Mola yeri adı"><select class="gr-field" id="grPlaceType"><option>Kafe</option><option>Akaryakıt</option><option>Manzara Noktası</option><option>Restoran</option><option>Servis / Lastik</option><option>Diğer</option></select><textarea class="gr-field" id="grPlaceDesc" rows="4" placeholder="Sürücü için neden iyi bir mola noktası?"></textarea><button class="gr-submit gr-secondary" id="grUseGps"><span class="mi" style="vertical-align:-5px">my_location</span> Mevcut Konumumu Kullan</button><div class="sub" id="grCoords" style="margin-top:7px">Konum seçilmedi</div><button class="gr-submit" id="grSendPlace">Admin Onayına Gönder</button>');
  $("grUseGps").onclick=function(){var out=$("grCoords");out.textContent="Konum alınıyor...";navigator.geolocation.getCurrentPosition(function(pos){out.dataset.lat=pos.coords.latitude;out.dataset.lon=pos.coords.longitude;out.textContent=pos.coords.latitude.toFixed(5)+", "+pos.coords.longitude.toFixed(5)},function(){out.textContent="Konum alınamadı. Konum iznini kontrol et."},{enableHighAccuracy:true,timeout:12000})};
- $("grSendPlace").onclick=function(){var title=$("grPlaceTitle").value.trim(),out=$("grCoords");if(!title||!out.dataset.lat)return alert("Mola adı ve konum gerekli.");submission("place",{title:title,type:$("grPlaceType").value,description:$("grPlaceDesc").value.trim(),lat:Number(out.dataset.lat),lon:Number(out.dataset.lon)});closeModal();alert("Mola yeri admin onayına gönderildi.");showMine()}
+ $("grSendPlace").onclick=async function(){var title=$("grPlaceTitle").value.trim(),out=$("grCoords");if(!title||!out.dataset.lat)return alert("Mola adı ve konum gerekli.");await submission("place",{title:title,type:$("grPlaceType").value,description:$("grPlaceDesc").value.trim(),lat:Number(out.dataset.lat),lon:Number(out.dataset.lon)});closeModal();alert("Mola yeri admin onayına gönderildi.");showMine()}
 }
 function showMine(){
  var p=profile(),q=read(K_PENDING).filter(function(x){return x.author===(p.name||"")});
  modal("Gönderilerim",q.length?q.map(function(s){return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge pending">ONAY BEKLİYOR</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div></div>'}).join(""):'<div class="gr-empty">Admin onayında gönderin yok.</div>')
 }
 function admin(){
+ if(window.GaZonAuth&&GaZonAuth.configured){location.href="admin.html";return;}
  var q=read(K_PENDING);
  modal("Admin Onay Kuyruğu",'<div class="sub">Şimdilik bu cihazdaki test kuyruğudur. Merkezi admin panelini Firebase ile bağlayacağız.</div>'+(q.length?q.map(function(s,i){return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge pending">BEKLİYOR</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.author)+' · '+esc(s.bike)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div><div class="gr-admin-actions"><button class="gr-ok" data-gr-approve="'+i+'">Onayla</button><button class="gr-no" data-gr-reject="'+i+'">Reddet</button></div></div>'}).join(""):'<div class="gr-empty">Onay bekleyen gönderi yok.</div>'));
  document.querySelectorAll("[data-gr-approve]").forEach(function(b){b.onclick=function(){var a=read(K_PENDING),i=Number(b.getAttribute("data-gr-approve")),s=a[i];if(!s)return;if(s.type==="route"){var r=read(K_ROUTES);r.unshift({title:s.data.title,destination:s.data.destination,difficulty:s.data.difficulty,description:s.data.description,track:s.data.track||[],author:s.author,bike:s.bike,likes:0,createdAt:s.createdAt});write(K_ROUTES,r)}else{var p=read(K_PLACES);p.unshift({title:s.data.title,type:s.data.type,description:s.data.description,lat:s.data.lat,lon:s.data.lon,author:s.author,bike:s.bike,likes:0,createdAt:s.createdAt});write(K_PLACES,p)}a.splice(i,1);write(K_PENDING,a);render();admin()}});
@@ -67,6 +78,15 @@ function render(filter){
  var op=$("grOpenProfile");if(op)op.onclick=function(){var b=document.querySelector('[data-page="profile"]');if(b)b.click()};
  var og=$("grOpenGroups");if(og)og.onclick=function(){var b=document.querySelector('[data-page="profile"]');if(b)b.click();setTimeout(function(){var row=document.querySelector('[data-profile-action="groups"]');if(row)row.click()},120)};
 }
+function syncRemoteCommunity(){
+ if(!(window.GaZonAuth&&GaZonAuth.configured))return;
+ GaZonAuth.ready.then(function(){
+  if(!GaZonAuth.state.user)return;
+  var db=GaZonAuth.db();
+  db.ref("community/routes").on("value",function(s){var o=s.val()||{},a=Object.keys(o).map(function(k){return Object.assign({remoteId:k},o[k])});write(K_ROUTES,a);render()});
+  db.ref("community/places").on("value",function(s){var o=s.val()||{},a=Object.keys(o).map(function(k){return Object.assign({remoteId:k},o[k])});write(K_PLACES,a);render()});
+ });
+}
 function install(){
  var host=document.querySelector(".discoverSection");if(!host||$("grSocial"))return;
  var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-social-head"><div><b>GaZonRide Topluluğu</b><small>Rota · mola · sürücüler</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions"><button class="gr-social-btn primary" id="grAddRoute"><span class="mi">add_road</span>Rota Ekle</button><button class="gr-social-btn" id="grAddPlace"><span class="mi">add_location_alt</span>Mola Yeri Ekle</button></div><div class="gr-social-tabs"><button class="gr-social-tab active" data-gr-tab="feed">Akış</button><button class="gr-social-tab" data-gr-tab="routes">Rotalar</button><button class="gr-social-tab" data-gr-tab="places">Molalar</button><button class="gr-social-tab" data-gr-tab="riders">Sürücüler</button><button class="gr-social-tab" id="grAdmin">Admin</button></div><div class="gr-social-list" id="grSocialList"></div>';
@@ -75,6 +95,7 @@ function install(){
  $("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;
  document.querySelectorAll("[data-gr-tab]").forEach(function(b){b.onclick=function(){document.querySelectorAll(".gr-social-tab").forEach(function(x){x.classList.remove("active")});b.classList.add("active");render(b.dataset.grTab)}});
  render();
+ syncRemoteCommunity();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonRideSocial={render:render,routeForm:routeForm,placeForm:placeForm,admin:admin,mine:showMine,close:closeModal};

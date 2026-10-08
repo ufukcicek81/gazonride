@@ -8,6 +8,7 @@ function redirectLogin(){var next=encodeURIComponent(location.href);location.rep
 function saveLocalProfile(p){if(!p)return;localStorage.setItem("gazon_profile",JSON.stringify({name:p.name||"GaZonRide sürücüsü",bike:p.bike||"Motosiklet"}))}
 function syncUi(){
  var p=state.profile||{},w=document.getElementById("homeWelcome");if(w)w.textContent=p.name?"Merhaba, "+p.name:"GaZonRide";
+ var adminBtn=document.getElementById("homeAdmin");if(adminBtn)adminBtn.style.display=state.role==="admin"?"flex":"none";
  var motor=document.getElementById("motorBtn");if(motor&&p.bike)motor.innerHTML='<span class="mi">two_wheeler</span><span>'+String(p.bike).replace(/[<>]/g,"")+'</span><span class="mi chev">expand_more</span>';
 }
 async function loadProfile(user){

@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     private static final String URL = "https://ufukcicek81.github.io/gazonride/";
     private static final String RELEASES_API = "https://api.github.com/repos/ufukcicek81/gazonride/releases/latest";
     private android.content.SharedPreferences prefs;
+    private String pendingOAuthUrl = null;
 
     public class AndroidBridge {
         @JavascriptInterface public void startRide(){
@@ -50,6 +51,16 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void clearBufferedPoints(){prefs.edit().putString("buffer","[]").apply();}
         @JavascriptInterface public String getSystemTheme(){
             return isSystemDarkMode() ? "dark" : "light";
+        }
+        @JavascriptInterface public void openOAuth(String url){
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(i);
+                } catch(Exception e) {
+                    Toast.makeText(MainActivity.this,"Giriş sayfası açılamadı.",Toast.LENGTH_LONG).show();
+                }
+            });
         }
         @JavascriptInterface public String getGoogleMapsApiKey(){
             try {
@@ -68,6 +79,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+        captureOAuthIntent(getIntent());
         // GaZonRide is used as a motorcycle navigation screen: keep display awake
         // while the application is in the foreground.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -78,7 +90,12 @@ public class MainActivity extends Activity {
         s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false); s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView view, String url){
+                super.onPageFinished(view,url);
+                deliverPendingOAuth();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient(){
             @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback){
                 if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED) callback.invoke(origin,true,false);
@@ -115,6 +132,34 @@ public class MainActivity extends Activity {
             webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
             webView.evaluateJavascript("if(window.applyAppTheme){window.applyAppTheme();}",null);
         }
+    }
+
+    private void captureOAuthIntent(Intent intent){
+        if(intent==null || intent.getData()==null) return;
+        Uri data=intent.getData();
+        if("gazonride".equalsIgnoreCase(data.getScheme()) && "auth".equalsIgnoreCase(data.getHost())){
+            pendingOAuthUrl=data.toString();
+        }
+    }
+
+    private void deliverPendingOAuth(){
+        if(webView==null || pendingOAuthUrl==null) return;
+        final String callback=pendingOAuthUrl;
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if(webView==null || callback==null) return;
+            String js="if(window.GaZonAuth&&GaZonAuth.completeOAuthCallback){GaZonAuth.completeOAuthCallback("+JSONObject.quote(callback)+");true}else{false}";
+            webView.evaluateJavascript(js, value -> {
+                if(value!=null && value.contains("true")) pendingOAuthUrl=null;
+                else new Handler(Looper.getMainLooper()).postDelayed(this::deliverPendingOAuth,600);
+            });
+        },350);
+    }
+
+    @Override protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);
+        setIntent(intent);
+        captureOAuthIntent(intent);
+        deliverPendingOAuth();
     }
 
     private void checkForNativeUpdate(){

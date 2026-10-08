@@ -2,16 +2,43 @@
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5f6f8"><title>GaZonRide Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f6f8;color:#171a1f}.wrap{width:min(850px,100%);margin:auto;padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 30px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.head h1{margin:0;font-size:25px}.head button{border:1px solid #dce1e7;background:#fff;border-radius:12px;padding:10px 12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:#fff;border:1px solid #dfe3e8;border-radius:16px;padding:14px}.stat b{display:block;font-size:24px}.stat small{color:#707985}.card{background:#fff;border:1px solid #dfe3e8;border-radius:17px;padding:14px;margin-top:9px}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#fff3cd;color:#745600;font-size:9px;font-weight:900}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions button{border:0;border-radius:11px;padding:10px;font-weight:900}.ok{background:#1d8b4b;color:#fff}.no{background:#303640;color:#fff}.muted{color:#737b85;font-size:11px}.empty{padding:30px;text-align:center;color:#737b85;background:#fff;border:1px dashed #dfe3e8;border-radius:17px}.denied{background:#fff;border:1px solid #dfe3e8;border-radius:20px;padding:24px;text-align:center}@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f6f8;color:#171a1f}.wrap{width:min(900px,100%);margin:auto;padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 30px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.head h1{margin:0;font-size:25px}.head button,.btn{border:1px solid #dce1e7;background:#fff;border-radius:12px;padding:10px 12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:#fff;border:1px solid #dfe3e8;border-radius:16px;padding:14px}.stat b{display:block;font-size:24px}.stat small{color:#707985}.card{background:#fff;border:1px solid #dfe3e8;border-radius:17px;padding:14px;margin-top:9px}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#fff3cd;color:#745600;font-size:9px;font-weight:900}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions button{border:0;border-radius:11px;padding:10px;font-weight:900}.ok{background:#1d8b4b;color:#fff}.no{background:#303640;color:#fff}.muted{color:#737b85;font-size:11px}.empty,.denied{padding:28px;text-align:center;color:#737b85;background:#fff;border:1px dashed #dfe3e8;border-radius:17px}.danger{color:#a82d2d}.adminClaim{margin-top:14px;background:#ff5a1f;color:#fff;border:0;border-radius:13px;padding:13px 16px;font-weight:900}@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}}
 </style></head><body><div class="wrap"><div class="head"><div><div class="muted">GAZONRIDE</div><h1>Admin Paneli</h1></div><button onclick="location.href='index.html'">Uygulamaya Dön</button></div><div id="app"><div class="empty">Yükleniyor...</div></div></div>
-<script src="firebase-config.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script><script src="auth.js"></script>
+<script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261008-sb1"></script>
 <script>
-(async function(){var app=document.getElementById("app");if(!GaZonAuth.configured){app.innerHTML='<div class="denied"><h2>Firebase bağlantısı bekleniyor</h2><div class="muted">Üyelik altyapısı hazır; proje bağlantısı eklenince panel merkezi çalışacak.</div></div>';return}await GaZonAuth.ready;if(!GaZonAuth.state.user){return}if(GaZonAuth.state.role!=="admin"){app.innerHTML='<div class="denied"><h2>Admin yetkisi gerekli</h2><div class="muted">Bu hesap admin rolüne sahip değil.</div></div>';return}
-var db=firebase.database(),users={},subs={};
-function render(){var ua=Object.values(users||{}),sa=Object.entries(subs||{});var pending=sa.filter(function(x){return (x[1].status||"pending")==="pending"});app.innerHTML='<div class="grid"><div class="stat"><b>'+ua.length+'</b><small>Üye</small></div><div class="stat"><b>'+pending.length+'</b><small>Onay bekleyen</small></div><div class="stat"><b>'+sa.filter(function(x){return x[1].status==="approved"}).length+'</b><small>Onaylanan</small></div></div><h3>Onay Kuyruğu</h3>'+(pending.length?pending.map(function(row){var id=row[0],s=row[1],d=s.data||{};return '<div class="card"><b>'+String(d.title||"İçerik")+'</b> <span class="tag">'+String(s.type||"gönderi")+'</span><div class="muted">'+String(s.authorName||s.author||"Sürücü")+'</div><p style="font-size:12px">'+String(d.description||"")+'</p><div class="actions"><button class="ok" data-ok="'+id+'">Onayla</button><button class="no" data-no="'+id+'">Reddet</button></div></div>'}).join(""):'<div class="empty">Onay bekleyen gönderi yok.</div>')+'<h3 style="margin-top:22px">Üyeler</h3>'+ua.slice(0,30).map(function(u){return '<div class="card"><b>'+String(u.name||"Üye")+'</b><div class="muted">'+String(u.email||"")+' · '+String(u.bike||"Motosiklet")+' · '+String(u.role||"member")+'</div></div>'}).join("");
-app.querySelectorAll("[data-ok]").forEach(function(b){b.onclick=async function(){var id=b.dataset.ok,s=subs[id],type=s.type==="route"?"routes":"places";await db.ref("community/"+type+"/"+id).set(Object.assign({},s.data,{authorUid:s.authorUid||"",authorName:s.authorName||"",approvedAt:firebase.database.ServerValue.TIMESTAMP}));await db.ref("submissions/"+id+"/status").set("approved")}});
-app.querySelectorAll("[data-no]").forEach(function(b){b.onclick=function(){db.ref("submissions/"+b.dataset.no+"/status").set("rejected")}});
-}
-db.ref("users").on("value",function(s){users=s.val()||{};render()});db.ref("submissions").on("value",function(s){subs=s.val()||{};render()});
+(async function(){
+ var app=document.getElementById("app");
+ await GaZonAuth.ready;
+ if(!GaZonAuth.state.user)return;
+ if(GaZonAuth.state.role!=="admin"){
+   app.innerHTML='<div class="denied"><h2>Admin hesabını etkinleştir</h2><div class="muted">İlk kurulumdaysan bu hesabı GaZonRide yöneticisi yapabilirsin. Sistem yalnızca hiç admin yoksa ilk hesabı kabul eder.</div><button class="adminClaim" id="claimAdmin">Bu Hesabı İlk Admin Yap</button><div class="muted danger" id="claimMsg"></div></div>';
+   document.getElementById("claimAdmin").onclick=async function(){
+     this.disabled=true;document.getElementById("claimMsg").textContent="Kontrol ediliyor...";
+     try{var ok=await GaZonAuth.claimFirstAdmin();if(ok)location.reload();else document.getElementById("claimMsg").textContent="Sistemde zaten bir admin hesabı var."}
+     catch(e){document.getElementById("claimMsg").textContent=e.message||"Admin yetkisi verilemedi."}
+     this.disabled=false;
+   };
+   return;
+ }
+ var client=GaZonAuth.client,users=[],subs=[];
+ function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+ async function load(){
+   var ur=await client.rpc("admin_list_users");if(ur.error)throw ur.error;users=ur.data||[];
+   var sr=await client.from("submissions").select("*").order("created_at",{ascending:false});if(sr.error)throw sr.error;subs=sr.data||[];
+   render();
+ }
+ function render(){
+   var pending=subs.filter(function(x){return x.status==="pending"}),approved=subs.filter(function(x){return x.status==="approved"});
+   app.innerHTML='<div class="grid"><div class="stat"><b>'+users.length+'</b><small>Üye</small></div><div class="stat"><b>'+pending.length+'</b><small>Onay bekleyen</small></div><div class="stat"><b>'+approved.length+'</b><small>Onaylanan</small></div></div><h3>Onay Kuyruğu</h3>'+
+   (pending.length?pending.map(function(s){return '<div class="card"><b>'+esc(s.title)+'</b> <span class="tag">'+esc(s.type==="route"?"Rota":"Mola")+'</span><div class="muted">'+esc(s.author_name)+' · '+esc(s.bike)+'</div><p style="font-size:12px">'+esc(s.description||"")+'</p><div class="actions"><button class="ok" data-ok="'+s.id+'">Onayla</button><button class="no" data-no="'+s.id+'">Reddet</button></div></div>'}).join(""):'<div class="empty">Onay bekleyen gönderi yok.</div>')+
+   '<h3 style="margin-top:22px">Üyeler</h3>'+users.slice(0,50).map(function(u){return '<div class="card"><b>'+esc(u.name||"Üye")+'</b><div class="muted">'+esc(u.email||"")+' · '+esc(u.bike||"Motosiklet")+'</div></div>'}).join("");
+   app.querySelectorAll("[data-ok]").forEach(function(b){b.onclick=function(){review(b.dataset.ok,"approved")}});
+   app.querySelectorAll("[data-no]").forEach(function(b){b.onclick=function(){review(b.dataset.no,"rejected")}});
+ }
+ async function review(id,status){
+   var r=await client.from("submissions").update({status:status,reviewed_at:new Date().toISOString(),reviewed_by:GaZonAuth.state.user.id}).eq("id",id);
+   if(r.error){alert(r.error.message);return}await load();
+ }
+ try{await load()}catch(e){app.innerHTML='<div class="denied"><h2>Admin verileri yüklenemedi</h2><div class="muted danger">'+esc(e.message||e)+'</div></div>'}
 })();
 </script></body></html>

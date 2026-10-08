@@ -59,7 +59,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;padding:0 16px}.btn{border-radius:17px;padding:16px;font-weight:900;font-size:14px}.dark{background:#191d24;color:#fff;border:1px solid #343943}.red{background:var(--red);color:#fff;border:0}
 .status{margin:12px 16px;padding:12px;border-radius:14px;background:#10131a;border:1px solid var(--line);color:#a5acb6;font-size:11px;text-align:center}
 .history{padding:20px 16px}.ride{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px;display:flex;justify-content:space-between}.ride small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
-.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#080a0ef8;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
+.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#080a0e;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
 .navBtn{border:0;background:transparent;color:#737b87;font-size:10px;padding:5px;cursor:pointer}.navBtn b{display:block;font-size:21px;margin-bottom:2px}.navBtn.active{color:var(--accent)}
 .bikeIcon{font-size:25px;text-shadow:0 2px 5px #000}.screen{display:none;padding:18px 16px 30px}.screen.active{display:block}.screenHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.screenTitle{font-size:22px;font-weight:900}.screenCard{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:10px}.screenBtn{width:100%;border:0;border-radius:13px;padding:13px;background:var(--red);color:#fff;font-weight:800;margin-top:8px}.screenBtn.dark{background:#191d24;border:1px solid #343943}.input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#0c0f14;color:#fff;outline:none;margin-top:7px}.statRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.statBox{background:#0d1015;border:1px solid var(--line);border-radius:13px;padding:12px}.statBox b{font-size:20px;display:block}
 
@@ -83,7 +83,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .feedPhoto:after{content:"🏍️";position:absolute;font-size:60px;left:42%;bottom:12px;filter:drop-shadow(0 5px 5px #000)}
 .feedText{font-size:11px;line-height:1.5;margin-top:9px;color:var(--text)}
 .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0}.quickBtn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:13px;font-size:12px;font-weight:900}.quickBtn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
-.navigationPanel{display:none;padding:14px 16px 24px}.navigationPanel.active{display:block}.navPointLabel{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;color:var(--muted);margin:9px 2px 5px}.navPointLabel .mi{font-size:15px}.navSearchRow{display:flex;gap:8px}.navSearchRow{position:relative}.navSearchRow .input{margin:0}.navSearchRow button{border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;padding:0 16px}.navSuggest{position:absolute;z-index:1800;left:0;right:66px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 14px 35px #0005;display:none;max-height:300px;overflow-y:auto}.navSuggest.active{display:block}.navSuggest button{width:100%;display:block;text-align:left;background:var(--card);color:var(--text);border:0;border-bottom:1px solid var(--line);padding:13px 14px;font-weight:700;font-size:13px}.navSuggest button:last-child{border-bottom:0}
+.navigationPanel{display:none;padding:14px 16px 24px}.navigationPanel.active{display:block}.navOriginCompact{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.navOriginCompact>div{display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center;min-width:0}.navOriginCompact .mi{grid-row:1/3;font-size:18px;color:var(--accent)}.navOriginCompact b{font-size:11px}.navOriginCompact small{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.navOriginCompact button{border:0;background:var(--soft);color:var(--text);border-radius:10px;padding:8px 10px;font-size:10px;font-weight:900}.navOriginEditor{display:none;margin-bottom:8px}.navOriginEditor.active{display:block}.navPointLabel{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;color:var(--muted);margin:9px 2px 5px}.navPointLabel .mi{font-size:15px}.navSearchRow{display:flex;gap:8px}.navSearchRow{position:relative}.navSearchRow .input{margin:0}.navSearchRow button{border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;padding:0 16px}.navSuggest{position:absolute;z-index:1800;left:0;right:66px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 14px 35px #0005;display:none;max-height:300px;overflow-y:auto}.navSuggest.active{display:block}.navSuggest button{width:100%;display:block;text-align:left;background:var(--card);color:var(--text);border:0;border-bottom:1px solid var(--line);padding:13px 14px;font-weight:700;font-size:13px}.navSuggest button:last-child{border-bottom:0}
 .navChoices{display:none;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.navChoices.active{display:flex}.navChoices::-webkit-scrollbar{display:none}.navChoice{min-width:150px;flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;padding:11px;text-align:left}.navChoice.active{border:2px solid var(--accent);background:var(--soft)}.navChoice b{display:block;font-size:13px}.navChoice span{display:block;font-size:10px;color:var(--muted);margin-top:3px}.navChoice em{display:inline-block;font-style:normal;font-size:8px;font-weight:900;color:var(--accent);margin-top:5px}
 .navInstruction{display:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px}.navInstruction.active{display:block}.navTurn{font-size:21px;font-weight:950}.navInfo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.navInfo div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px}.navInfo b{display:block;font-size:17px}.navInfo small{color:var(--muted);font-size:8px}
 .voiceDock{position:fixed;z-index:1300;left:50%;transform:translateX(-50%);bottom:78px;width:min(500px,calc(100% - 24px));background:rgba(13,16,21,.94);backdrop-filter:blur(18px);border:1px solid #39404a;border-radius:18px;padding:9px 10px;display:none;align-items:center;gap:9px;box-shadow:0 10px 30px #0008}.voiceDock.active{display:flex}.voiceDock .vMain{flex:1;min-width:0}.voiceDock b{display:block;font-size:11px}.voiceDock small{font-size:9px;color:#aab1bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.voiceDock button{width:44px;height:44px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:18px}
@@ -93,13 +93,15 @@ body.mode-ride .discoverSection,body.mode-ride .navigationPanel{display:none}
 body.mode-navigation .discoverSection,body.mode-navigation .content,body.mode-navigation .actions,body.mode-navigation .history{display:none}
 body.mode-navigation .navigationPanel{display:block}
 body.mode-navigation .map{height:58vh;min-height:390px}
+body.mode-navigation .map .live,body.mode-navigation .map .mapBottom{display:none}
+body.mode-navigation:not(.guidance-active) .map{margin-bottom:0}
 body.mode-overlay .app{display:none}
 @media (prefers-color-scheme: light){
  :root{--bg:#f5f6f8;--card:#ffffff;--card2:#f0f2f5;--line:#dfe3e8;--muted:#6f7884;--text:#171a1f;--soft:#f6f7f9;color-scheme:light}
  html,body{background:var(--bg);color:var(--text)}
  header{background:var(--bg)} .logo{color:var(--text)}
  .motor,.card,.screenCard,.statBox,.discoverSearch,.chip,.routeCard,.placeCard,.feedCard,.quickBtn,.navInstruction{background:var(--card);color:var(--text);border-color:var(--line)}
- .screen{background:var(--bg);color:var(--text)} .bottom{background:rgba(248,249,251,.96);border-color:var(--line)}
+ .screen{background:var(--bg);color:var(--text)} .bottom{background:#f8f9fb;border-color:var(--line)}
  .navBtn.active{color:#111}.input{background:#fff;color:#111}.liveBox,.loc,.mapBtn{background:rgba(255,255,255,.92);color:#111;border-color:#d8dde3}
  .status{background:#fff;border-color:var(--line);color:#5d6672}.voiceDock{background:rgba(255,255,255,.96);border-color:#d9dee5;color:#111;box-shadow:0 10px 30px #0002}.voiceDock small{color:#65707c}
 }
@@ -269,8 +271,10 @@ body.mode-discover #discoverEmpty{display:none!important}
 </section>
 <section class="navigationPanel" id="navigationPanel">
   <div class="ey">GAZONRIDE NAVİGASYON</div>
-  <div class="navPointLabel"><span class="mi">trip_origin</span>Başlangıç</div>
-  <div class="navSearchRow"><input class="input" id="navOrigin" autocomplete="off" placeholder="Mevcut konumum"><button type="button" id="navUseCurrent" title="Mevcut konumumu kullan"><span class="mi">my_location</span></button><div class="navSuggest" id="navOriginSuggest"></div></div>
+  <div class="navOriginCompact" id="navOriginCompact"><div><span class="mi">trip_origin</span><b>Başlangıç</b><small id="navOriginSummary">Konumun otomatik kullanılıyor</small></div><button type="button" id="navChangeOrigin">Değiştir</button></div>
+  <div class="navOriginEditor" id="navOriginEditor">
+    <div class="navSearchRow"><input class="input" id="navOrigin" autocomplete="off" placeholder="Başlangıç noktası ara"><button type="button" id="navUseCurrent" title="Konumumu kullan"><span class="mi">my_location</span></button><div class="navSuggest" id="navOriginSuggest"></div></div>
+  </div>
   <div class="navPointLabel"><span class="mi">flag</span>Varış</div>
   <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
@@ -576,18 +580,21 @@ async function fetchOriginSuggestions(value,seq){
   if(currentPoint)req.origin={lat:currentPoint.lat,lng:currentPoint.lon};
   var res=await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);if(seq!==originAutocompleteSeq)return;
   var box=$("navOriginSuggest");if(!box)return;box.innerHTML="";
-  (res.suggestions||[]).slice(0,6).forEach(function(s){var p=s.placePrediction;if(!p)return;var b=document.createElement("button");b.type="button";b.textContent=p.text&&p.text.toString?p.text.toString():String(p.text||"");b.onclick=async function(){var place=p.toPlace();await place.fetchFields({fields:["displayName","formattedAddress","location"]});if(!place.location)return;var inp=$("navOrigin"),label=place.formattedAddress||place.displayName||b.textContent;inp.value=label;inp.dataset.lat=String(place.location.lat());inp.dataset.lon=String(place.location.lng());inp.dataset.label=label;clearOriginSuggestions();originAutocompleteToken=null;if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()})};box.appendChild(b)});
+  (res.suggestions||[]).slice(0,6).forEach(function(s){var p=s.placePrediction;if(!p)return;var b=document.createElement("button");b.type="button";b.textContent=p.text&&p.text.toString?p.text.toString():String(p.text||"");b.onclick=async function(){var place=p.toPlace();await place.fetchFields({fields:["displayName","formattedAddress","location"]});if(!place.location)return;var inp=$("navOrigin"),label=place.formattedAddress||place.displayName||b.textContent;inp.value=label;inp.dataset.lat=String(place.location.lat());inp.dataset.lon=String(place.location.lng());inp.dataset.label=label;delete inp.dataset.current;setOriginSummary(label);clearOriginSuggestions();closeOriginEditor();originAutocompleteToken=null;if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()})};box.appendChild(b)});
   box.classList.toggle("active",box.children.length>0);
  }catch(e){console.warn("Origin autocomplete",e);clearOriginSuggestions()}
 }
+function setOriginSummary(text){var e=$("navOriginSummary");if(e)e.textContent=text||"Konumun otomatik kullanılıyor"}
+function closeOriginEditor(){var e=$("navOriginEditor");if(e)e.classList.remove("active")}
 function useCurrentOrigin(){
- var input=$("navOrigin");if(!input)return;input.value="Mevcut konumum";delete input.dataset.lat;delete input.dataset.lon;input.dataset.current="1";input.dataset.label="Mevcut konumum";clearOriginSuggestions();if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon})
+ var input=$("navOrigin");if(!input)return;input.value="";delete input.dataset.lat;delete input.dataset.lon;input.dataset.current="1";input.dataset.label="Mevcut konum";clearOriginSuggestions();setOriginSummary("Konumun otomatik kullanılıyor");closeOriginEditor();if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon})
 }
 function setupOriginAutocomplete(){
  var input=$("navOrigin");if(!input)return;useCurrentOrigin();
  input.addEventListener("input",function(){delete input.dataset.current;delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;var value=input.value.trim(),seq=++originAutocompleteSeq;clearTimeout(originAutocompleteTimer);if(value.length<2){clearOriginSuggestions();return}originAutocompleteTimer=setTimeout(function(){fetchOriginSuggestions(value,seq)},180)});
  input.addEventListener("focus",function(){if(input.value.trim().length>=2&&input.dataset.current!=="1"){var seq=++originAutocompleteSeq;fetchOriginSuggestions(input.value.trim(),seq)}});
  var cur=$("navUseCurrent");if(cur)cur.onclick=useCurrentOrigin;
+ var change=$("navChangeOrigin");if(change)change.onclick=function(){var e=$("navOriginEditor");if(e)e.classList.toggle("active");if(e&&e.classList.contains("active"))setTimeout(function(){input.focus()},80)};
 }
 async function geocodeGoogle(q){
  return new Promise(function(resolve,reject){
@@ -691,7 +698,7 @@ async function planNavigation(){
    clearNavSuggestions();
    if(!originInput||originInput.dataset.current==="1"||!originQ)o={lat:currentPoint.lat,lon:currentPoint.lon,label:"Mevcut konumum"};
    else if(originInput.dataset.lat&&originInput.dataset.lon)o={lat:Number(originInput.dataset.lat),lon:Number(originInput.dataset.lon),label:originInput.dataset.label||originQ};
-   else o=await geocodeGoogle(originQ);
+   else{o=await geocodeGoogle(originQ);setOriginSummary(o.label||originQ);closeOriginEditor();}
    clearOriginSuggestions();
 
    var routesLib=await google.maps.importLibrary("routes");

@@ -32,10 +32,12 @@ import java.net.URL;
 public class MainActivity extends Activity {
     private WebView webView;
     private static final int LOCATION_REQ = 42;
+    private static final int MIC_REQ = 43;
     private static final String URL = "https://ufukcicek81.github.io/gazonride/";
     private static final String RELEASES_API = "https://api.github.com/repos/ufukcicek81/gazonride/releases/latest";
     private android.content.SharedPreferences prefs;
     private String pendingOAuthUrl = null;
+    private PermissionRequest pendingWebPermission = null;
 
     public class AndroidBridge {
         @JavascriptInterface public void startRide(){
@@ -101,7 +103,16 @@ public class MainActivity extends Activity {
                 if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED) callback.invoke(origin,true,false);
                 else {requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ); callback.invoke(origin,true,false);}
             }
-            @Override public void onPermissionRequest(PermissionRequest request){runOnUiThread(()->request.grant(request.getResources()));}
+            @Override public void onPermissionRequest(PermissionRequest request){
+                runOnUiThread(() -> {
+                    boolean wantsAudio=false;
+                    for(String r:request.getResources()) if(PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) wantsAudio=true;
+                    if(wantsAudio && checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+                        pendingWebPermission=request;
+                        requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},MIC_REQ);
+                    } else request.grant(request.getResources());
+                });
+            }
         });
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
         webView.loadUrl(URL + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis());
@@ -210,6 +221,15 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause(){super.onPause();prefs.edit().putBoolean("background",true).apply();}
     @Override protected void onResume(){super.onResume();prefs.edit().putBoolean("background",false).apply(); if(webView!=null) webView.evaluateJavascript("if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){try{var bg=JSON.parse(window.AndroidBridge.getBufferedPoints()||'[]');if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}}catch(e){}",null);}
-    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){super.onRequestPermissionsResult(requestCode,permissions,results);if(requestCode==LOCATION_REQ&&webView!=null)webView.reload();}
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(requestCode,permissions,results);
+        if(requestCode==LOCATION_REQ&&webView!=null)webView.reload();
+        if(requestCode==MIC_REQ&&pendingWebPermission!=null){
+            if(results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED){
+                pendingWebPermission.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+            }else pendingWebPermission.deny();
+            pendingWebPermission=null;
+        }
+    }
     @Override public void onBackPressed(){if(webView.canGoBack())webView.goBack();else super.onBackPressed();}
 }

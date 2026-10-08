@@ -22,7 +22,7 @@ async function compressPhoto(file){
  })
 }
 async function uploadRoutePhotos(files){
- files=Array.prototype.slice.call(files||[]).slice(0,3);
+ files=Array.prototype.slice.call(files||[]).slice(0,5);
  if(!files.length)return[];
  if(!(window.GaZonAuth&&GaZonAuth.configured))return[];
  await GaZonAuth.ready;
@@ -57,7 +57,7 @@ async function submission(type,data){
      title:data.title||"İçerik",description:data.description||null,
      destination:data.destination||null,difficulty:data.difficulty||null,
      place_type:data.type||null,lat:data.lat==null?null:Number(data.lat),lon:data.lon==null?null:Number(data.lon),
-     track:Array.isArray(data.track)?data.track:[],photos:Array.isArray(data.photos)?data.photos.slice(0,3):[],stops:Array.isArray(data.stops)?data.stops.slice(0,5):[],ride_meta:data.ride_meta||{},author_name:pr.name||"Sürücü",bike:pr.bike||"Motosiklet"
+     track:Array.isArray(data.track)?data.track:[],photos:Array.isArray(data.photos)?data.photos.slice(0,5):[],stops:Array.isArray(data.stops)?data.stops.slice(0,5):[],ride_meta:data.ride_meta||{},author_name:pr.name||"Sürücü",bike:pr.bike||"Motosiklet"
    };
    var r=await GaZonAuth.client.from("submissions").insert(row).select("id").single();
    if(r.error)throw r.error;item.remoteId=r.data.id;
@@ -93,6 +93,55 @@ function routeForm(){
    await submission("route",{title:title,destination:dest,difficulty:$("grRouteDiff").value,description:$("grRouteDesc").value.trim(),track:track,photos:photos,stops:stops,ride_meta:rideMeta(ride)});
    closeModal();alert("Sürüş rotası admin onayına gönderildi.");showMine()
   }catch(e){alert((e&&e.message)||"Rota gönderilemedi.");btn.disabled=false;btn.textContent="Admin Onayına Gönder"}
+ }
+}
+function postForm(){
+ var rides=read("gazon_rides");
+ if(!rides.length){modal("Fotoğraf Paylaş",'<div class="gr-empty">Rota bağlantılı paylaşım için önce en az bir sürüş kaydetmelisin.</div>');return}
+ var opts=rides.slice(0,40).map(function(r,i){return '<option value="'+i+'">'+esc(rideLabel(r,i))+'</option>'}).join("");
+ modal("Fotoğraf Paylaş",
+  '<div class="gr-post-compose-note"><span class="mi">photo_camera</span><div><b>Sürüşünden paylaş</b><small>Fotoğraflar rota, mesafe ve sürüş süresiyle birlikte yayınlanır.</small></div></div>'+
+  '<select class="gr-field" id="grPostRide">'+opts+'</select>'+
+  '<input class="gr-field" id="grPostTitle" placeholder="Konum / başlık (örn. Kapıdağ turu)">'+
+  '<textarea class="gr-field" id="grPostCaption" rows="4" maxlength="600" placeholder="Bu sürüşten bir şeyler yaz..."></textarea>'+
+  '<label class="gr-photo-picker" for="grPostPhotos"><span class="mi">add_photo_alternate</span><b>Fotoğraf seç</b><small>1–5 fotoğraf</small></label>'+
+  '<input id="grPostPhotos" type="file" accept="image/*" multiple style="display:none">'+
+  '<div class="gr-compose-preview" id="grPostPreview"></div>'+
+  '<div class="gr-route-summary" id="grPostRideSummary"></div>'+
+  '<button class="gr-submit" id="grSendPost"><span class="mi" style="vertical-align:-5px">send</span> Paylaşımı Onaya Gönder</button>'
+ );
+ function selected(){return rides[Number($("grPostRide").value)||0]}
+ function summary(){
+  var r=selected(),m=rideMeta(r),t=normalizeTrack(r.track);
+  $("grPostRideSummary").innerHTML='<div class="gr-mini-route"><span class="mi">route</span><div><b>'+esc(r.destination||"Kayıtlı sürüş")+'</b><small>'+m.km.toFixed(1)+' km · '+esc(m.duration)+' · '+t.length+' rota noktası</small></div></div>'
+ }
+ $("grPostRide").onchange=summary;
+ $("grPostPhotos").onchange=function(){
+  var files=Array.prototype.slice.call(this.files||[]);
+  if(files.length>5)alert("En fazla 5 fotoğraf seçebilirsin.");
+  files=files.slice(0,5);
+  $("grPostPreview").innerHTML="";
+  files.forEach(function(file){
+   var u=URL.createObjectURL(file),img=document.createElement("img");img.src=u;img.onload=function(){URL.revokeObjectURL(u)};
+   $("grPostPreview").appendChild(img)
+  })
+ };
+ summary();
+ $("grSendPost").onclick=async function(){
+  var btn=this,ride=selected(),track=normalizeTrack(ride.track),files=Array.prototype.slice.call($("grPostPhotos").files||[]).slice(0,5);
+  var title=$("grPostTitle").value.trim()||ride.destination||"Sürüş paylaşımı";
+  var caption=$("grPostCaption").value.trim();
+  if(track.length<2)return alert("Seçtiğin sürüşte rota izi bulunmuyor.");
+  if(!files.length)return alert("En az bir fotoğraf seç.");
+  try{
+   btn.disabled=true;btn.textContent="Fotoğraflar yükleniyor...";
+   var photos=await uploadRoutePhotos(files);
+   if(!photos.length)throw new Error("Fotoğraflar yüklenemedi.");
+   btn.textContent="Gönderiliyor...";
+   var meta=rideMeta(ride);meta.socialPost=true;
+   await submission("route",{title:title,destination:ride.destination||title,difficulty:"Sürüş",description:caption,track:track,photos:photos,stops:[],ride_meta:meta});
+   closeModal();alert("Paylaşım admin onayına gönderildi.");showMine()
+  }catch(e){alert((e&&e.message)||"Paylaşım gönderilemedi.");btn.disabled=false;btn.innerHTML='<span class="mi" style="vertical-align:-5px">send</span> Paylaşımı Onaya Gönder'}
  }
 }
 function placeForm(){
@@ -149,12 +198,23 @@ async function toggleFavorite(kind,index){
  }
 }
 function card(kind,x,i){
- var icon=kind==="route"?"route":"local_cafe",type=kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola"),photos=Array.isArray(x.photos)?x.photos.slice(0,3):[],stops=Array.isArray(x.stops)?x.stops:[],m=x.ride_meta||{};
- var gallery=photos.length?'<div class="gr-gallery gr-gallery-'+photos.length+'">'+photos.map(function(u){return '<img src="'+esc(u)+'" loading="lazy" alt="Rota fotoğrafı">'}).join("")+'</div>':"";
+ var icon=kind==="route"?"two_wheeler":"local_cafe",type=kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola"),photos=Array.isArray(x.photos)?x.photos.slice(0,5):[],stops=Array.isArray(x.stops)?x.stops:[],m=x.ride_meta||{},isPost=kind==="route"&&m.socialPost===true;
+ var gallery="";
+ if(photos.length){
+  if(isPost){
+   gallery='<div class="gr-insta-gallery" data-gallery="'+i+'"><div class="gr-insta-track">'+photos.map(function(u,n){return '<div class="gr-insta-slide"><img src="'+esc(u)+'" loading="lazy" alt="Sürüş fotoğrafı">'+(photos.length>1?'<span class="gr-photo-count">'+(n+1)+'/'+photos.length+'</span>':'')+'</div>'}).join("")+'</div></div>';
+  }else{
+   gallery='<div class="gr-gallery gr-gallery-'+Math.min(photos.length,3)+'">'+photos.slice(0,3).map(function(u){return '<img src="'+esc(u)+'" loading="lazy" alt="Rota fotoğrafı">'}).join("")+'</div>';
+  }
+ }
  var stats=kind==="route"&&x.track&&x.track.length>1?'<div class="gr-route-stats"><span><b>'+Number(m.km||0).toFixed(1)+'</b> km</span><span><b>'+esc(m.duration||"—")+'</b> süre</span><span><b>'+Math.round(Number(m.max||0))+'</b> km/sa</span></div>':"";
  var stopHtml=kind==="route"&&stops.length?'<div class="gr-card-stops">'+stops.map(function(z){return '<span><i class="mi">local_cafe</i>'+esc(z.name||"Mola")+'</span>'}).join("")+'</div>':"";
  var navText=kind==="route"&&x.track&&x.track.length>1?"Rotayı Sür":"Git";
- return '<article class="gr-post">'+gallery+'<div class="gr-post-head"><div class="gr-post-avatar"><span class="mi">'+icon+'</span></div><div><b>'+esc(x.author||"GaZonRide Sürücüsü")+'</b><small>'+esc(x.bike||"Motosiklet")+' · '+esc(x.createdAt||"")+'</small></div></div><div class="gr-post-title">'+esc(x.title)+'</div><div class="gr-post-text">'+esc(x.description||"")+'</div>'+stats+stopHtml+'<div class="gr-post-meta">'+esc(type)+'</div><div class="gr-post-actions"><button class="gr-drive-route" data-gr-nav="'+kind+':'+i+'"><span class="mi" style="font-size:15px">navigation</span> '+navText+'</button><button data-gr-like="'+kind+':'+i+'"><span class="mi" style="font-size:15px">favorite</span> '+(isFavorite(kind,x)?"Favoride":"Favori")+'</button>'+(kind==="route"&&x.track&&x.track.length>1?'<button data-gr-replay-route="'+i+'"><span class="mi" style="font-size:15px">3d_rotation</span> Sürüş</button>':'')+'<button data-gr-share="'+kind+':'+i+'"><span class="mi" style="font-size:15px">share</span> Paylaş</button></div></article>'
+ var head='<div class="gr-post-head"><div class="gr-post-avatar"><span class="mi">'+icon+'</span></div><div class="gr-post-user"><b>'+esc(x.author||"GaZonRide Sürücüsü")+'</b><small>'+esc(x.bike||"Motosiklet")+' · '+esc(x.createdAt||"")+'</small></div><button class="gr-post-more"><span class="mi">more_horiz</span></button></div>';
+ var body=isPost
+  ? '<div class="gr-insta-actions"><button data-gr-like="'+kind+':'+i+'"><span class="mi">favorite_border</span></button><button data-gr-share="'+kind+':'+i+'"><span class="mi">send</span></button><button data-gr-nav="'+kind+':'+i+'"><span class="mi">route</span></button></div><div class="gr-post-caption"><b>'+esc(x.author||"Sürücü")+'</b> '+esc(x.description||"")+'</div><div class="gr-post-routechip"><span class="mi">route</span><div><b>'+esc(x.title||x.destination||"Sürüş")+'</b><small>'+Number(m.km||0).toFixed(1)+' km · '+esc(m.duration||"—")+'</small></div><button data-gr-nav="'+kind+':'+i+'">Rotayı Aç</button></div>'
+  : '<div class="gr-post-title">'+esc(x.title)+'</div><div class="gr-post-text">'+esc(x.description||"")+'</div>'+stats+stopHtml+'<div class="gr-post-meta">'+esc(type)+'</div><div class="gr-post-actions"><button class="gr-drive-route" data-gr-nav="'+kind+':'+i+'"><span class="mi" style="font-size:15px">navigation</span> '+navText+'</button><button data-gr-like="'+kind+':'+i+'"><span class="mi" style="font-size:15px">favorite</span> '+(isFavorite(kind,x)?"Favoride":"Favori")+'</button>'+(kind==="route"&&x.track&&x.track.length>1?'<button data-gr-replay-route="'+i+'"><span class="mi" style="font-size:15px">3d_rotation</span> Sürüş</button>':'')+'<button data-gr-share="'+kind+':'+i+'"><span class="mi" style="font-size:15px">share</span> Paylaş</button></div>';
+ return '<article class="gr-post '+(isPost?'gr-insta-post':'')+'">'+head+gallery+body+'</article>'
 }
 function render(filter){
  filter=filter||document.querySelector(".gr-social-tab.active")?.dataset.grTab||"feed";
@@ -212,14 +272,14 @@ function syncRemoteCommunity(){
 }
 function install(){
  var host=document.querySelector(".discoverSection");if(!host||$("grSocial"))return;
- var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-social-head"><div><b>GaZonRide Topluluğu</b><small>Rota · mola · sürücüler</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions"><button class="gr-social-btn primary" id="grAddRoute"><span class="mi">add_road</span>Rota Ekle</button><button class="gr-social-btn" id="grAddPlace"><span class="mi">add_location_alt</span>Mola Yeri Ekle</button></div><div class="gr-social-tabs"><button class="gr-social-tab active" data-gr-tab="feed">Akış</button><button class="gr-social-tab" data-gr-tab="routes">Rotalar</button><button class="gr-social-tab" data-gr-tab="places">Molalar</button><button class="gr-social-tab" data-gr-tab="riders">Sürücüler</button><button class="gr-social-tab" id="grAdmin">Admin</button></div><div class="gr-social-list" id="grSocialList"></div>';
+ var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-social-head"><div><b>GaZonRide Topluluğu</b><small>Rota · mola · sürücüler</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions gr-social-actions-3"><button class="gr-social-btn primary" id="grAddPost"><span class="mi">add_photo_alternate</span>Fotoğraf Paylaş</button><button class="gr-social-btn" id="grAddRoute"><span class="mi">add_road</span>Rota Ekle</button><button class="gr-social-btn" id="grAddPlace"><span class="mi">add_location_alt</span>Mola Yeri</button></div><div class="gr-social-tabs"><button class="gr-social-tab active" data-gr-tab="feed">Akış</button><button class="gr-social-tab" data-gr-tab="routes">Rotalar</button><button class="gr-social-tab" data-gr-tab="places">Molalar</button><button class="gr-social-tab" data-gr-tab="riders">Sürücüler</button><button class="gr-social-tab" id="grAdmin">Admin</button></div><div class="gr-social-list" id="grSocialList"></div>';
  var quick=host.querySelector(".quickRow");if(quick)quick.insertAdjacentElement("afterend",wrap);else host.prepend(wrap);
  var m=document.createElement("div");m.id="grSocialModal";m.className="gr-modal";document.body.appendChild(m);
- $("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;var ab=$("grAdmin");if(ab)ab.style.display="none";if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){if(ab)ab.style.display=GaZonAuth.state.role==="admin"?"inline-block":"none"});
+ $("grAddPost").onclick=postForm;$("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;var ab=$("grAdmin");if(ab)ab.style.display="none";if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){if(ab)ab.style.display=GaZonAuth.state.role==="admin"?"inline-block":"none"});
  document.querySelectorAll("[data-gr-tab]").forEach(function(b){b.onclick=function(){document.querySelectorAll(".gr-social-tab").forEach(function(x){x.classList.remove("active")});b.classList.add("active");render(b.dataset.grTab)}});
  render();
  syncRemoteCommunity();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonRideSocial={render:render,routeForm:routeForm,placeForm:placeForm,admin:admin,mine:showMine,close:closeModal};
+window.GaZonRideSocial={render:render,postForm:postForm,routeForm:routeForm,placeForm:placeForm,admin:admin,mine:showMine,close:closeModal};
 })();

@@ -20,8 +20,15 @@ async function submission(type,data){
  if(window.GaZonAuth&&GaZonAuth.configured){
    await GaZonAuth.ready;
    if(!GaZonAuth.state.user){location.href="login.html?next="+encodeURIComponent(location.href);return item;}
-   var u=GaZonAuth.state.user,pr=GaZonAuth.state.profile||{},ref=GaZonAuth.db().ref("submissions").push();
-   await ref.set({type:type,status:"pending",authorUid:u.uid,authorName:pr.name||u.displayName||"Sürücü",bike:pr.bike||"Motosiklet",createdAt:firebase.database.ServerValue.TIMESTAMP,data:data});
+   var pr=GaZonAuth.state.profile||{},row={
+     user_id:GaZonAuth.state.user.id,type:type,status:"pending",
+     title:data.title||"İçerik",description:data.description||null,
+     destination:data.destination||null,difficulty:data.difficulty||null,
+     place_type:data.type||null,lat:data.lat==null?null:Number(data.lat),lon:data.lon==null?null:Number(data.lon),
+     track:Array.isArray(data.track)?data.track:[],author_name:pr.name||"Sürücü",bike:pr.bike||"Motosiklet"
+   };
+   var r=await GaZonAuth.client.from("submissions").insert(row).select("id").single();
+   if(r.error)throw r.error;item.remoteId=r.data.id;
  }
  return item
 }
@@ -39,9 +46,16 @@ function placeForm(){
  $("grUseGps").onclick=function(){var out=$("grCoords");out.textContent="Konum alınıyor...";navigator.geolocation.getCurrentPosition(function(pos){out.dataset.lat=pos.coords.latitude;out.dataset.lon=pos.coords.longitude;out.textContent=pos.coords.latitude.toFixed(5)+", "+pos.coords.longitude.toFixed(5)},function(){out.textContent="Konum alınamadı. Konum iznini kontrol et."},{enableHighAccuracy:true,timeout:12000})};
  $("grSendPlace").onclick=async function(){var title=$("grPlaceTitle").value.trim(),out=$("grCoords");if(!title||!out.dataset.lat)return alert("Mola adı ve konum gerekli.");await submission("place",{title:title,type:$("grPlaceType").value,description:$("grPlaceDesc").value.trim(),lat:Number(out.dataset.lat),lon:Number(out.dataset.lon)});closeModal();alert("Mola yeri admin onayına gönderildi.");showMine()}
 }
-function showMine(){
+async function showMine(){
  var p=profile(),q=read(K_PENDING).filter(function(x){return x.author===(p.name||"")});
- modal("Gönderilerim",q.length?q.map(function(s){return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge pending">ONAY BEKLİYOR</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div></div>'}).join(""):'<div class="gr-empty">Admin onayında gönderin yok.</div>')
+ if(window.GaZonAuth&&GaZonAuth.configured){
+   await GaZonAuth.ready;
+   if(GaZonAuth.state.user){
+     var r=await GaZonAuth.client.from("submissions").select("*").eq("user_id",GaZonAuth.state.user.id).order("created_at",{ascending:false}).limit(50);
+     if(!r.error)q=(r.data||[]).map(function(s){return {type:s.type,status:s.status,createdAt:new Date(s.created_at).toLocaleString("tr-TR"),data:{title:s.title,description:s.description||""}}});
+   }
+ }
+ modal("Gönderilerim",q.length?q.map(function(s){var st=s.status==="approved"?"ONAYLANDI":s.status==="rejected"?"REDDEDİLDİ":"ONAY BEKLİYOR";return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge '+(s.status==="approved"?"approved":"pending")+'">'+st+'</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div></div>'}).join(""):'<div class="gr-empty">Henüz gönderin yok.</div>')
 }
 function admin(){
  if(window.GaZonAuth&&GaZonAuth.configured){location.href="admin.html";return;}
@@ -52,12 +66,17 @@ function admin(){
 }
 function favoriteId(kind,x){return kind+"|"+String(x.title||"")+"|"+String(x.destination||x.lat||"")}
 function isFavorite(kind,x){var id=favoriteId(kind,x);return read(K_FAVS).some(function(f){return f.id===id})}
-function toggleFavorite(kind,index){
+async function toggleFavorite(kind,index){
  var key=kind==="route"?K_ROUTES:K_PLACES,a=read(key),x=a[index];if(!x)return;
- var favs=read(K_FAVS),id=favoriteId(kind,x),at=favs.findIndex(function(f){return f.id===id});
- if(at>=0){favs.splice(at,1);x.likes=Math.max(0,Number(x.likes||0)-1)}
- else{favs.unshift({id:id,kind:kind,title:x.title||"",destination:x.destination||x.title||"",lat:x.lat,lon:x.lon,meta:kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola"),author:x.author||""});x.likes=Number(x.likes||0)+1}
- write(K_FAVS,favs);write(key,a);render()
+ var favs=read(K_FAVS),id=favoriteId(kind,x),at=favs.findIndex(function(f){return f.id===id}),adding=at<0;
+ if(!adding)favs.splice(at,1);
+ else favs.unshift({id:id,kind:kind,title:x.title||"",destination:x.destination||x.title||"",lat:x.lat,lon:x.lon,meta:kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola"),author:x.author||"",submissionId:x.submissionId||null});
+ write(K_FAVS,favs);render();
+ if(window.GaZonAuth&&GaZonAuth.configured&&x.submissionId){
+  await GaZonAuth.ready;if(!GaZonAuth.state.user)return;
+  if(adding){var r=await GaZonAuth.client.from("favorites").upsert({user_id:GaZonAuth.state.user.id,submission_id:x.submissionId},{onConflict:"user_id,submission_id"});if(r.error)console.warn(r.error);}
+  else{var d=await GaZonAuth.client.from("favorites").delete().eq("user_id",GaZonAuth.state.user.id).eq("submission_id",x.submissionId);if(d.error)console.warn(d.error);}
+ }
 }
 function card(kind,x,i){
  var icon=kind==="route"?"route":"local_cafe",type=kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola");
@@ -80,11 +99,20 @@ function render(filter){
 }
 function syncRemoteCommunity(){
  if(!(window.GaZonAuth&&GaZonAuth.configured))return;
- GaZonAuth.ready.then(function(){
+ GaZonAuth.ready.then(async function(){
   if(!GaZonAuth.state.user)return;
-  var db=GaZonAuth.db();
-  db.ref("community/routes").on("value",function(s){var o=s.val()||{},a=Object.keys(o).map(function(k){return Object.assign({remoteId:k},o[k])});write(K_ROUTES,a);render()});
-  db.ref("community/places").on("value",function(s){var o=s.val()||{},a=Object.keys(o).map(function(k){return Object.assign({remoteId:k},o[k])});write(K_PLACES,a);render()});
+  async function pull(){
+   var r=await GaZonAuth.client.from("submissions").select("*").eq("status","approved").order("reviewed_at",{ascending:false}).limit(100);
+   if(r.error){console.warn("community sync",r.error);return;}
+   var routes=[],places=[];
+   (r.data||[]).forEach(function(s){
+    if(s.type==="route")routes.push({submissionId:s.id,title:s.title,destination:s.destination||s.title,difficulty:s.difficulty||"Rota",description:s.description||"",track:s.track||[],author:s.author_name||"Sürücü",bike:s.bike||"Motosiklet",likes:0,createdAt:new Date(s.created_at).toLocaleString("tr-TR")});
+    else places.push({submissionId:s.id,title:s.title,type:s.place_type||"Mola",description:s.description||"",lat:s.lat,lon:s.lon,author:s.author_name||"Sürücü",bike:s.bike||"Motosiklet",likes:0,createdAt:new Date(s.created_at).toLocaleString("tr-TR")});
+   });
+   write(K_ROUTES,routes);write(K_PLACES,places);render();
+  }
+  await pull();
+  try{GaZonAuth.client.channel("gazon-community").on("postgres_changes",{event:"*",schema:"public",table:"submissions",filter:"status=eq.approved"},pull).subscribe();}catch(e){}
  });
 }
 function install(){

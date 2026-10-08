@@ -187,6 +187,14 @@ body.mode-home .discoverSection,body.mode-home .map,body.mode-home .content,body
 body.mode-discover .homeSection,body.mode-ride .homeSection,body.mode-navigation .homeSection,body.mode-overlay .homeSection{display:none}
 html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .communityTop button{background:#fff!important;color:#171a1f!important;border-color:var(--line)!important}
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+/* Community cleanup */
+body.mode-discover #discoverSection>.discoverSearch,
+body.mode-discover #discoverSection>.discoverTabs,
+body.mode-discover #discoverSection>.quickRow,
+body.mode-discover #discoverSection>.routesBlock,
+body.mode-discover #discoverSection>.placesBlock,
+body.mode-discover #discoverSection>.communityBlock,
+body.mode-discover #discoverEmpty{display:none!important}
 </style>
 </head>
 <body>
@@ -202,7 +210,7 @@ html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#
     <button class="homeMenuBtn" id="homeIntercom"><span class="mi">headset_mic</span><div><b>Intercom</b><small>Grup sürüşünde konuş.</small></div></button>
     <button class="homeMenuBtn" id="homeGroups"><span class="mi">group_add</span><div><b>Gruplarım</b><small>Grup oluştur veya katıl.</small></div></button>
     <button class="homeMenuBtn" id="homeProfile"><span class="mi">person</span><div><b>Profilim</b><small>Üyelik, motosiklet ve istatistikler.</small></div></button>
-    <button class="homeMenuBtn" id="homeAdmin"><span class="mi">admin_panel_settings</span><div><b>Admin</b><small>Onay kuyruğu ve yönetim.</small></div></button>
+    <button class="homeMenuBtn" id="homeAdmin" style="display:none"><span class="mi">admin_panel_settings</span><div><b>Admin</b><small>Onay kuyruğu ve yönetim.</small></div></button>
   </div>
 </section>
 <section class="discoverSection" id="discoverSection">
@@ -300,7 +308,7 @@ html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#
 <button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
 <button class="navBtn" data-page="profile"><b><span class="mi">person</span></b>Profil</button>
 </nav>
-<script src="gazonride-config.js"></script><script src="supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261008-sb4"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261008-sb5"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -396,7 +404,7 @@ function setPolyline(poly,pts){if(!poly)return;poly.setPath((pts||[]).map(functi
 function fitPolyline(poly){if(!map||!poly)return;var path=poly.getPath(),b=new google.maps.LatLngBounds();path.forEach(function(p){b.extend(p);});if(!b.isEmpty())map.fitBounds(b,40);}
 function setMapCenter(p,zoom){if(!map)return;map.setCenter({lat:p.lat,lng:p.lon});if(zoom)map.setZoom(zoom);}
 function applyPosition(pos){
- var c=pos.coords,p={lat:c.latitude,lon:c.longitude};currentPoint=p;if(navActive)updateNavigation(p);
+ var c=pos.coords,p={lat:c.latitude,lon:c.longitude},ts=Number(pos.timestamp||c.timestamp||Date.now());currentPoint=p;if(navActive)updateNavigation(p);
  $("location").innerHTML='<span class="mi">location_on</span><span>'+p.lat.toFixed(5)+", "+p.lon.toFixed(5)+"</span>";
  $("gps").textContent="GPS bağlı";
  $("accuracy").textContent="Konum doğruluğu: ±"+Math.round(c.accuracy||0)+" m";
@@ -411,15 +419,15 @@ function applyPosition(pos){
  }
  if(map&&!riding&&!navActive)setMapCenter(p,16);
  if(riding){
-   track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),Date.now()]);updateTurns();setPolyline(route,track);
+   track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),ts]);updateTurns();setPolyline(route,track);
    if(track.length>1)map.panTo({lat:p.lat,lng:p.lon});
    if(lastPoint){
- var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(Date.now()-lastGpsTs)/1000):1;
+ var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(ts-lastGpsTs)/1000):1;
  var acc=Number(c.accuracy||999),implied=dt>0?(d*3600/dt):999;
  if(d>0.003 && d<0.8 && (acc<=80 || implied<=180)) totalKm+=d;
  $("distance").textContent=totalKm.toFixed(2);
 }
-lastGpsTs=Date.now();
+lastGpsTs=ts;
    lastPoint=p;
    var sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$("speed").textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$("max").textContent=Math.round(maxSpeed);
    if(c.altitude!=null){$("altitude").textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$("elev").textContent=Math.round(totalClimb);}
@@ -730,7 +738,7 @@ function stopNavigation(){
  }else $("status").textContent="Navigasyon kapatıldı.";
 }
 
-function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay"))setMode("discover");window.scrollTo({top:0,behavior:"smooth"});}
+function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay"))setMode("home");window.scrollTo({top:0,behavior:"smooth"});}
 var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
 var VOICE_WS="wss://gazonride-voice.onrender.com";
 function voiceId(){return "rider-"+Math.random().toString(36).slice(2,9);}
@@ -827,7 +835,7 @@ async function showGroupsSupabase(x){
  x.innerHTML='<div class="screenHead"><div><div class="ey">SOSYAL SÜRÜŞ</div><div class="screenTitle">Gruplarım</div></div><button class="mapBtn" id="closeScreen">✕</button></div><div class="screenCard"><b>Yeni grup oluştur</b><input class="input" id="groupName" placeholder="Grup adı"><button class="screenBtn" id="createGroup">＋ Grup Oluştur</button></div><div class="screenCard"><b>Gruba katıl</b><input class="input" id="groupCode" placeholder="Davet kodu"><button class="screenBtn dark" id="joinGroup">Katıl</button></div><div class="ey">GRUPLARIM</div>'+(groups.length?groups.map(function(g,i){return '<div class="screenCard"><b>🏍️ '+g.name+'</b><div class="sub">Kod: '+g.code+' · '+(g.role==="owner"?"Kurucu":"Üye")+'</div><button class="screenBtn" data-group-voice="'+i+'">Intercom\'a Katıl</button><button class="screenBtn dark" data-group-remove="'+i+'">'+(g.role==="owner"?"Grubu Sil":"Gruptan Ayrıl")+'</button></div>';}).join(""):'<div class="screenCard"><div class="sub">Henüz bir grubun yok.</div></div>');
  x.querySelector("#closeScreen").onclick=closeScreen;
  x.querySelector("#createGroup").onclick=async function(){var n=x.querySelector("#groupName").value.trim();if(!n)return;var code="GR"+Math.random().toString(36).slice(2,7).toUpperCase();var gr=await client.from("groups").insert({owner_id:uid,name:n,code:code}).select("id").single();if(gr.error){$("status").textContent=gr.error.message;return}var gm=await client.from("group_members").insert({group_id:gr.data.id,user_id:uid,role:"owner"});if(gm.error){$("status").textContent=gm.error.message;return}showGroupsSupabase(x);};
- x.querySelector("#joinGroup").onclick=async function(){var code=x.querySelector("#groupCode").value.trim().toUpperCase();if(!code)return;var gr=await client.from("groups").select("id,name,code").eq("code",code).maybeSingle();if(gr.error||!gr.data){$("status").textContent="Grup kodu bulunamadı.";return}var gm=await client.from("group_members").upsert({group_id:gr.data.id,user_id:uid,role:"member"},{onConflict:"group_id,user_id"});if(gm.error){$("status").textContent=gm.error.message;return}showGroupsSupabase(x);};
+ x.querySelector("#joinGroup").onclick=async function(){var code=x.querySelector("#groupCode").value.trim().toUpperCase();if(!code)return;var gr=await client.from("groups").select("id,name,code").eq("code",code).maybeSingle();if(gr.error||!gr.data){$("status").textContent="Grup kodu bulunamadı.";return}var ex=await client.from("group_members").select("role").eq("group_id",gr.data.id).eq("user_id",uid).maybeSingle();if(ex.error){$("status").textContent=ex.error.message;return}if(!ex.data){var gm=await client.from("group_members").insert({group_id:gr.data.id,user_id:uid,role:"member"});if(gm.error){$("status").textContent=gm.error.message;return}}showGroupsSupabase(x);};
  x.querySelectorAll("[data-group-voice]").forEach(function(b){b.onclick=function(){var g=groups[Number(b.getAttribute("data-group-voice"))];if(!g)return;showScreen("voice");setTimeout(function(){var r=$("roomCode");if(r)r.value=g.code;},40);};});
  x.querySelectorAll("[data-group-remove]").forEach(function(b){b.onclick=async function(){var g=groups[Number(b.getAttribute("data-group-remove"))];if(!g)return;if(g.role==="owner"){var d=await client.from("groups").delete().eq("id",g.id).eq("owner_id",uid);if(d.error){$("status").textContent=d.error.message;return}}else{var d2=await client.from("group_members").delete().eq("group_id",g.id).eq("user_id",uid);if(d2.error){$("status").textContent=d2.error.message;return}}showGroupsSupabase(x);};});
 }
@@ -973,7 +981,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-social7"></script>
+<script src="social.js?v=20261008-social8"></script>
 <script src="replay.js?v=20261008-r2"></script>
 </body>
 </html>

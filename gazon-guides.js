@@ -180,8 +180,13 @@ function decorate(){
   var visual=tile.querySelector(".gr-route-visual");
   if(visual){
    visual.setAttribute("title","Fotoğraf galerisi ve bölge rehberini aç");
-   var note=document.createElement("span");note.className="gr-gallery-hint";note.textContent="Fotoğraflar · Bölge rehberi";
-   visual.appendChild(note)
+   var body=tile.querySelector(".gr-route-tile-body");
+   if(body){
+    var note=document.createElement("div");
+    note.className="gr-gallery-hint";
+    note.innerHTML='<span class="mi" aria-hidden="true">photo_library</span><span>Fotoğraflar ve bölge rehberi <span class="mi" aria-hidden="true">chevron_right</span></span>';
+    body.insertBefore(note,body.firstChild);
+   }
   }
   tile.addEventListener("click",function(e){if(e.target.closest("button,a,input"))return;showGuide(tile)});
   tile.addEventListener("keydown",function(e){if(e.target!==tile)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();showGuide(tile)}})

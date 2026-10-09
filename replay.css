@@ -12,3 +12,18 @@
 .gr-detail-list{padding:20px 10px}.gr-detail-list div{display:flex;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid #171b22}.gr-detail-list span{color:#939ca8}.gr-detail-list b{color:#fff}
 .gr-replay-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:8px}.gr-replay-controls button{border:1px solid #343944;background:#151922;color:#fff;border-radius:14px;padding:13px 10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:5px}.gr-replay-controls button.primary{background:#ff5a1f;border-color:#ff5a1f}
 @media(max-width:430px){.gr-replay-controls{grid-template-columns:1fr 1fr}.gr-replay-controls .primary{grid-column:1/-1}.gr-bigstats b{font-size:34px}.gr-replay-map{min-height:330px}}
+
+/* Ride replay v2 */
+.gr-replay-wrap{width:min(620px,100%);padding-left:0;padding-right:0;background:#05070b}
+.gr-replay-head{padding:0 14px}
+.gr-replay-stage{border-radius:0;border-left:0;border-right:0}
+.gr-replay-map{height:min(62vh,620px);min-height:430px}
+.gr-play3d{bottom:78px}
+.gr-replay-title{left:12px;right:12px;bottom:12px}
+.gr-bigstats{grid-template-columns:repeat(3,1fr);gap:8px;padding:20px 16px 18px}
+.gr-bigstats>div{text-align:left}
+.gr-bigstats b{font-size:32px}
+.gr-detail-list{padding:8px 16px 18px}
+.gr-detail-list div{font-size:12px}
+.gr-replay-controls{padding:0 16px 16px}
+@media(max-width:430px){.gr-replay-map{min-height:410px;height:58vh}.gr-bigstats{grid-template-columns:repeat(3,1fr)}.gr-bigstats b{font-size:27px}.gr-bigstats small{font-size:8px;letter-spacing:1px}}

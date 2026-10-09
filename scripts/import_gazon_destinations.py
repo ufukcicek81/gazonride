@@ -22,7 +22,15 @@ def get_city(phrase):
     first = re.split(r"[\s\-–]", phrase.strip(), 1)[0]
     if first.startswith("Uludağ"):
         return "Bursa"
-    return first if first in PROVINCE_SET else ALIASES.get(first)
+    if first in PROVINCE_SET:
+        return first
+    if first in ALIASES:
+        return ALIASES[first]
+    # Turkish list has forms like Adana’dan, Amasya’da and Antalya'da.
+    for city in PROVINCES:
+        if first.startswith(city) and first[len(city):len(city) + 1] in ("'", "’", "‘", "-"):
+            return city
+    return None
 
 
 def category(text):
@@ -74,7 +82,9 @@ def parse_article(html):
     result = []
     for n, row in enumerate(records, 1):
         city, text = row["city"], row["text"]
-        label = re.sub(r"^" + re.escape(city) + r"(?:\s*[-–])?\s*", "", text, count=1)
+        label = re.sub(r"^" + re.escape(city) + r"(?:(?:[’'‘][A-Za-zçğıöşüÇĞİÖŞÜ]+)|\s*[-–])?\s*", "", text, count=1)
+        if city == "Bursa" and text.startswith("Uludağ"):
+            label = text
         label = label.strip(" -–.") or text
         result.append({
             "id": n,
@@ -98,6 +108,9 @@ def main():
     if len(data) < 1000 or len(data) > 1080 or missing:
         raise ValueError(f"Incomplete catalogue: {len(data)} entries, {len(cities)} provinces, missing={missing}")
     assert data[0]["city"] == "Adana"
+    assert any(x["sourceNumber"] == 13 and x["city"] == "Adana" for x in data)
+    assert any(x["sourceNumber"] == 46 and x["city"] == "Amasya" for x in data)
+    assert any(x["sourceNumber"] == 1021 and x["city"] == "Diyarbakır" for x in data)
     assert any(x["city"] == "Düzce" and "Güzeldere" in x["title"] for x in data)
     OUTPUT.write_text(json.dumps({"source": SOURCE, "version": 1, "cities": PROVINCES, "items": data}, ensure_ascii=False, indent=0), encoding="utf-8")
     print(f"OK: wrote {OUTPUT} with {len(data)} entries across {len(cities)} cities.")

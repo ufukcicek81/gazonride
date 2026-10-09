@@ -260,30 +260,30 @@ async function build3DMap(ride){
   var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
   map3d=new Map3DElement({
    center:{lat:info.center.lat,lng:info.center.lng,altitude:0},
-   range:info.range,tilt:58,heading:head,mode:"HYBRID",
+   range:info.range,tilt:47,heading:head,mode:"HYBRID",
    defaultUIHidden:true,gestureHandling:"COOPERATIVE"
   });
   map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
   host.appendChild(map3d);
 
   route3d=new Polyline3DElement({
-   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:1}}),
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#20E0D0",strokeWidth:13,
-   outerColor:"#07191A",outerWidth:.42,drawsOccludedSegments:false,geodesic:true,zIndex:8
+   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#21F2DE",strokeWidth:22,
+   outerColor:"#07191A",outerWidth:.30,drawsOccludedSegments:true,geodesic:true,zIndex:8
   });
   map3d.append(route3d);
 
   travel3d=new Polyline3DElement({
    path:[{lat:first.lat,lng:first.lng,altitude:2}],
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:7,
-   outerColor:"#20E0D0",outerWidth:.28,drawsOccludedSegments:false,zIndex:12
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:10,
+   outerColor:"#20E0D0",outerWidth:.28,drawsOccludedSegments:true,zIndex:12
   });
   map3d.append(travel3d);
 
   if(Marker3DElement){
    bike3d=new Marker3DElement({
-    position:{lat:first.lat,lng:first.lng,altitude:7},
-    altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:false,zIndex:30
+    position:{lat:first.lat,lng:first.lng,altitude:2},
+    altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true,zIndex:30
    });
    map3d.append(bike3d);
   }
@@ -292,11 +292,11 @@ async function build3DMap(ride){
   $("grReplayState").textContent="Google Earth görünümü hazırlanıyor…";
   try{
    map3d.flyCameraTo({
-    endCamera:{center:{lat:first.lat,lng:first.lng,altitude:80},range:2800,tilt:56,heading:head},
+    endCamera:{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},
     durationMillis:2100
    });
   }catch(e){
-   map3d.center={lat:first.lat,lng:first.lng,altitude:80};map3d.range=2800;map3d.tilt=56;map3d.heading=head;
+   map3d.center={lat:first.lat,lng:first.lng,altitude:140};map3d.range=4500;map3d.tilt=47;map3d.heading=head;
   }
   startReplayPlayback(ride,"Sinematik kamera hazırlanıyor");
  }catch(e){
@@ -310,27 +310,24 @@ function updateScene(progress,ts){
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
 
  if(using3d&&map3d){
-  if(bike3d)try{bike3d.position={lat:p.lat,lng:p.lng,altitude:8}}catch(e){}
-  if(now-lastTrailTs>180&&travel3d){
-   try{travel3d.path=playPoints.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:2}})}catch(e){}
+  if(bike3d)try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
+  if(now-lastTrailTs>240&&travel3d){
+   try{travel3d.path=playPoints.slice(0,x.i+1).filter(function(q,i){return i%3===0}).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}})}catch(e){}
    lastTrailTs=now
   }
   if(now-lastCameraTs>140){
-   var look=Math.max(10,Math.min(42,Math.round(playPoints.length*.012)));
-   var ahead=playPoints[Math.min(playPoints.length-1,x.i+look)]||x.next||p;
-   var rawHead=bearing(p,ahead);
-   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.075);
-   if(!lastCameraPoint)lastCameraPoint={lat:pos.lat,lng:pos.lng};
-   lastCameraPoint={
-    lat:lastCameraPoint.lat+(pos.lat-lastCameraPoint.lat)*.085,
-    lng:lastCameraPoint.lng+(pos.lng-lastCameraPoint.lng)*.085
-   };
-   var nearEnd=progress>.90?(progress-.90)/.10:0;
-   var cinematicRange=2800+650*Math.sin(progress*Math.PI)+nearEnd*1800;
+   var headPoint=pointAtDistance(Math.min(1,progress+Math.min(.065,.30/Math.max(playTotal,1))));
+   var ahead=headPoint&&headPoint.point||x.next||p,rawHead=bearing(p,ahead);
+   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.12);
+   var desired={lat:p.lat+(ahead.lat-p.lat)*.18,lng:p.lng+(ahead.lng-p.lng)*.18};
+   if(!lastCameraPoint)lastCameraPoint=desired;
+   lastCameraPoint={lat:lastCameraPoint.lat+(desired.lat-lastCameraPoint.lat)*.24,lng:lastCameraPoint.lng+(desired.lng-lastCameraPoint.lng)*.24};
+   var nearEnd=progress>.92?(progress-.92)/.08:0;
+   var cinematicRange=4500+600*Math.sin(progress*Math.PI)+nearEnd*1300;
    try{
-    map3d.center={lat:lastCameraPoint.lat,lng:lastCameraPoint.lng,altitude:80};
+    map3d.center={lat:lastCameraPoint.lat,lng:lastCameraPoint.lng,altitude:140};
     map3d.heading=lastCameraHeading;
-    map3d.tilt=56;
+    map3d.tilt=47;
     map3d.range=cinematicRange
    }catch(e){}
    lastCameraTs=now
@@ -348,8 +345,8 @@ function updateScene(progress,ts){
    lastCameraHeading=lerpAngle(lastCameraHeading||rawHead2,rawHead2,.09);
    if(!lastCameraPoint)lastCameraPoint={lat:pos.lat,lng:pos.lng};
    lastCameraPoint={lat:lastCameraPoint.lat+(pos.lat-lastCameraPoint.lat)*.10,lng:lastCameraPoint.lng+(pos.lng-lastCameraPoint.lng)*.10};
-   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:lastCameraPoint,zoom:14.8,heading:lastCameraHeading,tilt:35});
-   else{classicMap.panTo(lastCameraPoint);try{classicMap.setZoom(15);classicMap.setHeading(lastCameraHeading);classicMap.setTilt(35)}catch(e){}}
+   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:lastCameraPoint,zoom:14.2,heading:lastCameraHeading,tilt:32});
+   else{classicMap.panTo(lastCameraPoint);try{classicMap.setZoom(14.2);classicMap.setHeading(lastCameraHeading);classicMap.setTilt(32)}catch(e){}}
    lastCameraTs=now
   }
  }

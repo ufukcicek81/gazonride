@@ -487,7 +487,7 @@ async function open(ride){
   buildOverviewMap(currentRide)
  }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#ff8a65;font-weight:800">Örnek rota açılamadı: '+String(e&&e.message||e).replace(/[&<>]/g,"")+'</div>';console.warn(e)}
 }
-function close(){clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
+function close(){closeReplayShare();clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
 function pauseResume(){
  var restarting=!auto&&lastProgress>=.999;
  if(restarting){
@@ -509,15 +509,60 @@ function backOverview(){
  playSessionId++;auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);
  stopCinematicFlight();orbitRail=[];orbitLatest=null;orbitLastFrame=0;buildOverviewMap(currentRide)
 }
-async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
+function replayShareText(){
+ var ride=currentRide||{},track=pts(ride),label=ride.destination||"Motosiklet sürüşü";
+ var text="🏍 GaZonRide sürüşü\\n"+label+"\\n"+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"");
+ if(track.length>1){
+  var a=track[0],b=track[track.length-1];
+  var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a.lat.toFixed(6)+","+a.lng.toFixed(6))+"&destination="+encodeURIComponent(b.lat.toFixed(6)+","+b.lng.toFixed(6))+"&travelmode=driving";
+  text+="\\n📍 Başlangıç / varış: "+url
+ }
+ return text
+}
+function closeReplayShare(){
+ var panel=$("grReplaySharePanel");if(panel)panel.classList.remove("active")
+}
+function shareRide(){
+ var panel=$("grReplaySharePanel");if(!panel)return;
+ panel.classList.add("active");
+ var msg=$("grReplayShareResult");if(msg)msg.textContent="Paylaşım yöntemini seç";
+}
+async function copyReplayShare(){
+ var text=replayShareText(),result=$("grReplayShareResult"),ok=false;
+ try{
+  if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);ok=true}
+ }catch(e){}
+ if(!ok){
+  try{
+   var area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);
+   area.focus();area.select();ok=!!document.execCommand("copy");area.remove()
+  }catch(e){}
+ }
+ if(result)result.textContent=ok?"Sürüş bilgileri kopyalandı.":"Kopyalama engellendi. WhatsApp veya cihaz paylaşımını kullan.";
+}
+function whatsappReplayShare(){
+ var url="https://wa.me/?text="+encodeURIComponent(replayShareText());
+ var tab=null;try{tab=window.open(url,"_blank","noopener,noreferrer")}catch(e){}
+ if(!tab)window.location.href=url
+}
+async function nativeReplayShare(){
+ var txt=replayShareText(),result=$("grReplayShareResult");
+ if(!navigator.share){if(result)result.textContent="Cihaz paylaşımı desteklenmiyor. WhatsApp veya Kopyala'yı kullan.";return}
+ try{
+  await navigator.share({title:"GaZonRide Sürüşü",text:txt});
+  if(result)result.textContent="Paylaşım açıldı.";
+ }catch(e){
+  if(result)result.textContent=e&&e.name==="AbortError"?"Paylaşım iptal edildi.":"Cihaz paylaşımı açılamadı. Diğer seçenekleri kullan."
+ }
+}
 function scan(){
  document.querySelectorAll("#historyList .ride").forEach(function(row,i){if(row.querySelector("[data-gr-replay]"))return;var b=document.createElement("button");b.className="mapBtn";b.setAttribute("data-gr-replay",String(i));b.title="Sürüş Tekrarı";b.innerHTML='<span class="mi">3d_rotation</span>';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-replay"))];if(r)open(r)};row.appendChild(b)});
  document.querySelectorAll("#screen [data-route]").forEach(function(routeBtn){var card=routeBtn.closest(".screenCard");if(!card||card.querySelector("[data-gr-screen-replay]"))return;var i=Number(routeBtn.getAttribute("data-route")),b=document.createElement("button");b.className="screenBtn";b.setAttribute("data-gr-screen-replay",String(i));b.innerHTML='<span class="mi" style="vertical-align:-5px">3d_rotation</span> Sürüş Tekrarı';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-screen-replay"))];if(r)open(r)};routeBtn.insertAdjacentElement("afterend",b)})
 }
 function install(){
  modal=document.createElement("div");modal.id="grReplay";modal.className="gr-replay";
- modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Paylaş</button></div></div>';
- document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><p>Başlangıç ve varış konumunu içeren harita bağlantısı paylaşılır; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button></div></div></div>';
+ document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {type:"continuous-route-axis-orbit",frames:orbitFrames,railPoints:orbitRail.length,orbitDegrees:orbitTotalDegrees,latest:orbitLatest,mode:using3d?"3d":"classic"}}};

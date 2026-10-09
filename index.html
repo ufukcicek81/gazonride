@@ -377,7 +377,7 @@ html,body{max-width:100%;overflow-x:clip}
       <div><b id="navEta">—</b><small>TAHMİNİ SÜRE</small></div>
       <div><b id="navNext">—</b><small>SONRAKİ MANEVRA</small></div>
     </div>
-    <button class="screenBtn" id="navDrive" style="background:var(--accent);color:#fff;border-color:var(--accent);font-size:16px;font-weight:950"><span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat</button><button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
+    <button class="screenBtn" id="navDrive" style="background:var(--accent);color:#fff;border-color:var(--accent);font-size:16px;font-weight:950"><span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat</button><button class="screenBtn dark" id="navGoogleMaps"><span class="mi" style="vertical-align:-4px;margin-right:6px">open_in_new</span>Google Haritalar'da Aç (ayrı uygulama)</button><button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
   </div>
 </section>
 <div class="guidanceHud" id="guidanceHud">
@@ -1292,6 +1292,19 @@ async function openCommunityRouteNavigation(item,autoStart){
   if(autoStart){setTimeout(function(){if(navReady)startPlannedNavigation()},180)}
  }catch(e){console.warn("Community route",e);$("status").textContent="Topluluk rotası navigasyona dönüştürülemedi."}
 }
+function openGoogleMapsNavigation(){
+ if(!activeNavDestination){$("status").textContent="Önce hedef seçip rota oluştur.";return}
+ var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
+ if(!isFinite(lat)||!isFinite(lon))return;
+ var destination=lat.toFixed(6)+","+lon.toFixed(6);
+ var url="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination)+"&travelmode=driving&dir_action=navigate";
+ try{
+  if(window.AndroidBridge&&typeof AndroidBridge.openExternal==="function"){
+   AndroidBridge.openExternal("google.navigation:q="+destination+"&mode=d")
+  }else window.open(url,"_blank","noopener,noreferrer");
+  $("status").textContent="Google Haritalar ayrı uygulamada açılıyor. GaZonRide sürüş kayıt ekranına geri dönebilirsin."
+ }catch(e){$("status").textContent="Google Haritalar açılamadı."}
+}
 function recenterNavigationOnce(){
  if(!map||!currentPoint)return;
  map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});
@@ -1641,6 +1654,7 @@ function boot(){
  $("navGo").addEventListener("click",planNavigation);
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
  $("navDrive").addEventListener("click",startPlannedNavigation);
+ $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",calibrateLeanSensor);
  startLeanSensor();
  $("navStop").addEventListener("click",stopNavigation);

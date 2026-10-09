@@ -265,7 +265,7 @@ body.mode-ride .bottom{background:rgba(8,10,14,.97)}
 .rideReport h3{margin:0 0 9px;font-size:13px;color:var(--accent);letter-spacing:1px}
 .rideReportRow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:11px}
 .rideReportRow:last-child{border-bottom:0}.rideReportRow span{color:var(--muted)}.rideReportRow b{font-size:12px}
-.rideSummaryActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.rideSummaryActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.rideDeleteBtn{background:#271514!important;border:1px solid #71332f!important;color:#ff8b80!important}
 
 /* Community cleanup */
 body.mode-discover #discoverSection>.communityTop,
@@ -784,7 +784,7 @@ function finishRide(){
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var rp=getRiderProfile(),ci=$("rideConsumptionInput"),cv=ci?Number(String(ci.value||"0").replace(",",".")):0;if(cv>0){rp.motor=rp.motor||{};rp.motor.consumption=cv;saveRiderProfileLocal(rp)}var fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{},leanMaxLeft:Number(leanMaxLeft.toFixed(1)),leanMaxRight:Number(leanMaxRight.toFixed(1)),leanSamples:leanSamples.slice()};
  if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} if(window.AndroidBridge&&window.AndroidBridge.stopLeanTracking)try{window.AndroidBridge.stopLeanTracking();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,20)));renderHistory();showRideSummary(ride);
- if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track,fuel_liters:ride.fuelLiters,fuel_cost:ride.fuelCost,fuel_consumption:ride.fuelConsumption,motor:ride.motor,lean_max_left:ride.leanMaxLeft,lean_max_right:ride.leanMaxRight,lean_samples:ride.leanSamples});if(r.error)console.warn("ride cloud save",r.error);});}
+ if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track,fuel_liters:ride.fuelLiters,fuel_cost:ride.fuelCost,fuel_consumption:ride.fuelConsumption,motor:ride.motor,lean_max_left:ride.leanMaxLeft,lean_max_right:ride.leanMaxRight,lean_samples:ride.leanSamples}).select("id").single();if(r.error)console.warn("ride cloud save",r.error);else if(r.data&&r.data.id){ride.cloudId=r.data.id;var lr=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(lr.length&&!lr[0].cloudId){lr[0].cloudId=r.data.id;localStorage.setItem("gazon_rides",JSON.stringify(lr))}}});}
 }
 function syncMemberRideHistory(){
  if(!(window.GaZonAuth&&GaZonAuth.configured))return;
@@ -792,7 +792,7 @@ function syncMemberRideHistory(){
   if(!GaZonAuth.state.user)return;
   var r=await GaZonAuth.client.from("rides").select("*").eq("user_id",GaZonAuth.state.user.id).order("created_at",{ascending:false}).limit(20);
   if(r.error){console.warn("ride cloud load",r.error);return;}
-  var cloud=(r.data||[]).map(function(x){var sec=Number(x.duration_sec||0),hh=Math.floor(sec/3600),mm=Math.floor((sec%3600)/60),ss=sec%60;return {km:Number(x.distance_km||0),duration:(hh?String(hh).padStart(2,"0")+":":"")+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0"),max:Number(x.max_speed_kmh||0),elev:Number(x.elevation_gain_m||0),turns:Number(x.turns||0),date:new Date(x.created_at).toLocaleString("tr-TR"),track:x.track||[],destination:x.destination||"",routeMode:x.route_mode||"DRIVING",fuelLiters:Number(x.fuel_liters||0),fuelCost:Number(x.fuel_cost||0),fuelConsumption:Number(x.fuel_consumption||0),motor:x.motor||{},leanMaxLeft:Number(x.lean_max_left||0),leanMaxRight:Number(x.lean_max_right||0),leanSamples:Array.isArray(x.lean_samples)?x.lean_samples:[]};});
+  var cloud=(r.data||[]).map(function(x){var sec=Number(x.duration_sec||0),hh=Math.floor(sec/3600),mm=Math.floor((sec%3600)/60),ss=sec%60;return {cloudId:x.id,km:Number(x.distance_km||0),duration:(hh?String(hh).padStart(2,"0")+":":"")+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0"),max:Number(x.max_speed_kmh||0),elev:Number(x.elevation_gain_m||0),turns:Number(x.turns||0),date:new Date(x.created_at).toLocaleString("tr-TR"),track:x.track||[],destination:x.destination||"",routeMode:x.route_mode||"DRIVING",fuelLiters:Number(x.fuel_liters||0),fuelCost:Number(x.fuel_cost||0),fuelConsumption:Number(x.fuel_consumption||0),motor:x.motor||{},leanMaxLeft:Number(x.lean_max_left||0),leanMaxRight:Number(x.lean_max_right||0),leanSamples:Array.isArray(x.lean_samples)?x.lean_samples:[]};});
   if(cloud.length){localStorage.setItem("gazon_rides",JSON.stringify(cloud));renderHistory();}
  });
 }
@@ -1394,7 +1394,7 @@ function showScreen(page){
  if(page==="routes"){
    var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
    x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Sürüş Geçmişim</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
-   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar\'da Aç</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
+   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar\'da Aç</button><button class="screenBtn rideDeleteBtn" data-delete-ride="'+i+'"><span class="mi" style="vertical-align:-5px">delete</span> Bu Sürüşü Sil</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
    x.querySelector("#closeScreen").onclick=closeScreen;
    x.querySelectorAll("[data-google]").forEach(function(b){b.onclick=function(){
  var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-google"))];
@@ -1404,9 +1404,26 @@ function showScreen(page){
  for(var k=1;k<=3;k++){var idx=Math.round((pts.length-1)*k/4);if(idx>0&&idx<pts.length-1)mids.push(pts[idx][0]+","+pts[idx][1]);}
  var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(dest)+"&travelmode=driving";
  if(mids.length)url+="&waypoints="+encodeURIComponent(mids.join("|"));
- window.open(url,"_blank");
+ try{
+   if(window.AndroidBridge&&typeof AndroidBridge.openExternal==="function")AndroidBridge.openExternal(url);
+   else location.href=url;
+ }catch(e){location.href=url}
 };});
-x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-route"))];if(a&&a.track&&a.track.length&&map){closeScreen();setPolyline(route,a.track);fitPolyline(route);window.scrollTo({top:0,behavior:"smooth"});$("status").textContent="Kayıtlı rota Google Haritalar üzerinde gösteriliyor.";}}});
+x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){
+ var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-route"))];
+ if(a&&a.track&&a.track.length&&map){
+   closeScreen();setMode("ride");setPolyline(route,a.track);fitPolyline(route);
+   $("status").textContent="Kayıtlı rota haritada gösteriliyor.";
+ }
+}});
+   x.querySelectorAll("[data-delete-ride]").forEach(function(b){b.onclick=async function(){
+ var idx=Number(b.getAttribute("data-delete-ride")),arr=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),ride=arr[idx];if(!ride)return;
+ if(!confirm("Bu sürüş kaydını silmek istiyor musun?"))return;
+ if(ride.cloudId&&window.GaZonAuth&&GaZonAuth.configured){
+   try{await GaZonAuth.ready;if(GaZonAuth.state.user){var del=await GaZonAuth.client.from("rides").delete().eq("id",ride.cloudId).eq("user_id",GaZonAuth.state.user.id);if(del.error){alert("Sürüş buluttan silinemedi: "+del.error.message);return}}}catch(e){alert("Sürüş silinemedi.");return}
+ }
+ arr.splice(idx,1);localStorage.setItem("gazon_rides",JSON.stringify(arr));renderHistory();showScreen("routes");
+}});
  }else if(page==="groups"){
    if(window.GaZonAuth&&GaZonAuth.configured){showGroupsSupabase(x);return;}
    var groups=JSON.parse(localStorage.getItem("gazon_groups")||"[]");

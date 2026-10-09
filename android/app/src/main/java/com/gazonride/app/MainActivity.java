@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
             if (!leanTracking || event == null) return;
             float rawDeg;
             try {
-                if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR || event.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
                     float[] rotation = new float[9];
                     float[] orientation = new float[3];
                     SensorManager.getRotationMatrixFromVector(rotation, event.values);
@@ -91,7 +91,13 @@ public class MainActivity extends Activity {
             if (lean > 90f) lean = 90f;
             if (lean < -90f) lean = -90f;
 
-            leanFilteredDeg = leanFilteredDeg * 0.82f + lean * 0.18f;
+            // Motorcycle vibration can create one-frame spikes. Ignore impossible jumps,
+            // then apply a stronger low-pass filter for a stable lean display.
+            float delta = lean - leanFilteredDeg;
+            if (Math.abs(delta) > 22f) return;
+            float alpha = Math.abs(delta) > 8f ? 0.10f : 0.07f;
+            leanFilteredDeg = leanFilteredDeg + alpha * delta;
+            if (Math.abs(leanFilteredDeg) < 0.7f) leanFilteredDeg = 0f;
             if (leanFilteredDeg < 0f) leanMaxLeftDeg = Math.max(leanMaxLeftDeg, -leanFilteredDeg);
             else leanMaxRightDeg = Math.max(leanMaxRightDeg, leanFilteredDeg);
 
@@ -125,14 +131,22 @@ public class MainActivity extends Activity {
 
     public class AndroidBridge {
         @JavascriptInterface public void startRide(){
-            prefs.edit().putBoolean("background",false).putString("buffer","[]").apply();
+            long now=System.currentTimeMillis();
+            prefs.edit()
+                .putBoolean("background",false)
+                .putBoolean("ride_active",true)
+                .putLong("ride_started_at",now)
+                .putString("buffer","[]")
+                .apply();
             Intent i=new Intent(MainActivity.this,RideLocationService.class);
             if(android.os.Build.VERSION.SDK_INT>=26) startForegroundService(i); else startService(i);
         }
         @JavascriptInterface public void stopRide(){
             stopService(new Intent(MainActivity.this,RideLocationService.class));
-            prefs.edit().putBoolean("background",false).apply();
+            prefs.edit().putBoolean("background",false).putBoolean("ride_active",false).apply();
         }
+        @JavascriptInterface public boolean isRideActive(){return prefs.getBoolean("ride_active",false);}
+        @JavascriptInterface public long getRideStartedAt(){return prefs.getLong("ride_started_at",0L);}
         @JavascriptInterface public void startLeanTracking(){
             runOnUiThread(() -> startLeanSensors(false));
         }
@@ -193,7 +207,8 @@ public class MainActivity extends Activity {
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
         sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
         if(sensorManager!=null){
-            rotationSensor=sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            rotationSensor=sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+            if(rotationSensor==null) rotationSensor=sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
             accelerometerSensor=sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
         updateDownloadId=prefs.getLong("update_download_id",-1L);

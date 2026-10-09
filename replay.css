@@ -27,3 +27,14 @@
 .gr-detail-list div{font-size:12px}
 .gr-replay-controls{padding:0 16px 16px}
 @media(max-width:430px){.gr-replay-map{min-height:410px;height:58vh}.gr-bigstats{grid-template-columns:repeat(3,1fr)}.gr-bigstats b{font-size:27px}.gr-bigstats small{font-size:8px;letter-spacing:1px}}
+
+/* Replay v5: visible, compact playback speed and measured route progress */
+.gr-replay-speed{display:flex;gap:9px;align-items:center;justify-content:flex-end;padding:11px 16px 0;background:#05070b}
+.gr-replay-speed span{margin-right:auto;color:#a6b4c2;font-size:12px;font-weight:800}
+.gr-replay-speed button{border:1px solid #3c4654;background:#131922;color:#d9e5ec;border-radius:12px;padding:9px 14px;font-weight:900;font-size:13px;min-width:55px}
+.gr-replay-speed button.active{color:#07191a;background:#25e2d1;border-color:#25e2d1}
+.gr-replay-title small.gr-replay-distance{color:#32f2da;font-size:13px;font-weight:900;margin-top:6px}
+.gr-replay-head small{font-size:11px;line-height:1.4;max-width:92vw}
+.gr-replay-progress{height:7px}
+.gr-replay-progress i{background:#25e2d1}
+@media(max-width:390px){.gr-replay-speed button{min-width:49px;padding:9px 11px}.gr-replay-speed{gap:6px}}

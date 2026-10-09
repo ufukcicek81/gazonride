@@ -184,7 +184,7 @@ function decorate(){
    visual.appendChild(note)
   }
   tile.addEventListener("click",function(e){if(e.target.closest("button,a,input"))return;showGuide(tile)});
-  tile.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();showGuide(tile)}})
+  tile.addEventListener("keydown",function(e){if(e.target!==tile)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();showGuide(tile)}})
  })
 }
 function install(){

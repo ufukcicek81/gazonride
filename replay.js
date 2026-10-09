@@ -104,8 +104,8 @@ async function build3DMap(ride){
  using3d=false;
  classicMap=new google.maps.Map(host,{
   center:{lat:a[0].lat,lng:a[0].lng},
-  zoom:9,
-  mapTypeId:"roadmap",
+  zoom:17,
+  mapTypeId:"hybrid",
   disableDefaultUI:true,
   gestureHandling:"greedy",
   clickableIcons:false,
@@ -130,16 +130,16 @@ async function build3DMap(ride){
   icon:makeDotIcon("#ff5a1f",14),
   zIndex:50
  });
- try{classicMap.setTilt(0);classicMap.setHeading(0)}catch(e){}
+ try{classicMap.setTilt(45);classicMap.setHeading(bearing(a[0],a[Math.min(1,a.length-1)]))}catch(e){}
  mode="3d";
  $("grReplayPlay3D").style.display="none";
  $("grReplayPause").style.display="inline-flex";
- $("grReplayState").textContent="Yol haritasında sürüş hazırlanıyor";
+ $("grReplayState").textContent="Takip kamerası hazırlanıyor";
  auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;preparePlayback(ride);cancelAnimationFrame(anim);updateScene(0,performance.now());
  setTimeout(function(){
   if(mode!=="3d")return;
   auto=true;start=0;
-  $("grReplayState").textContent="Yol haritasında sürüş oynatılıyor";
+  $("grReplayState").textContent="Motor takip kamerası";
   anim=requestAnimationFrame(loop)
  },introDelay)
 }
@@ -155,8 +155,9 @@ function updateScene(progress,ts){
    lastTrailTs=now;
   }
   if(now-lastCameraTs>45){
-   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:pos,zoom:9,heading:0,tilt:0});
-   else{classicMap.setCenter(pos);classicMap.setZoom(9)}
+   var head=bearing(p,x.next||p);
+   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:pos,zoom:17,heading:head,tilt:45});
+   else{classicMap.setCenter(pos);classicMap.setZoom(17);try{classicMap.setHeading(head);classicMap.setTilt(45)}catch(e){}}
    lastCameraTs=now;
   }
  }

@@ -108,3 +108,5 @@ textarea.gr-field{resize:vertical}.gr-submit{width:100%;margin-top:10px;border:0
 html.theme-light .gr-route-source-tabs button,html.theme-light .gr-route-tile,html.theme-light .gr-route-tile-actions button{background:#fff;color:#171a1f}
 html.theme-light .gr-route-source-tabs button.active,html.theme-light .gr-route-tile-actions button:first-child{background:var(--accent);color:#fff}
 @media(max-width:390px){.gr-route-tile{flex-basis:88vw}.gr-route-title{font-size:22px}}
+
+.gr-insta-actions{align-items:center}.gr-insta-actions .liked{color:#ff3b30!important}.gr-insta-actions .liked .mi{font-variation-settings:'FILL' 1}.gr-like-count{margin-left:auto;font-size:9px;color:var(--text);white-space:nowrap}

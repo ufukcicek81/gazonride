@@ -42,6 +42,7 @@ import java.net.URL;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private MusicController musicController;
     private static final int LOCATION_REQ = 42;
     private static final int MIC_REQ = 43;
     private static final String URL = "https://ufukcicek81.github.io/gazonride/";
@@ -199,6 +200,28 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        // Media sessions are exposed only after the user enables Android notification access.
+        @JavascriptInterface public String getMusicStatus(){
+            return musicController != null ? musicController.status() : "{\"native\":true,\"access\":false}";
+        }
+        @JavascriptInterface public void musicCommand(String command){
+            if(musicController != null) musicController.command(command);
+        }
+        @JavascriptInterface public void requestMusicAccess(){
+            if(musicController != null) musicController.requestAccess();
+        }
+        @JavascriptInterface public void openMusicApp(String provider){
+            if(musicController != null) musicController.openPlayer(provider);
+        }
+        @JavascriptInterface public void beginNavSpeech(){
+            if(musicController != null) musicController.beginNarration();
+        }
+        @JavascriptInterface public void endNavSpeech(){
+            if(musicController != null) musicController.endNarration();
+        }
+        @JavascriptInterface public void setMusicDuckingEnabled(boolean enabled){
+            if(musicController != null) musicController.setDuckingEnabled(enabled);
+        }
         @JavascriptInterface public String getGoogleMapsApiKey(){
             try {
                 java.io.BufferedReader r = new java.io.BufferedReader(
@@ -216,6 +239,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+        musicController=new MusicController(this);
         sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
         if(sensorManager!=null){
             rotationSensor=sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
@@ -537,6 +561,7 @@ public class MainActivity extends Activity {
             downloadReceiverRegistered=false;
         }
         stopLeanSensors();
+        if(musicController!=null)musicController.release();
         super.onDestroy();
     }
     @Override public void onBackPressed(){

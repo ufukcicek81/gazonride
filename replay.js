@@ -102,71 +102,135 @@ function buildOverviewMap(ride){
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
  mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent="Gerçek yol rotası";
 }
-async function build3DMap(ride){
+async function buildClassicFollowMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
- await waitForGoogle();
- using3d=false;
+ using3d=false;map3d=null;route3d=null;travel3d=null;bike3d=null;
  classicMap=new google.maps.Map(host,{
-  center:{lat:a[0].lat,lng:a[0].lng},
-  zoom:16,
-  mapTypeId:"roadmap",
-  disableDefaultUI:true,
-  gestureHandling:"greedy",
-  clickableIcons:false,
-  streetViewControl:false,
-  fullscreenControl:false,
-  mapTypeControl:false
+  center:{lat:a[0].lat,lng:a[0].lng},zoom:16,mapTypeId:"roadmap",
+  disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false,
+  streetViewControl:false,fullscreenControl:false,mapTypeControl:false
  });
- classicRoute=new google.maps.Polyline({
-  map:classicMap,
-  path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),
-  strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1
- });
- classicTravel=new google.maps.Polyline({
-  map:classicMap,
-  path:[{lat:a[0].lat,lng:a[0].lng}],
-  strokeColor:"#ffffff",strokeWeight:4,strokeOpacity:.95
- });
- classicBike=new google.maps.Marker({
-  map:classicMap,
-  position:{lat:a[0].lat,lng:a[0].lng},
-  label:{text:"🏍",fontSize:"22px"},
-  icon:makeDotIcon("#ff5a1f",14),
-  zIndex:50
- });
- lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};try{classicMap.setTilt(35);classicMap.setHeading(lastCameraHeading)}catch(e){}
- mode="3d";
- $("grReplayPlay3D").style.display="none";
- $("grReplayPause").style.display="inline-flex";
- $("grReplayState").textContent="Takip görünümü hazırlanıyor";
- auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(ride);cancelAnimationFrame(anim);updateScene(0,performance.now());
+ classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:7,strokeOpacity:.96});
+ classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#ffffff",strokeWeight:3,strokeOpacity:.9});
+ classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",13),zIndex:50});
+ lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};
+ try{classicMap.setTilt(35);classicMap.setHeading(lastCameraHeading)}catch(e){}
+ startReplayPlayback(ride,"Uyumlu takip görünümü");
+}
+
+function routeBoundsInfo(a){
+ var minLat=90,maxLat=-90,minLng=180,maxLng=-180;
+ a.forEach(function(p){minLat=Math.min(minLat,p.lat);maxLat=Math.max(maxLat,p.lat);minLng=Math.min(minLng,p.lng);maxLng=Math.max(maxLng,p.lng)});
+ var center={lat:(minLat+maxLat)/2,lng:(minLng+maxLng)/2,altitude:0};
+ var diag=geoKm({lat:minLat,lng:minLng},{lat:maxLat,lng:maxLng});
+ return {center:center,range:Math.max(1800,Math.min(18000,diag*1150))}
+}
+
+function startReplayPlayback(ride,label){
+ mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";
+ $("grReplayState").textContent=label||"Sinematik sürüş hazırlanıyor";
+ auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(ride);cancelAnimationFrame(anim);
  setTimeout(function(){
   if(mode!=="3d")return;
-  auto=true;start=0;
-  $("grReplayState").textContent="Sürüş takip görünümü";
+  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay · 3D arazi":"Sürüş takip görünümü";
   anim=requestAnimationFrame(loop)
- },introDelay)
+ },using3d?2300:introDelay)
+}
+
+async function build3DMap(ride){
+ var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
+ host.innerHTML="";await waitForGoogle();
+ classicMap=null;classicRoute=null;classicTravel=null;classicBike=null;
+ try{
+  var lib=await google.maps.importLibrary("maps3d");
+  var Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement;
+  if(!Map3DElement||!Polyline3DElement)throw new Error("3D Maps desteklenmiyor");
+  var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
+  map3d=new Map3DElement({
+   center:{lat:info.center.lat,lng:info.center.lng,altitude:0},
+   range:info.range,tilt:58,heading:head,mode:"HYBRID",
+   defaultUIHidden:true,gestureHandling:"COOPERATIVE"
+  });
+  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
+  host.appendChild(map3d);
+
+  route3d=new Polyline3DElement({
+   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#20E0D0",strokeWidth:10,
+   outerColor:"#07191A",outerWidth:.32,drawsOccludedSegments:false,geodesic:true,zIndex:8
+  });
+  map3d.append(route3d);
+
+  travel3d=new Polyline3DElement({
+   path:[{lat:first.lat,lng:first.lng,altitude:4}],
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:5,
+   outerColor:"#20E0D0",outerWidth:.28,drawsOccludedSegments:false,zIndex:12
+  });
+  map3d.append(travel3d);
+
+  if(Marker3DElement){
+   bike3d=new Marker3DElement({
+    position:{lat:first.lat,lng:first.lng,altitude:7},
+    altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:false,zIndex:30
+   });
+   map3d.append(bike3d);
+  }
+
+  using3d=true;lastCameraHeading=head;lastCameraPoint={lat:first.lat,lng:first.lng};
+  $("grReplayState").textContent="3D arazi hazırlanıyor…";
+  try{
+   map3d.flyCameraTo({
+    endCamera:{center:{lat:first.lat,lng:first.lng,altitude:25},range:950,tilt:67,heading:head},
+    durationMillis:2100
+   });
+  }catch(e){
+   map3d.center={lat:first.lat,lng:first.lng,altitude:25};map3d.range=950;map3d.tilt=67;map3d.heading=head;
+  }
+  startReplayPlayback(ride,"Sinematik kamera hazırlanıyor");
+ }catch(e){
+  console.warn("3D cinematic fallback",e);
+  await buildClassicFollowMap(ride)
+ }
 }
 function updateScene(progress,ts){
  if(playPoints.length<2)preparePlayback(currentRide);
  var x=pointAtDistance(progress);if(!x)return;
- var p=x.point,pos={lat:p.lat,lng:p.lng};
- if(classicMap){
+ var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
+ if(using3d&&map3d){
+  if(bike3d)try{bike3d.position={lat:p.lat,lng:p.lng,altitude:7}}catch(e){}
+  if(now-lastTrailTs>140&&travel3d){
+   try{travel3d.path=playPoints.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:4}})}catch(e){}
+   lastTrailTs=now
+  }
+  if(now-lastCameraTs>70){
+   var ahead=playPoints[Math.min(playPoints.length-1,x.i+Math.max(5,Math.round(playPoints.length*.006)))]||x.next||p;
+   var rawHead=bearing(p,ahead);
+   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.12);
+   if(!lastCameraPoint)lastCameraPoint={lat:pos.lat,lng:pos.lng};
+   lastCameraPoint={lat:lastCameraPoint.lat+(pos.lat-lastCameraPoint.lat)*.16,lng:lastCameraPoint.lng+(pos.lng-lastCameraPoint.lng)*.16};
+   var curve=Math.abs((((rawHead-lastCameraHeading)+540)%360)-180);
+   var cinematicRange=820+Math.min(420,curve*9)+180*Math.sin(progress*Math.PI);
+   try{
+    map3d.center={lat:lastCameraPoint.lat,lng:lastCameraPoint.lng,altitude:25};
+    map3d.heading=lastCameraHeading;map3d.tilt=67;map3d.range=cinematicRange;
+   }catch(e){}
+   lastCameraTs=now
+  }
+ }else if(classicMap){
   classicBike.setPosition(pos);
-  var now=Number(ts||performance.now());
   if(now-lastTrailTs>120){
    classicTravel.setPath(playPoints.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));
-   lastTrailTs=now;
+   lastTrailTs=now
   }
   if(now-lastCameraTs>90){
-   var rawHead=bearing(p,x.next||p);
-   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.18);
+   var rawHead2=bearing(p,x.next||p);
+   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead2,rawHead2,.18);
    if(!lastCameraPoint)lastCameraPoint={lat:pos.lat,lng:pos.lng};
    lastCameraPoint={lat:lastCameraPoint.lat+(pos.lat-lastCameraPoint.lat)*.30,lng:lastCameraPoint.lng+(pos.lng-lastCameraPoint.lng)*.30};
    if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:lastCameraPoint,zoom:16,heading:lastCameraHeading,tilt:35});
    else{classicMap.panTo(lastCameraPoint);try{classicMap.setHeading(lastCameraHeading);classicMap.setTilt(35)}catch(e){}}
-   lastCameraTs=now;
+   lastCameraTs=now
   }
  }
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%"

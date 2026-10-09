@@ -13,18 +13,22 @@ function geoKm(a,b){var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lng-a.
 function lerpAngle(a,b,t){var d=((b-a+540)%360)-180;return (a+d*t+360)%360}
 function replaySource(ride){return ride&&Array.isArray(ride._matchedReplayPath)&&ride._matchedReplayPath.length>1?ride._matchedReplayPath:cleanTrack(pts(ride))}
 function cleanTrack(a){
- if(!Array.isArray(a)||a.length<2)return a||[];
- var out=[],last=null;
- a.forEach(function(p){
-  if(!p||!isFinite(p.lat)||!isFinite(p.lng))return;
-  if(!last){out.push(p);last=p;return}
-  var d=geoKm(last,p),dt=Math.max(.5,(Number(p.time||0)-Number(last.time||0))/1000),kmh=d*3600/dt;
-  if(d<.003)return;
-  if(d>.65)return;
-  if(last.time&&p.time&&kmh>190)return;
-  out.push(p);last=p
- });
- return out.length>=2?out:a
+ if(!Array.isArray(a))return [];
+ var out=[];
+ for(var i=0;i<a.length;i++){
+  var p=a[i];
+  if(!p||!isFinite(Number(p.lat))||!isFinite(Number(p.lng))||Math.abs(p.lat)>90||Math.abs(p.lng)>180)continue;
+  if(!out.length){out.push(p);continue}
+  var last=out[out.length-1],d=geoKm(last,p);
+  if(d<.002)continue;
+  var dt=last.time&&p.time?Math.max(.5,(Number(p.time)-Number(last.time))/1000):0;
+  if(d>.35&&dt>0&&dt<5){
+   var next=a[i+1];
+   if(next&&isFinite(Number(next.lat))&&isFinite(Number(next.lng))&&geoKm(last,next)<.10)continue;
+  }
+  out.push(p);
+ }
+ return out
 }
 function simplifyForMatch(a,max){
  if(a.length<=max)return a.slice();
@@ -68,7 +72,7 @@ function appendUniquePath(base,extra){
 async function matchOsrmChunk(chunk){
  var coords=chunk.map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
  var radiuses=chunk.map(function(){return "45"}).join(";");
- var url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true&gaps=split&radiuses="+radii;
+ var url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true&gaps=ignore&radiuses="+radiuses;
  var res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("OSRM "+res.status);
  var data=await res.json(),matchings=(data&&data.matchings)||[];
  if(!matchings.length)throw new Error("OSRM match empty");
@@ -86,9 +90,10 @@ async function matchViaOsrm(raw){
   var chunk=sampled.slice(i,Math.min(sampled.length,i+chunkSize));
   if(chunk.length<2)break;
   var part=await matchOsrmChunk(chunk);
+  if(!validMatched(chunk,part))throw new Error("Truncated matching segment");
   appendUniquePath(all,part);
  }
- return resamplePath(all,8)
+ return resamplePath(all,18)
 }
 async function matchRideToRoads(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
@@ -97,7 +102,7 @@ async function matchRideToRoads(ride){
   if(validMatched(raw,osrmPath))return osrmPath;
   console.warn("Road match rejected: incomplete route")
  }catch(e){console.warn("OSRM road match fallback",e)}
- return resamplePath(raw,8)
+ return resamplePath(raw,18)
 }
 function preparePlayback(ride){
  playPoints=replaySource(ride);playCum=[0];playTotal=0;

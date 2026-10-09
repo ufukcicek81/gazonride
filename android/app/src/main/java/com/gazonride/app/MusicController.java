@@ -17,6 +17,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+
+import java.util.Locale;
 
 import org.json.JSONObject;
 
@@ -42,6 +46,12 @@ public final class MusicController {
     private int speechSerial;
     private Runnable safetyRelease;
     private String preferredPackage = "";
+    private TextToSpeech narrator;
+    private volatile boolean narrationReady;
+    private volatile boolean narratorFailed;
+    private volatile String focusStatus = "not_requested";
+    private String currentUtterance;
+    private int utteranceCounter;
     private final AudioManager.OnAudioFocusChangeListener focusListener = change -> {
         // Navigation focus is released on narration end, or by the safety timeout.
     };
@@ -52,6 +62,37 @@ public final class MusicController {
         audio = (AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
         listener = new ComponentName(activity, MusicNotificationListener.class);
         preferredPackage = activity.getPreferences(Context.MODE_PRIVATE).getString("music_preferred_package", "");
+        try {
+            narrator = new TextToSpeech(activity, result -> handler.post(() -> {
+                if (result != TextToSpeech.SUCCESS || narrator == null) {
+                    narratorFailed = true;
+                    narrationReady = false;
+                    return;
+                }
+                try {
+                    int language = narrator.setLanguage(new Locale("tr", "TR"));
+                    AudioAttributes attrs = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
+                    narrator.setAudioAttributes(attrs);
+                    narrator.setSpeechRate(1.02f);
+                    narrator.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override public void onStart(String id) {}
+                        @Override public void onDone(String id) { finishUtterance(id); }
+                        @Override public void onError(String id) { finishUtterance(id); }
+                    });
+                    narrationReady = language != TextToSpeech.LANG_MISSING_DATA
+                            && language != TextToSpeech.LANG_NOT_SUPPORTED;
+                    narratorFailed = !narrationReady;
+                } catch (Exception e) {
+                    narratorFailed = true;
+                    narrationReady = false;
+                }
+            }));
+        } catch (Exception ignored) {
+            narratorFailed = true;
+            narrationReady = false;
+        }
     }
 
     private static boolean supported(String name) {
@@ -106,6 +147,10 @@ public final class MusicController {
             out.put("access", granted);
             out.put("duckEnabled", isDuckingEnabled());
             out.put("ducking", holdingFocus);
+            out.put("nativeNarrationReady", narrationReady);
+            out.put("narratorFailed", narratorFailed);
+            out.put("narrating", currentUtterance != null);
+            out.put("focusStatus", focusStatus);
             out.put("hasSession", false);
             out.put("playing", false);
             out.put("title", "");
@@ -204,41 +249,86 @@ public final class MusicController {
     }
 
     /**
-     * Briefly requests navigation audio focus. Android requests that Spotify,
-     * YouTube Music and other compliant players duck automatically.
-     * No manual volume changes; other apps may ignore the request.
+     * Native Android TTS takes focus BEFORE playing a navigation announcement.
+     * WebView speechSynthesis was started before its asynchronous audio-focus
+     * request, sometimes defeating ducking on recent Android/HyperOS phones.
      */
+    public boolean speakNavigation(String text) {
+        if (!narrationReady || narrator == null || text == null || text.trim().isEmpty()) return false;
+        final String message = text.trim();
+        handler.post(() -> {
+            if (!narrationReady || narrator == null) return;
+            stopNarrationNow();
+            if (isDuckingEnabled()) requestFocusNow();
+            final String id = "gazon-nav-" + (++utteranceCounter);
+            currentUtterance = id;
+            try {
+                int result = narrator.speak(message, TextToSpeech.QUEUE_FLUSH, null, id);
+                if (result == TextToSpeech.ERROR) {
+                    currentUtterance = null;
+                    abandonFocus();
+                }
+            } catch (Exception ignored) {
+                currentUtterance = null;
+                abandonFocus();
+            }
+        });
+        return true;
+    }
+
+    private void finishUtterance(String id) {
+        handler.post(() -> {
+            if (id != null && id.equals(currentUtterance)) {
+                currentUtterance = null;
+                abandonFocus();
+            }
+        });
+    }
+
+    public void stopNavigationSpeech() {
+        handler.post(this::stopNarrationNow);
+    }
+
+    private void stopNarrationNow() {
+        currentUtterance = null;
+        try { if (narrator != null) narrator.stop(); } catch (Exception ignored) {}
+        abandonFocus();
+    }
+
+    /** Compatibility path for browser speech on older Android versions. */
     public void beginNarration() {
         if (!isDuckingEnabled()) return;
-        handler.post(() -> {
-            if (!isDuckingEnabled() || audio == null) return;
-            abandonFocus();
-            int result;
-            try {
-                if (Build.VERSION.SDK_INT >= 26) {
-                    AudioAttributes attrs = new AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                            .build();
-                    focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-                            .setAudioAttributes(attrs)
-                            .setOnAudioFocusChangeListener(focusListener)
-                            .setWillPauseWhenDucked(false)
-                            .build();
-                    result = audio.requestAudioFocus(focusRequest);
-                } else {
-                    legacyFocus = true;
-                    result = audio.requestAudioFocus(focusListener,
-                            AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
-                }
-                holdingFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-            } catch (Exception ignored) {
-                holdingFocus = false;
+        handler.post(this::requestFocusNow);
+    }
+
+    private void requestFocusNow() {
+        if (!isDuckingEnabled() || audio == null) return;
+        abandonFocus();
+        int result = AudioManager.AUDIOFOCUS_REQUEST_FAILED;
+        try {
+            if (Build.VERSION.SDK_INT >= 26) {
+                AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                        .setAudioAttributes(attrs)
+                        .setOnAudioFocusChangeListener(focusListener)
+                        .build();
+                result = audio.requestAudioFocus(focusRequest);
+            } else {
+                legacyFocus = true;
+                result = audio.requestAudioFocus(focusListener,
+                        AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
             }
-            final int serial = ++speechSerial;
-            safetyRelease = () -> { if (serial == speechSerial) abandonFocus(); };
-            handler.postDelayed(safetyRelease, 12000L);
-        });
+        } catch (Exception ignored) {
+            result = AudioManager.AUDIOFOCUS_REQUEST_FAILED;
+        }
+        holdingFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        focusStatus = holdingFocus ? "granted" : "denied";
+        final int serial = ++speechSerial;
+        safetyRelease = () -> { if (serial == speechSerial) abandonFocus(); };
+        handler.postDelayed(safetyRelease, 15000L);
     }
 
     public void endNarration() {
@@ -251,20 +341,27 @@ public final class MusicController {
             handler.removeCallbacks(safetyRelease);
             safetyRelease = null;
         }
-        if (audio == null) return;
-        try {
-            if (Build.VERSION.SDK_INT >= 26 && focusRequest != null) {
-                audio.abandonAudioFocusRequest(focusRequest);
-                focusRequest = null;
-            } else if (legacyFocus) {
-                audio.abandonAudioFocus(focusListener);
-                legacyFocus = false;
-            }
-        } catch (Exception ignored) {}
+        if (audio != null) {
+            try {
+                if (Build.VERSION.SDK_INT >= 26 && focusRequest != null) {
+                    audio.abandonAudioFocusRequest(focusRequest);
+                    focusRequest = null;
+                } else if (legacyFocus) {
+                    audio.abandonAudioFocus(focusListener);
+                    legacyFocus = false;
+                }
+            } catch (Exception ignored) {}
+        }
         holdingFocus = false;
     }
 
     public void release() {
-        handler.post(this::abandonFocus);
+        handler.post(() -> {
+            stopNarrationNow();
+            try { if (narrator != null) narrator.shutdown(); } catch (Exception ignored) {}
+            narrator = null;
+            narrationReady = false;
+        });
     }
+
 }

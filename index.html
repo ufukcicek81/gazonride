@@ -1210,7 +1210,7 @@ function remainingGuidanceMeters(p){
 function updateGuidanceHud(p){
  if(!navActive)return;
  var cur=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))]||{},next=navSteps[navStepIndex+1]||null;
- var curText=cleanInstruction(cur.instruction&&cur.instruction.instructions)||googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ var curText=navSteps.length?cleanInstruction(cur.instruction&&cur.instruction.instructions):"Google dönüş talimatları alınamadı · Yedek Google Haritalar seçeneğini kullan";
  $("guidanceTurnIcon").textContent=guidanceIcon(cur.instruction&&cur.instruction.maneuver);
  var progress=window.GaZonNavProgress?GaZonNavProgress.state():null;
  var turnMeters=progress&&progress.nextTurnMeters!=null?progress.nextTurnMeters:(cur&&cur.end&&p?hav(p,cur.end)*1000:0);

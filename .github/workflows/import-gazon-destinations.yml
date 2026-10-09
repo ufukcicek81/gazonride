@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/gazonride-ui-travel-catalog
+      - main
   workflow_dispatch:
 permissions:
   contents: write
@@ -28,5 +29,5 @@ jobs:
           git add gazon-destinations.json
           if ! git diff --cached --quiet; then
             git commit -m "Populate complete Turkey travel destinations catalogue"
-            git push origin HEAD:feature/gazonride-ui-travel-catalog
+            git push origin HEAD:${GITHUB_REF_NAME}
           fi

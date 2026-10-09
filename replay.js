@@ -95,6 +95,36 @@ async function matchViaOsrm(raw){
  }
  return resamplePath(all,18)
 }
+async function roadBridge(a,b){
+ var coords=[a,b].map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
+ var url="https://router.project-osrm.org/route/v1/driving/"+coords+"?overview=full&geometries=geojson&steps=false";
+ var ctrl=typeof AbortController!=="undefined"?new AbortController():null;
+ var timeout=ctrl?setTimeout(function(){ctrl.abort()},4500):null;
+ try{
+  var response=await fetch(url,{cache:"no-store",signal:ctrl?ctrl.signal:undefined});
+  if(!response.ok)throw new Error("Gap route "+response.status);
+  var data=await response.json(),r=data.routes&&data.routes[0],coords2=r&&r.geometry&&r.geometry.coordinates;
+  if(!Array.isArray(coords2)||coords2.length<2)throw new Error("No gap geometry");
+  var path=coords2.map(function(q){return {lat:Number(q[1]),lng:Number(q[0]),alt:0,time:0}});
+  var straight=geoKm(a,b),km=pathLength(path);
+  if(geoKm(a,path[0])>.12||geoKm(b,path[path.length-1])>.12||km>Math.max(1,straight*3.2))throw new Error("Unsafe gap route");
+  return path
+ }finally{if(timeout)clearTimeout(timeout)}
+}
+async function bridgeGpsGaps(raw){
+ var out=[raw[0]],bridged=0,unresolved=0;
+ for(var i=1;i<raw.length;i++){
+  var p=raw[i],prev=raw[i-1],km=geoKm(prev,p);
+  if(km>.45){
+   if(km<30&&bridged+unresolved<4){
+    try{appendUniquePath(out,await roadBridge(prev,p));bridged++;continue}catch(e){console.warn("GPS gap bridge fallback",e)}
+   }
+   unresolved++
+  }
+  appendUniquePath(out,[p])
+ }
+ return {path:out,bridged:bridged,unresolved:unresolved}
+}
 async function matchRideToRoads(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
  try{
@@ -102,7 +132,13 @@ async function matchRideToRoads(ride){
   if(validMatched(raw,osrmPath))return osrmPath;
   console.warn("Road match rejected: incomplete route")
  }catch(e){console.warn("OSRM road match fallback",e)}
- return resamplePath(raw,18)
+ // Missing GPS samples must be joined on a real roadway, not by a flight across buildings.
+ var repaired=await bridgeGpsGaps(raw);
+ ride._replayGapCount=repaired.bridged;
+ ride._replayUnresolvedGaps=repaired.unresolved;
+ var suggested=pathLength(repaired.path),reported=Number(ride.km||0);
+ if(repaired.bridged&&reported>0&&suggested>reported*1.5)console.warn("Reconstructed road exceeds recorded trip; check GPS");
+ return resamplePath(repaired.path,18)
 }
 function preparePlayback(ride){
  playPoints=replaySource(ride);playCum=[0];playTotal=0;
@@ -130,6 +166,8 @@ function routeIntegrity(ride){
 function qualityLabel(ride){
  var q=routeIntegrity(ride);
  return q.missing?"GPS izi eksik: "+q.playableKm.toFixed(1)+" / "+q.reportedKm.toFixed(1)+" km · Kaydedilmeyen bölüm oynatılamaz":
+ ride._replayUnresolvedGaps?"GPS boşluğu var · "+q.playableKm.toFixed(1)+" km · Yol eşleşmesi kısmen eksik":
+ ride._replayGapCount?"Tahmini yol bağlantısı · "+q.playableKm.toFixed(1)+" km · GPS boşluğu tamamlandı":
  "Gerçek rota · "+q.playableKm.toFixed(1)+" km · "+q.pointCount+" nokta";
 }
 function setDistanceLabel(progress){
@@ -267,7 +305,7 @@ async function build3DMap(ride){
   host.appendChild(map3d);
 
   route3d=new Polyline3DElement({
-   path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
+   path:simplifyForMatch(a,900).map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
    altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#21F2DE",strokeWidth:22,
    outerColor:"#07191A",outerWidth:.30,drawsOccludedSegments:true,geodesic:true,zIndex:8
   });

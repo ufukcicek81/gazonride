@@ -158,8 +158,10 @@ function remoteCatalogue(){
  ];
  function attempt(index){
   if(index>=proxies.length)return Promise.reject(new Error("1021 gezi noktası kaynağı şu anda erişilemiyor"));
-  return fetch(proxies[index]).then(function(r){if(!r.ok)throw Error("Proxy "+r.status);return r.text()}).then(parseGuideSource)
-   .catch(function(){return attempt(index+1)})
+  var controller=typeof AbortController==="function"?new AbortController():null;
+  var timeout=controller?setTimeout(function(){controller.abort()},8500):null;
+  return fetch(proxies[index],controller?{signal:controller.signal}:{}).then(function(r){if(!r.ok)throw Error("Proxy "+r.status);return r.text()})
+   .then(parseGuideSource).catch(function(){return attempt(index+1)}).finally(function(){if(timeout)clearTimeout(timeout)})
  }
  return attempt(0).then(function(catalog){try{localStorage.setItem(cacheKey,JSON.stringify(catalog))}catch(e){}return catalog})
 }
@@ -201,7 +203,7 @@ function install(){
   root.dataset.ready="1";draw()
  }).catch(function(error){
   $("grTravelCount").textContent="Liste henüz yüklenemedi";
-  $("grTravelItems").innerHTML='<div class="gr-travel-empty">'+esc(error.message)+' · Biraz sonra tekrar deneyin.</div>'
+  $("grTravelItems").innerHTML='<div class="gr-travel-empty">'+esc(error.message)+' · Bu sırada <a href="https://www.turkishnews.com/2021/07/05/1001-turkiye/" target="_blank" rel="noopener noreferrer">gezi listesinin kaynağını açabilirsin.</a></div>'
  })
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();

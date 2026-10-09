@@ -476,7 +476,8 @@ public class MainActivity extends Activity {
     @Override protected void onPause(){
         super.onPause();
         prefs.edit().putBoolean("background",true).apply();
-        if(sensorManager!=null) sensorManager.unregisterListener(leanSensorListener);
+        boolean activeRide=prefs.getBoolean("ride_active",false);
+        if(!activeRide && sensorManager!=null) sensorManager.unregisterListener(leanSensorListener);
     }
     @Override protected void onResume(){
         super.onResume();

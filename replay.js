@@ -317,15 +317,15 @@ function candidateRouteClearance(candidate,sceneMid,sceneWidth){
 }
 function chooseDroneSide(startProgress,endProgress,previousSide){
  var width=Math.max(.001,endProgress-startProgress),middle=(startProgress+endProgress)/2;
- var entry=segmentDirection(startProgress+.04*width,middle),exit=segmentDirection(middle,endProgress-.04*width);
+ var entry=segmentDirection(startProgress+.01*width,startProgress+.22*width),exit=segmentDirection(endProgress-.22*width,endProgress-.01*width);
  var turn=normalizeTurnDegrees(exit-entry),mid=routePoint(middle);
  var heading=segmentDirection(startProgress+.12*width,endProgress-.12*width);
  var sampleSide=Math.max(160,Math.min(380,playTotal*1000*width*.095));
  var left=candidateRouteClearance(offsetCoordinate(mid,heading-90,sampleSide),middle,width);
  var right=candidateRouteClearance(offsetCoordinate(mid,heading+90,sampleSide),middle,width);
  // Exterior of a bend is generally better for showing both the bike and the route.
- if(turn>18)left+=Math.min(360,Math.abs(turn)*5);
- if(turn<-18)right+=Math.min(360,Math.abs(turn)*5);
+ if(turn>14)left+=Math.min(500,Math.abs(turn)*7);
+ if(turn<-14)right+=Math.min(500,Math.abs(turn)*7);
  // Hysteresis avoids needless left/right flips between adjacent camera scenes.
  if(previousSide==="left")left+=220;
  if(previousSide==="right")right+=220;

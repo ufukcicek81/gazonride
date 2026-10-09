@@ -13,7 +13,7 @@ function saveLocalProfile(p){
  var old={};try{old=JSON.parse(localStorage.getItem("gazon_profile")||"{}")||{}}catch(e){}
  var out=Object.assign({},old,{name:p.name||old.name||"GaZonRide sürücüsü",bike:p.bike||old.bike||"Motosiklet"});
  if(p.avatar_url)out.avatar=p.avatar_url;
- if(p.motor_data)out.motor=Object.assign({},old.motor||{},p.motor_data);
+ if(p.motor_data){if(Array.isArray(p.motor_data.motors)&&p.motor_data.motors.length){out.motors=p.motor_data.motors;out.activeMotorIndex=Number(p.motor_data.activeMotorIndex||0);out.motor=out.motors[out.activeMotorIndex]||out.motors[0]}else out.motor=Object.assign({},old.motor||{},p.motor_data);}
  localStorage.setItem("gazon_profile",JSON.stringify(out))
 }
 function syncUi(){

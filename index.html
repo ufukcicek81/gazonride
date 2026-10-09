@@ -210,6 +210,63 @@ html.theme-light .homeHero,html.theme-light .homeMenuBtn,html.theme-light .commu
 html.theme-light .homeMenuBtn.primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
 .profileAvatarWrap{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;margin:4px 0 16px}.profileAvatar{width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:var(--card2);display:grid;place-items:center;margin:0 auto}.profileAvatar img{width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block}.profileAvatar .mi{font-size:42px;color:var(--accent)}.avatarPick{width:100%;text-align:center}.motorSelector{display:flex;gap:7px;overflow-x:auto;margin:10px 0 8px;scrollbar-width:none}.motorSelector::-webkit-scrollbar{display:none}.motorChip{flex:0 0 auto;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:12px;padding:9px 11px;font-size:9px;font-weight:900}.motorChip.active{background:var(--accent);border-color:var(--accent);color:#fff}.motorAddBtn{width:100%;border:1px dashed var(--line);background:transparent;color:var(--text);border-radius:12px;padding:10px;font-size:9px;font-weight:900;margin-bottom:8px}.activeMotorRow{background:var(--soft)!important;border-radius:12px}.activeMotorRow .mi{color:var(--accent)}.motorDeleteBtn{width:100%;border:1px solid #74332d;background:#2a1715;color:#ff9286;border-radius:12px;padding:9px;font-size:9px;font-weight:900;margin-top:8px}.avatarPick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;cursor:pointer}.motorFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.motorFormGrid .full{grid-column:1/-1}.fuelSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.fuelSummary>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.fuelSummary b{display:block;font-size:14px}.fuelSummary small{display:block;color:var(--muted);font-size:8px;margin-top:3px}.profileHero.customAvatar{background-image:linear-gradient(to top,rgba(0,0,0,.88),rgba(0,0,0,.15)),var(--profile-avatar)!important;background-size:cover!important;background-position:center!important}.fuelPriceLive{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}.fuelPriceLive small{display:block;color:var(--muted);font-size:8px;letter-spacing:1px}.fuelPriceLive b{display:block;font-size:18px;margin-top:2px}.fuelPriceLive span{display:block;color:var(--muted);font-size:8px;margin-top:2px}.fuelPriceLive button{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);display:grid;place-items:center}.rideFuel{color:var(--accent)!important;font-weight:800}@media(max-width:390px){.motorFormGrid{grid-template-columns:1fr}.motorFormGrid .full{grid-column:auto}.fuelSummary{grid-template-columns:1fr 1fr}}
 .gr-distance-main{display:flex;align-items:baseline;gap:7px;margin:2px 0 8px}.gr-distance-main small{font-size:7px;letter-spacing:.8px;color:var(--muted);font-weight:900}.gr-distance-main b{font-size:22px;color:var(--text)}.gr-route-tag{display:block!important}.gr-social-actions-simple{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.gr-social-actions-simple .gr-social-btn{min-height:44px}.gr-route-visual[style]{background-color:#17212c!important}
+
+/* Ride cockpit v2 */
+body.mode-ride{overflow:hidden}
+body.mode-ride .appHeader{display:none}
+body.mode-ride .app{max-width:540px;height:100vh;padding-bottom:0;position:relative;overflow:hidden}
+body.mode-ride .map{position:absolute;inset:0 0 76px 0;height:auto;margin:0;border:0;border-radius:0}
+body.mode-ride .map .live{top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;right:14px;gap:8px}
+body.mode-ride .liveBox{background:rgba(8,10,14,.84);backdrop-filter:blur(16px);border-color:#ffffff25;border-radius:16px;padding:11px 12px;text-align:center;box-shadow:0 8px 25px #0005}
+body.mode-ride .liveBox b{font-size:25px;line-height:1}
+body.mode-ride .liveBox small{display:block;margin-top:5px;font-size:7px;letter-spacing:.8px}
+body.mode-ride .mapBottom{left:auto;right:14px;bottom:238px;display:grid;grid-template-columns:48px 48px;gap:8px}
+body.mode-ride .mapBottom .loc{display:none}
+body.mode-ride .mapBottom .mapBtn{width:48px;height:48px;border-radius:50%;padding:0;display:grid;place-items:center;background:rgba(8,10,14,.88);backdrop-filter:blur(14px)}
+body.mode-ride .content{position:fixed;z-index:720;left:50%;transform:translateX(-50%);bottom:76px;width:min(540px,100%);padding:0 10px 78px;pointer-events:none}
+body.mode-ride .content>.ey{display:none}
+body.mode-ride .content .grid{background:rgba(8,10,14,.90);backdrop-filter:blur(20px);border:1px solid #ffffff1f;border-radius:22px 22px 0 0;padding:11px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;pointer-events:auto;max-height:210px;overflow:hidden;box-shadow:0 -12px 30px #0006}
+body.mode-ride .content .card{border:0;background:transparent;border-radius:10px;padding:7px 5px;text-align:center;min-width:0}
+body.mode-ride .content .card .big{font-size:18px;white-space:nowrap}
+body.mode-ride .content .card .sub{font-size:7px;line-height:1.2;margin-top:3px}
+body.mode-ride .content .card.full{display:none}
+body.mode-ride .content .fuelInline{justify-content:center}
+body.mode-ride .content .fuelInline input{font-size:17px;width:48px;text-align:right}
+body.mode-ride .content .fuelInline span{font-size:7px}
+body.mode-ride .content .leanCard{grid-column:1/-1!important;display:grid!important;grid-template-columns:86px 1fr 90px;align-items:center;gap:8px;padding:7px!important;border-top:1px solid #ffffff18!important;margin-top:2px;text-align:left!important}
+body.mode-ride .leanCard>div:first-child{display:none}
+body.mode-ride .leanGauge{height:64px;margin:0;border:0;background:transparent}
+body.mode-ride .leanArc{width:94px;height:47px;border-width:6px;bottom:5px}
+body.mode-ride .leanNeedle{height:43px;bottom:5px;width:3px}
+body.mode-ride .leanCenter b{font-size:18px}
+body.mode-ride .leanCenter small{font-size:6px}
+body.mode-ride .leanStats{margin:0;gap:5px}
+body.mode-ride .leanStats>div{padding:7px 5px;border-radius:9px}
+body.mode-ride .leanStats b{font-size:14px}
+body.mode-ride .leanStats small{font-size:6px}
+body.mode-ride .leanActions{display:block;margin:0}
+body.mode-ride .leanActions .leanStatus{display:none}
+body.mode-ride .leanActions button{width:100%;padding:9px 6px;font-size:7px;background:#1b2028}
+body.mode-ride .actions{position:fixed;z-index:760;left:50%;transform:translateX(-50%);bottom:82px;width:min(520px,calc(100% - 20px));padding:0;display:grid;grid-template-columns:54px 1fr;gap:8px}
+body.mode-ride .actions .btn{height:54px;border-radius:17px;padding:0 12px}
+body.mode-ride #shareBtn{font-size:0}
+body.mode-ride #shareBtn .mi{font-size:22px}
+body.mode-ride #startBtn{font-size:13px}
+body.mode-ride .status,body.mode-ride .history{display:none}
+body.mode-ride .bottom{background:rgba(8,10,14,.97)}
+.rideSummaryHero{height:310px;border-radius:22px;overflow:hidden;position:relative;background:#18201d;margin-bottom:14px}
+#rideSummaryMap{position:absolute;inset:0}
+.rideSummaryBadge{position:absolute;z-index:4;left:12px;right:12px;top:12px;background:rgba(8,10,14,.84);backdrop-filter:blur(16px);border:1px solid #ffffff25;border-radius:16px;padding:11px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.rideSummaryBadge b{display:block;font-size:18px}.rideSummaryBadge small{font-size:7px;color:#b4bbc5;letter-spacing:.6px}
+.rideSummaryMain{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px;margin:12px 0}
+.rideSummaryMain>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px}
+.rideSummaryMain b{display:block;font-size:26px;line-height:1}.rideSummaryMain small{display:block;color:var(--muted);font-size:8px;margin-top:5px}
+.rideReport{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px}
+.rideReport h3{margin:0 0 9px;font-size:13px;color:var(--accent);letter-spacing:1px}
+.rideReportRow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:11px}
+.rideReportRow:last-child{border-bottom:0}.rideReportRow span{color:var(--muted)}.rideReportRow b{font-size:12px}
+.rideSummaryActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+
 /* Community cleanup */
 body.mode-discover #discoverSection>.communityTop,
 body.mode-discover #discoverSection>.routesBlock,
@@ -684,17 +741,49 @@ function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
  riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;try{if(window.AndroidBridge&&typeof AndroidBridge.resetLeanSession==="function")AndroidBridge.resetLeanSession();else startLeanSensor()}catch(e){}
  if(route)route.setPath([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
- $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';var lf=$("liveFuelUsed");if(lf)lf.textContent="0.00 L";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
+ document.body.classList.add("ride-cockpit-active");$("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';var lf=$("liveFuelUsed");if(lf)lf.textContent="0.00 L";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
  timer=setInterval(function(){$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000));},1000);
  watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000}); if(window.AndroidBridge&&window.AndroidBridge.startRide)try{window.AndroidBridge.startRide();}catch(e){}
 }
+function showRideSummary(ride){
+ var x=$("screen");setMode("overlay");x.classList.add("active");
+ var avgSpeed=0,sec=Math.max(1,Math.round((Date.now()-startTime)/1000));avgSpeed=Math.round(Number(ride.km||0)/(sec/3600));
+ var maxLean=Math.max(Number(ride.leanMaxLeft||0),Number(ride.leanMaxRight||0));
+ x.innerHTML='<div class="screenHead"><div><div class="ey">SÜRÜŞ TAMAMLANDI</div><div class="screenTitle">Sürüş Özeti</div></div><button class="mapBtn" id="closeRideSummary"><span class="mi">close</span></button></div>'+
+ '<div class="rideSummaryHero"><div id="rideSummaryMap"></div><div class="rideSummaryBadge"><div><b>'+Number(ride.km||0).toFixed(1)+'</b><small>KM MESAFE</small></div><div><b>'+Math.round(Number(ride.max||0))+'</b><small>KM/SA MAX</small></div><div><b>'+Math.round(Number(ride.elev||0))+'</b><small>M TIRMANIŞ</small></div></div></div>'+
+ '<div class="rideSummaryMain"><div><b>'+Number(ride.km||0).toFixed(1)+'</b><small>KM</small></div><div><b>'+escSummary(ride.duration||"00:00")+'</b><small>SÜRE</small></div><div><b>'+Number(ride.turns||0)+'</b><small>VİRAJ</small></div></div>'+
+ '<div class="rideReport"><h3>SÜRÜŞ RAPORU</h3>'+
+ '<div class="rideReportRow"><span>Ortalama hız</span><b>'+avgSpeed+' km/sa</b></div>'+
+ '<div class="rideReportRow"><span>Azami hız</span><b>'+Math.round(Number(ride.max||0))+' km/sa</b></div>'+
+ '<div class="rideReportRow"><span>Toplam tırmanış</span><b>'+Math.round(Number(ride.elev||0))+' m</b></div>'+
+ '<div class="rideReportRow"><span>Viraj sayısı</span><b>'+Number(ride.turns||0)+'</b></div>'+
+ '<div class="rideReportRow"><span>Yakıt tahmini</span><b>'+Number(ride.fuelLiters||0).toFixed(1)+' L'+(Number(ride.fuelCost||0)>0?' · '+Number(ride.fuelCost).toFixed(0)+' ₺':'')+'</b></div>'+
+ '<div class="rideReportRow"><span>Sol yatış rekoru</span><b>'+Number(ride.leanMaxLeft||0).toFixed(1)+'°</b></div>'+
+ '<div class="rideReportRow"><span>Sağ yatış rekoru</span><b>'+Number(ride.leanMaxRight||0).toFixed(1)+'°</b></div>'+
+ '<div class="rideReportRow"><span>En yüksek yatış</span><b>'+maxLean.toFixed(1)+'°</b></div></div>'+
+ '<div class="rideSummaryActions"><button class="screenBtn dark" id="rideSummaryReplay"><span class="mi" style="vertical-align:-5px">play_circle</span> Sürüşü Oynat</button><button class="screenBtn" id="rideSummaryShare"><span class="mi" style="vertical-align:-5px">share</span> Paylaş</button></div>';
+ x.querySelector("#closeRideSummary").onclick=function(){setMode("discover");setDiscoverFilter("discover")};
+ x.querySelector("#rideSummaryReplay").onclick=function(){if(window.GaZonReplay)GaZonReplay.open(ride)};
+ x.querySelector("#rideSummaryShare").onclick=function(){var t="GaZonRide sürüşüm · "+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"")+" · Max "+Math.round(Number(ride.max||0))+" km/sa";if(navigator.share)navigator.share({title:"GaZonRide Sürüş",text:t}).catch(function(){});else navigator.clipboard&&navigator.clipboard.writeText(t)};
+ setTimeout(function(){
+  try{
+   var pts=(ride.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2});
+   if(!pts.length||!window.google||!google.maps)return;
+   var mp=new google.maps.Map($("rideSummaryMap"),{center:{lat:Number(pts[0][0]),lng:Number(pts[0][1])},zoom:9,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy"});
+   new google.maps.Polyline({map:mp,path:pts.map(function(p){return {lat:Number(p[0]),lng:Number(p[1])}}),strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1});
+   var b=new google.maps.LatLngBounds();pts.forEach(function(p){b.extend({lat:Number(p[0]),lng:Number(p[1])})});mp.fitBounds(b,42)
+  }catch(e){}
+ },180)
+}
+function escSummary(v){return String(v==null?"":v).replace(/[&<>]/g,"")}
 function finishRide(){
+ document.body.classList.remove("ride-cockpit-active");
  var nativePts=nativeRidePoints();
  if(nativePts.length>1){track=nativePts;totalKm=trackDistanceKm(track);if(route)setPolyline(route,track)}
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var rp=getRiderProfile(),ci=$("rideConsumptionInput"),cv=ci?Number(String(ci.value||"0").replace(",",".")):0;if(cv>0){rp.motor=rp.motor||{};rp.motor.consumption=cv;saveRiderProfileLocal(rp)}var fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{},leanMaxLeft:Number(leanMaxLeft.toFixed(1)),leanMaxRight:Number(leanMaxRight.toFixed(1)),leanSamples:leanSamples.slice()};
- if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} if(window.AndroidBridge&&window.AndroidBridge.stopLeanTracking)try{window.AndroidBridge.stopLeanTracking();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,20)));renderHistory();
+ if(window.AndroidBridge&&window.AndroidBridge.stopRide)try{window.AndroidBridge.stopRide();}catch(e){} if(window.AndroidBridge&&window.AndroidBridge.stopLeanTracking)try{window.AndroidBridge.stopLeanTracking();}catch(e){} var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");rs.unshift(ride);localStorage.setItem("gazon_rides",JSON.stringify(rs.slice(0,20)));renderHistory();showRideSummary(ride);
  if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var dur=Math.max(0,Math.round((Date.now()-startTime)/1000));var r=await GaZonAuth.client.from("rides").insert({user_id:GaZonAuth.state.user.id,distance_km:ride.km,duration_sec:dur,max_speed_kmh:ride.max,elevation_gain_m:ride.elev,turns:ride.turns,destination:ride.destination,route_mode:ride.routeMode,track:ride.track,fuel_liters:ride.fuelLiters,fuel_cost:ride.fuelCost,fuel_consumption:ride.fuelConsumption,motor:ride.motor,lean_max_left:ride.leanMaxLeft,lean_max_right:ride.leanMaxRight,lean_samples:ride.leanSamples});if(r.error)console.warn("ride cloud save",r.error);});}
 }
 function syncMemberRideHistory(){

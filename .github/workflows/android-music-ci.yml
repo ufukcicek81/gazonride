@@ -1,7 +1,7 @@
 name: GaZonRide music feature APK test
 on:
   push:
-    branches: [feature/gazonride-music-center-20261009]
+    branches: [feature/gazonride-native-tts-duck-fix]
     paths:
       - "android/**"
       - ".github/workflows/android-music-ci.yml"

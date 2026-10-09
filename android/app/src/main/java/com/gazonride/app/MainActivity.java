@@ -148,6 +148,14 @@ public class MainActivity extends Activity {
                 startLeanSensors(true);
             });
         }
+        @JavascriptInterface public void resetLeanSession(){
+            runOnUiThread(() -> {
+                leanFilteredDeg = 0f;
+                leanMaxLeftDeg = 0f;
+                leanMaxRightDeg = 0f;
+                startLeanSensors(false);
+            });
+        }
         @JavascriptInterface public boolean hasLeanSensor(){
             return rotationSensor != null;
         }

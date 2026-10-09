@@ -1,0 +1,35 @@
+
+/* GaZonRide destination photography and guide details */
+#grRouteHubList .gr-route-tile{min-width:0;overflow:hidden}
+#grRouteHubList .gr-route-tile[data-kind="gazon"]{cursor:pointer}
+#grRouteHubList .gr-route-tile[data-kind="gazon"]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#grRouteHubList .gr-route-visual{height:224px;min-height:224px;position:relative;overflow:hidden;background-position:center;background-size:cover}
+#grRouteHubList .gr-route-title{font-size:19px;line-height:1.22;max-width:95%;overflow-wrap:anywhere}
+#grRouteHubList .gr-route-tile-body p{font-size:12px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.gr-gallery-hint{position:absolute;z-index:5;bottom:12px;right:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(4,8,13,.82);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 9px;border-radius:10px;font-size:10px;font-weight:800;box-shadow:0 5px 18px #0006}
+.gr-guide-overlay{position:fixed;inset:0;z-index:8500;overflow-y:auto;overscroll-behavior:contain;background:rgba(3,6,11,.92);backdrop-filter:blur(12px);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.gr-guide-sheet{margin:0 auto;min-height:100%;width:min(620px,100%);background:var(--bg);color:var(--text);padding:18px 14px 28px}
+.gr-guide-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;min-width:0}
+.gr-guide-head>div{min-width:0}
+.gr-guide-head small{display:block;color:var(--accent);font-size:9px;letter-spacing:1.2px;font-weight:800}
+.gr-guide-head b{display:block;font-size:22px;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
+.gr-guide-head button{flex:0 0 46px;width:46px;height:46px;border:1px solid var(--line);border-radius:14px;color:var(--text);background:var(--card)}
+.gr-guide-hero{position:relative;border-radius:18px;overflow:hidden;background:var(--card2);height:min(56vw,340px);min-height:230px;display:grid;place-items:center}
+.gr-guide-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.gr-guide-placeholder{color:var(--muted);padding:20px;font-weight:800;text-align:center}
+.gr-guide-credit{position:absolute;bottom:10px;right:10px;background:rgba(5,9,15,.88);color:#fff;font-size:10px;padding:7px 9px;border-radius:9px;text-decoration:none;display:inline-flex;gap:4px;align-items:center}
+.gr-guide-counter{margin:10px 1px;color:var(--muted);font-size:11px;line-height:1.5}
+.gr-guide-thumbs{display:flex;gap:8px;overflow:auto;padding:1px 0 10px;scrollbar-width:thin}
+.gr-guide-thumbs button{width:94px;height:67px;flex:0 0 94px;border:2px solid transparent;background:var(--card2);padding:0;border-radius:9px;overflow:hidden}
+.gr-guide-thumbs button.active{border-color:var(--accent)}
+.gr-guide-thumbs img{width:100%;height:100%;object-fit:cover}
+.gr-guide-copy{border-radius:16px;border:1px solid var(--line);background:var(--card);padding:15px;margin-top:12px}
+.gr-guide-copy h3{margin:0 0 12px;font-size:19px;line-height:1.3}
+.gr-guide-copy h4{margin:14px 0 6px;font-size:14px}
+.gr-guide-copy p{font-size:13px;line-height:1.7;margin:0 0 12px;color:var(--text)}
+.gr-guide-copy ul{margin:0;padding-left:20px;font-size:13px;line-height:1.8}
+.gr-guide-copy .gr-guide-note{font-size:11px;color:var(--muted);margin-top:14px}
+.gr-guide-actions{display:grid;grid-template-columns:1.3fr 1fr;gap:9px;margin-top:12px}
+.gr-guide-actions button{min-width:0;padding:13px 10px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--text);font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px}
+.gr-guide-actions button:first-child{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media(max-width:385px){#grRouteHubList .gr-route-visual{height:198px;min-height:198px}.gr-gallery-hint{font-size:9px}}

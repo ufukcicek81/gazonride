@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=1600,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0;
+var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
@@ -10,8 +10,13 @@ function pts(ride){return (ride&&ride.track||[]).filter(function(p){return Array
 function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lng-a.lng)*p;return (Math.atan2(Math.sin(dl)*Math.cos(y2),Math.cos(y1)*Math.sin(y2)-Math.sin(y1)*Math.cos(y2)*Math.cos(dl))*180/Math.PI+360)%360}
 function interpolate(a,b,t){return {lat:a.lat+(b.lat-a.lat)*t,lng:a.lng+(b.lng-a.lng)*t,alt:(a.alt||0)+((b.alt||0)-(a.alt||0))*t}}
 function geoKm(a,b){var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lng-a.lng)*p,x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)*Math.sin(dLon/2);return 2*R*Math.asin(Math.sqrt(x))}
+function lerpAngle(a,b,t){var d=((b-a+540)%360)-180;return (a+d*t+360)%360}
+function replaySource(ride){return ride&&Array.isArray(ride._matchedReplayPath)&&ride._matchedReplayPath.length>1?ride._matchedReplayPath:pts(ride)}
+function simplifyForMatch(a,max){if(a.length<=max)return a.slice();var out=[],step=(a.length-1)/(max-1);for(var i=0;i<max;i++)out.push(a[Math.min(a.length-1,Math.round(i*step))]);return out}
+function resamplePath(a,spacingM){if(!a||a.length<2)return a||[];var out=[a[0]],target=Math.max(4,Number(spacingM||7))/1000,carry=0;for(var i=1;i<a.length;i++){var s=a[i-1],e=a[i],seg=geoKm(s,e);if(seg<=0)continue;var used=0;while(carry+(seg-used)>=target){var need=target-carry,t=(used+need)/seg;out.push(interpolate(s,e,Math.max(0,Math.min(1,t))));used+=need;carry=0}carry+=Math.max(0,seg-used)}out.push(a[a.length-1]);return out}
+async function matchRideToRoads(ride){var raw=pts(ride);if(raw.length<2)return raw;var sample=simplifyForMatch(raw,80);try{var coords=sample.map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";"),url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true";var res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("match "+res.status);var data=await res.json(),m=data&&data.matchings&&data.matchings[0],g=m&&m.geometry&&m.geometry.coordinates;if(!Array.isArray(g)||g.length<2)throw new Error("matched path empty");return resamplePath(g.map(function(q){return {lat:Number(q[1]),lng:Number(q[0]),alt:0,time:0}}),7)}catch(e){console.warn("Road match fallback",e);return resamplePath(raw,7)}}
 function preparePlayback(ride){
- playPoints=pts(ride);playCum=[0];playTotal=0;
+ playPoints=replaySource(ride);playCum=[0];playTotal=0;
  for(var i=1;i<playPoints.length;i++){playTotal+=geoKm(playPoints[i-1],playPoints[i]);playCum.push(playTotal)}
 }
 function pointAtDistance(progress){
@@ -87,7 +92,7 @@ function clearMaps(){
 }
 function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
 function buildOverviewMap(ride){
- var a=pts(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
+ var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  overviewMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:10,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
  overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1});
@@ -98,7 +103,7 @@ function buildOverviewMap(ride){
  mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent="Gerçek yol rotası";
 }
 async function build3DMap(ride){
- var a=pts(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
+ var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  await waitForGoogle();
  using3d=false;
@@ -175,7 +180,7 @@ function loop(ts){
 async function open(ride){
  currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Düzce → Çark Caddesi gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
-  await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);
+  await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);currentRide._matchedReplayPath=await matchRideToRoads(currentRide);
   $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);
   $("grReplayTime").textContent=currentRide.duration||"00:00";
   $("grReplayMax").textContent=Math.round(Number(currentRide.max||0));

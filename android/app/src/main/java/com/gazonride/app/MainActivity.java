@@ -29,6 +29,10 @@ import android.view.View;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.provider.Settings;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -52,6 +56,65 @@ public class MainActivity extends Activity {
     private Uri pendingInstallUri = null;
     private boolean downloadReceiverRegistered = false;
 
+    private SensorManager sensorManager;
+    private Sensor rotationSensor;
+    private Sensor accelerometerSensor;
+    private float leanZeroDeg = Float.NaN;
+    private float leanFilteredDeg = 0f;
+    private float leanMaxLeftDeg = 0f;
+    private float leanMaxRightDeg = 0f;
+    private long leanLastUiMs = 0L;
+    private boolean leanTracking = false;
+
+    private final SensorEventListener leanSensorListener = new SensorEventListener() {
+        @Override public void onSensorChanged(SensorEvent event) {
+            if (!leanTracking || event == null) return;
+            float rawDeg;
+            try {
+                if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                    float[] rotation = new float[9];
+                    float[] orientation = new float[3];
+                    SensorManager.getRotationMatrixFromVector(rotation, event.values);
+                    SensorManager.getOrientation(rotation, orientation);
+                    rawDeg = (float)Math.toDegrees(orientation[2]);
+                } else {
+                    return;
+                }
+            } catch(Exception e) {
+                return;
+            }
+
+            if (Float.isNaN(leanZeroDeg)) leanZeroDeg = rawDeg;
+            float lean = rawDeg - leanZeroDeg;
+            while (lean > 180f) lean -= 360f;
+            while (lean < -180f) lean += 360f;
+            if (lean > 90f) lean = 90f;
+            if (lean < -90f) lean = -90f;
+
+            leanFilteredDeg = leanFilteredDeg * 0.82f + lean * 0.18f;
+            if (leanFilteredDeg < 0f) leanMaxLeftDeg = Math.max(leanMaxLeftDeg, -leanFilteredDeg);
+            else leanMaxRightDeg = Math.max(leanMaxRightDeg, leanFilteredDeg);
+
+            long now = System.currentTimeMillis();
+            if (now - leanLastUiMs >= 90L) {
+                leanLastUiMs = now;
+                final float a = leanFilteredDeg;
+                final float l = leanMaxLeftDeg;
+                final float r = leanMaxRightDeg;
+                runOnUiThread(() -> {
+                    if (webView != null) {
+                        String js = "if(window.GaZonLean&&GaZonLean.onSensor){GaZonLean.onSensor("+
+                            String.format(java.util.Locale.US,"%.2f",a)+","+
+                            String.format(java.util.Locale.US,"%.2f",l)+","+
+                            String.format(java.util.Locale.US,"%.2f",r)+")}";
+                        webView.evaluateJavascript(js,null);
+                    }
+                });
+            }
+        }
+        @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+    };
+
     private final BroadcastReceiver updateDownloadReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (!DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) return;
@@ -69,6 +132,24 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void stopRide(){
             stopService(new Intent(MainActivity.this,RideLocationService.class));
             prefs.edit().putBoolean("background",false).apply();
+        }
+        @JavascriptInterface public void startLeanTracking(){
+            runOnUiThread(() -> startLeanSensors(false));
+        }
+        @JavascriptInterface public void stopLeanTracking(){
+            runOnUiThread(() -> stopLeanSensors());
+        }
+        @JavascriptInterface public void calibrateLean(){
+            runOnUiThread(() -> {
+                leanZeroDeg = Float.NaN;
+                leanFilteredDeg = 0f;
+                leanMaxLeftDeg = 0f;
+                leanMaxRightDeg = 0f;
+                startLeanSensors(true);
+            });
+        }
+        @JavascriptInterface public boolean hasLeanSensor(){
+            return rotationSensor != null;
         }
         @JavascriptInterface public String getBufferedPoints(){return prefs.getString("buffer","[]");}
         @JavascriptInterface public void clearBufferedPoints(){prefs.edit().putString("buffer","[]").apply();}
@@ -102,6 +183,11 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+        sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
+        if(sensorManager!=null){
+            rotationSensor=sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            accelerometerSensor=sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
         updateDownloadId=prefs.getLong("update_download_id",-1L);
         String pendingUri=prefs.getString("pending_install_uri",null);
         if(pendingUri!=null&&!pendingUri.isEmpty()) pendingInstallUri=Uri.parse(pendingUri);
@@ -157,6 +243,25 @@ public class MainActivity extends Activity {
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
         webView.loadUrl(URL + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
+    }
+
+    private void startLeanSensors(boolean resetMax){
+        if(sensorManager==null || rotationSensor==null) {
+            if(webView!=null) webView.evaluateJavascript("if(window.GaZonLean&&GaZonLean.onUnavailable){GaZonLean.onUnavailable()}",null);
+            return;
+        }
+        if(resetMax){
+            leanMaxLeftDeg=0f;
+            leanMaxRightDeg=0f;
+        }
+        leanTracking=true;
+        sensorManager.unregisterListener(leanSensorListener);
+        sensorManager.registerListener(leanSensorListener,rotationSensor,SensorManager.SENSOR_DELAY_GAME);
+    }
+
+    private void stopLeanSensors(){
+        leanTracking=false;
+        if(sensorManager!=null) sensorManager.unregisterListener(leanSensorListener);
     }
 
     private boolean isSystemDarkMode(){
@@ -345,7 +450,11 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onPause(){super.onPause();prefs.edit().putBoolean("background",true).apply();}
+    @Override protected void onPause(){
+        super.onPause();
+        prefs.edit().putBoolean("background",true).apply();
+        if(sensorManager!=null) sensorManager.unregisterListener(leanSensorListener);
+    }
     @Override protected void onResume(){
         super.onResume();
         prefs.edit().putBoolean("background",false).apply();
@@ -354,6 +463,9 @@ public class MainActivity extends Activity {
             if(pending!=null&&!pending.isEmpty()) pendingInstallUri=Uri.parse(pending);
         }
         if(pendingInstallUri!=null && canInstallDownloadedApks()) installDownloadedApk(pendingInstallUri);
+        if(leanTracking && sensorManager!=null && rotationSensor!=null){
+            sensorManager.registerListener(leanSensorListener,rotationSensor,SensorManager.SENSOR_DELAY_GAME);
+        }
         if(webView!=null) webView.evaluateJavascript("if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){try{var bg=JSON.parse(window.AndroidBridge.getBufferedPoints()||'[]');if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}}catch(e){}",null);
     }
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
@@ -389,6 +501,7 @@ public class MainActivity extends Activity {
             try{unregisterReceiver(updateDownloadReceiver);}catch(Exception ignored){}
             downloadReceiverRegistered=false;
         }
+        stopLeanSensors();
         super.onDestroy();
     }
     @Override public void onBackPressed(){

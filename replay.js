@@ -53,63 +53,49 @@ function pathLength(a){var n=0;for(var i=1;i<a.length;i++)n+=geoKm(a[i-1],a[i]);
 function validMatched(raw,matched){
  if(!matched||matched.length<3)return false;
  var rawLen=Math.max(.05,pathLength(raw)),matLen=pathLength(matched);
- if(matLen<rawLen*.62||matLen>rawLen*1.55)return false;
- if(geoKm(raw[0],matched[0])>.45)return false;
- if(geoKm(raw[raw.length-1],matched[matched.length-1])>.45)return false;
+ if(matLen<rawLen*.82||matLen>rawLen*1.28)return false;
+ if(geoKm(raw[0],matched[0])>.22)return false;
+ if(geoKm(raw[raw.length-1],matched[matched.length-1])>.22)return false;
  return true
 }
-async function matchViaGoogleDirections(raw){
- if(!(window.google&&google.maps&&google.maps.DirectionsService))throw new Error("Directions unavailable");
- var anchors=simplifyForMatch(raw,20),origin=anchors[0],destination=anchors[anchors.length-1];
- var waypoints=anchors.slice(1,-1).map(function(p){return {location:{lat:p.lat,lng:p.lng},stopover:false}});
- var svc=new google.maps.DirectionsService();
- var res=await new Promise(function(resolve,reject){
-  svc.route({
-   origin:{lat:origin.lat,lng:origin.lng},
-   destination:{lat:destination.lat,lng:destination.lng},
-   waypoints:waypoints,optimizeWaypoints:false,
-   travelMode:google.maps.TravelMode.DRIVING,
-   provideRouteAlternatives:false
-  },function(r,status){if(status==="OK"&&r&&r.routes&&r.routes[0])resolve(r);else reject(new Error("Directions "+status))})
+function appendUniquePath(base,extra){
+ (extra||[]).forEach(function(p){
+  var last=base[base.length-1];
+  if(!last||geoKm(last,p)>.002)base.push(p)
  });
- var route=res.routes[0],path=[];
- (route.legs||[]).forEach(function(leg){
-  (leg.steps||[]).forEach(function(step){
-   (step.path||[]).forEach(function(p){
-    var q={lat:p.lat(),lng:p.lng(),alt:0,time:0},last=path[path.length-1];
-    if(!last||geoKm(last,q)>.001)path.push(q)
-   })
-  })
- });
- if(path.length<3&&route.overview_path)path=route.overview_path.map(function(p){return {lat:p.lat(),lng:p.lng(),alt:0,time:0}});
- return resamplePath(path,8)
+ return base
 }
-async function matchViaOsrm(raw){
- var sample=simplifyForMatch(raw,90);
- var coords=sample.map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
- var url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true&gaps=ignore";
+async function matchOsrmChunk(chunk){
+ var coords=chunk.map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
+ var radiuses=chunk.map(function(){return "45"}).join(";");
+ var url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true&gaps=split&radiuses="+radii;
  var res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("OSRM "+res.status);
  var data=await res.json(),matchings=(data&&data.matchings)||[];
  if(!matchings.length)throw new Error("OSRM match empty");
  var path=[];
  matchings.forEach(function(m){
   var g=m&&m.geometry&&m.geometry.coordinates;if(!Array.isArray(g))return;
-  g.forEach(function(q){
-   var p={lat:Number(q[1]),lng:Number(q[0]),alt:0,time:0},last=path[path.length-1];
-   if(!last||geoKm(last,p)>.001)path.push(p)
-  })
+  g.forEach(function(q){appendUniquePath(path,[{lat:Number(q[1]),lng:Number(q[0]),alt:0,time:0}])})
  });
- return resamplePath(path,8)
+ if(path.length<2)throw new Error("OSRM geometry empty");
+ return path
+}
+async function matchViaOsrm(raw){
+ var sampled=simplifyForMatch(raw,180),all=[],chunkSize=45,step=44;
+ for(var i=0;i<sampled.length-1;i+=step){
+  var chunk=sampled.slice(i,Math.min(sampled.length,i+chunkSize));
+  if(chunk.length<2)break;
+  var part=await matchOsrmChunk(chunk);
+  appendUniquePath(all,part);
+ }
+ return resamplePath(all,8)
 }
 async function matchRideToRoads(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
  try{
-  var googlePath=await matchViaGoogleDirections(raw);
-  if(validMatched(raw,googlePath))return googlePath
- }catch(e){console.warn("Google road match fallback",e)}
- try{
   var osrmPath=await matchViaOsrm(raw);
-  if(validMatched(raw,osrmPath))return osrmPath
+  if(validMatched(raw,osrmPath))return osrmPath;
+  console.warn("Road match rejected: incomplete route")
  }catch(e){console.warn("OSRM road match fallback",e)}
  return resamplePath(raw,8)
 }
@@ -130,8 +116,8 @@ function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.
 function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
 function replayDurationMs(ride){
  var km=Math.max(1,Number(ride&&ride.km||0));
- var base=km*700;
- return Math.max(45000,Math.min(100000,base));
+ var base=km*460;
+ return Math.max(30000,Math.min(72000,base));
 }
 
 async function computeDemoRouteNewApi(start,end){
@@ -190,7 +176,7 @@ function clearMaps(){
 }
 function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
 function buildOverviewMap(ride){
- var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
+ var a=cleanTrack(pts(ride)),host=$("grReplayMap");if(!host||a.length<2)a=replaySource(ride);if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  overviewMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:10,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
  overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1});
@@ -209,7 +195,7 @@ async function buildClassicFollowMap(ride){
   disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false,
   streetViewControl:false,fullscreenControl:false,mapTypeControl:false
  });
- classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:7,strokeOpacity:.96});
+ classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:10,strokeOpacity:.98});
  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#ffffff",strokeWeight:3,strokeOpacity:.9});
  classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",13),zIndex:50});
  lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};
@@ -255,14 +241,14 @@ async function build3DMap(ride){
 
   route3d=new Polyline3DElement({
    path:a.map(function(p){return {lat:p.lat,lng:p.lng,altitude:1}}),
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#20E0D0",strokeWidth:8,
-   outerColor:"#07191A",outerWidth:.32,drawsOccludedSegments:false,geodesic:true,zIndex:8
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#20E0D0",strokeWidth:13,
+   outerColor:"#07191A",outerWidth:.42,drawsOccludedSegments:false,geodesic:true,zIndex:8
   });
   map3d.append(route3d);
 
   travel3d=new Polyline3DElement({
    path:[{lat:first.lat,lng:first.lng,altitude:2}],
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:5,
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:7,
    outerColor:"#20E0D0",outerWidth:.28,drawsOccludedSegments:false,zIndex:12
   });
   map3d.append(travel3d);
@@ -352,7 +338,7 @@ function loop(ts){
  anim=requestAnimationFrame(loop)
 }
 async function open(ride){
- currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Düzce → Çark Caddesi gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
+ currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
   await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);currentRide._matchedReplayPath=await matchRideToRoads(currentRide);
   $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);

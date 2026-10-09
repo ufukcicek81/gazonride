@@ -287,24 +287,83 @@ function stopCinematicFlight(){
   try{map3d.stopCameraAnimation()}catch(e){console.warn("Camera stop",e)}
  }
 }
+function normalizeTurnDegrees(deg){return ((deg+540)%360)-180}
+function offsetCoordinate(p,heading,meters){
+ // Destination point on the sphere: safe for routes throughout Türkiye.
+ var rad=Math.PI/180,earth=6371000,lat=Number(p.lat)*rad,lng=Number(p.lng)*rad;
+ var travel=Math.max(0,meters)/earth,angle=heading*rad;
+ var phi=Math.asin(Math.sin(lat)*Math.cos(travel)+Math.cos(lat)*Math.sin(travel)*Math.cos(angle));
+ var lambda=lng+Math.atan2(Math.sin(angle)*Math.sin(travel)*Math.cos(lat),Math.cos(travel)-Math.sin(lat)*Math.sin(phi));
+ return {lat:phi/rad,lng:((lambda/rad+540)%360)-180}
+}
+function routePoint(progress){
+ var p=pointAtDistance(Math.max(0,Math.min(1,progress)));
+ return p&&p.point
+}
+function segmentDirection(from,to){
+ var p=routePoint(Math.max(0,Math.min(1,from))),q=routePoint(Math.max(0,Math.min(1,to)));
+ return p&&q&&geoKm(p,q)>.015?bearing(p,q):lastCameraHeading
+}
+function candidateRouteClearance(candidate,sceneMid,sceneWidth){
+ // Approximate free space from OTHER segments of the recorded route.
+ // This is not building/terrain detection and does not claim an unobstructed flight corridor.
+ var closest=1500,skip=Math.max(sceneWidth*.6,.06),stride=Math.max(1,Math.ceil(playPoints.length/300));
+ for(var j=0;j<playPoints.length;j+=stride){
+  var distProgress=playTotal>0?playCum[j]/playTotal:0;
+  if(Math.abs(distProgress-sceneMid)<skip)continue;
+  closest=Math.min(closest,geoKm(candidate,playPoints[j])*1000)
+ }
+ return closest
+}
+function chooseDroneSide(startProgress,endProgress,previousSide){
+ var width=Math.max(.001,endProgress-startProgress),middle=(startProgress+endProgress)/2;
+ var entry=segmentDirection(startProgress+.04*width,middle),exit=segmentDirection(middle,endProgress-.04*width);
+ var turn=normalizeTurnDegrees(exit-entry),mid=routePoint(middle);
+ var heading=segmentDirection(startProgress+.12*width,endProgress-.12*width);
+ var sampleSide=Math.max(160,Math.min(380,playTotal*1000*width*.095));
+ var left=candidateRouteClearance(offsetCoordinate(mid,heading-90,sampleSide),middle,width);
+ var right=candidateRouteClearance(offsetCoordinate(mid,heading+90,sampleSide),middle,width);
+ // Exterior of a bend is generally better for showing both the bike and the route.
+ if(turn>18)left+=Math.min(360,Math.abs(turn)*5);
+ if(turn<-18)right+=Math.min(360,Math.abs(turn)*5);
+ // Hysteresis avoids needless left/right flips between adjacent camera scenes.
+ if(previousSide==="left")left+=220;
+ if(previousSide==="right")right+=220;
+ return {side:left>=right?"left":"right",turn:turn,leftScore:left,rightScore:right}
+}
 function buildCinematicPlan(){
- // Camera positions come from the COMPLETE route, never from noisy frame-by-frame GPS.
- var realMs=duration/Math.max(.5,playbackSpeed),count=Math.max(3,Math.min(8,Math.floor(realMs/3300)));
- var moveMs=Math.max(1400,Math.min(6200,(realMs*.80/Math.max(1,count-1))*.80));
- var offsets=[-18,22,-24,16,-12,24,-17,12],tilts=[49,53,48,51,50,54,49,52];
- var width=Math.max(3300,Math.min(14500,2200+(playTotal/Math.max(1,count))*1100));
+ // Each scene is one continuous drone sweep: rear quarter -> side -> front quarter.
+ // Three Google-managed flyCameraTo transitions per scene, NEVER camera writes per GPS frame.
+ var realMs=duration/Math.max(.5,playbackSpeed),sceneCount=Math.max(1,Math.min(7,Math.round(realMs/7000)));
+ var sceneMillis=realMs/sceneCount;
+ var flightMillis=Math.max(750,Math.min(3700,sceneMillis*.285));
+ var phases=[{label:"rear",fraction:.025,headingOffset:44,tilt:47,sideRatio:.55},
+             {label:"side",fraction:.345,headingOffset:88,tilt:52,sideRatio:1},
+             {label:"front",fraction:.675,headingOffset:132,tilt:55,sideRatio:.72}];
  cinematicShots=[];cameraSceneIndex=-1;
- if(playPoints.length<2)return;
- for(var i=0;i<count;i++){
-  var trigger=.075+i*(.80/Math.max(1,count-1)),focus=Math.min(.985,trigger+.45/count);
-  var mid=pointAtDistance(focus),prev=pointAtDistance(Math.max(0,focus-.065)),next=pointAtDistance(Math.min(1,focus+.065));
-  if(!mid||!prev||!next)continue;
-  var dir=geoKm(prev.point,next.point)>.02?bearing(prev.point,next.point):lastCameraHeading;
-  var heading=(dir+offsets[i%offsets.length]+360)%360;
-  cinematicShots.push({
-   at:trigger,durationMillis:moveMs,
-   camera:{center:{lat:mid.point.lat,lng:mid.point.lng,altitude:120},range:width*(i%3===1?1.08:1),tilt:tilts[i%tilts.length],heading:heading}
-  })
+ if(playPoints.length<2||playTotal<=0)return;
+ var previousSide=null;
+ for(var scene=0;scene<sceneCount;scene++){
+  var begin=scene/sceneCount,finish=(scene+1)/sceneCount,sceneWidth=finish-begin;
+  var decision=chooseDroneSide(begin,finish,previousSide),side=decision.side,sign=side==="left"?1:-1;
+  previousSide=side;
+  var sceneKm=playTotal/sceneCount,baseRange=Math.max(2450,Math.min(5300,1800+sceneKm*570));
+  var lateralMeters=Math.max(75,Math.min(190,sceneKm*42));
+  for(var k=0;k<phases.length;k++){
+   var phase=phases[k],progress=begin+phase.fraction*sceneWidth;
+   var focus=routePoint(progress),sampleStep=Math.min(.045,sceneWidth*.16);
+   var dir=segmentDirection(progress-sampleStep,progress+sampleStep);
+   var target=offsetCoordinate(focus,dir+(side==="left"?-90:90),lateralMeters*phase.sideRatio);
+   cinematicShots.push({
+    at:progress,scene:scene,phase:phase.label,side:side,routeHeading:dir,turn:decision.turn,
+    durationMillis:flightMillis,
+    camera:{
+     center:{lat:target.lat,lng:target.lng,altitude:125},
+     range:baseRange*(phase.label==="side"?1.025:1),tilt:phase.tilt,
+     heading:(dir+sign*phase.headingOffset+360)%360
+    }
+   })
+  }
  }
 }
 function updateCinematicCamera(progress){
@@ -341,7 +400,7 @@ function startReplayPlayback(ride,label){
  setTimeout(function(){
   if(mode!=="3d"||thisSession!==playSessionId)return;
   auto=true;start=0;
-  $("grReplayState").textContent=using3d?"Cinematic Replay v6 · drone kamera · "+qualityLabel(ride):"Sinematik rota · "+qualityLabel(ride);
+  $("grReplayState").textContent=using3d?"Cinematic Replay v7 · yan drone çekimi · "+qualityLabel(ride):"Sinematik rota · "+qualityLabel(ride);
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
@@ -506,5 +565,5 @@ function install(){
  document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {shotCount:cinematicShots.length,sceneIndex:cameraSceneIndex,mode:using3d?"3d":"classic",shots:cinematicShots.map(function(s){return {at:s.at,heading:s.camera.heading,center:s.camera.center,range:s.camera.range}})}}};
+window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {shotCount:cinematicShots.length,sceneIndex:cameraSceneIndex,mode:using3d?"3d":"classic",shots:cinematicShots.map(function(s){return {at:s.at,scene:s.scene,phase:s.phase,side:s.side,routeHeading:s.routeHeading,turn:s.turn,heading:s.camera.heading,center:s.camera.center,range:s.camera.range}})}}};
 })();

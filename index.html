@@ -305,6 +305,7 @@ html,body{max-width:100%;overflow-x:clip}
 
 </style>
 <link rel="stylesheet" href="gazon-layout-fit.css?v=20261009-fit3-navbar-cards">
+<link rel="stylesheet" href="gazon-music.css?v=20261009-music1">
 </head>
 <body>
 <div class="app">
@@ -1157,7 +1158,17 @@ function guidanceDistanceText(m){
 function cleanInstruction(t){return String(t||"Rotayı takip et").replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();}
 function speakGuidance(text){
  if(guidanceMuted||!("speechSynthesis" in window)||!text)return;
- try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(cleanInstruction(text));u.lang="tr-TR";u.rate=1.02;speechSynthesis.speak(u);}catch(e){}
+ var music=window.GaZonMusic,speechId=0;
+ try{
+  if(music&&music.stopSpeech)music.stopSpeech();
+  speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(cleanInstruction(text));
+  u.lang="tr-TR";u.rate=1.02;
+  speechId=music&&music.beginSpeech?music.beginSpeech():0;
+  u.onend=function(){if(music&&music.endSpeech)music.endSpeech(speechId)};
+  u.onerror=function(){if(music&&music.endSpeech)music.endSpeech(speechId)};
+  speechSynthesis.speak(u);
+ }catch(e){if(music&&music.endSpeech)music.endSpeech(speechId)}
 }
 function remainingGuidanceMeters(p){
  if(!navSteps.length)return Math.max(0,navTotalKm*1000);
@@ -1296,6 +1307,8 @@ function updateNavigation(p){
  
 }
 function stopNavigation(){
+ if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();
+ try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}
  navActive=false;navReady=false;navSteps=[];navStepIndex=0;activeNavDestination=null;navPathPoints=[];navOffRouteCount=0;navRecalculating=false;
  exitGuidanceMode();
  clearAlternativeRoutes();if(navRoute){try{navRoute.setMap(null)}catch(e){}navRoute=null;}
@@ -1584,7 +1597,7 @@ function boot(){
  $("navStop").addEventListener("click",stopNavigation);
  $("guidanceClose").addEventListener("click",stopNavigation);
  $("guidanceCenter").addEventListener("click",recenterNavigationOnce);
- $("guidanceSound").addEventListener("click",function(){guidanceMuted=!guidanceMuted;this.innerHTML='<span class="mi">'+(guidanceMuted?"volume_off":"volume_up")+'</span>';if(!guidanceMuted)updateGuidanceHud(currentPoint);});
+ $("guidanceSound").addEventListener("click",function(){guidanceMuted=!guidanceMuted;this.innerHTML='<span class="mi">'+(guidanceMuted?"volume_off":"volume_up")+'</span>';if(guidanceMuted){if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}}else updateGuidanceHud(currentPoint);});
  $("guidanceMapType").addEventListener("click",toggleSatellite);
  $("guidanceMore").addEventListener("click",function(){alert(activeNavLabel+"\n"+$("guidanceRemain").textContent);});
  $("voiceDockMic").addEventListener("click",toggleMic);
@@ -1603,5 +1616,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-guides.js?v=20261009-guide2-no-overlap"></script>
 <script src="gazon-destinations.js?v=20261009-81city-restored"></script>
 <script src="replay.js?v=20261009-ui-share-fix1"></script>
+<script src="gazon-music.js?v=20261009-music1"></script>
 </body>
 </html>

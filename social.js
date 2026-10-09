@@ -302,6 +302,23 @@ async function toggleFavorite(kind,index){
   else{var d=await GaZonAuth.client.from("favorites").delete().eq("user_id",GaZonAuth.state.user.id).eq("submission_id",x.submissionId);if(d.error)console.warn(d.error);}
  }
 }
+async function togglePostLike(index){
+ var routes=read(K_ROUTES),x=routes[index];if(!x)return;
+ if(!(window.GaZonAuth&&GaZonAuth.configured)){x.likedByMe=!x.likedByMe;x.likes=Math.max(0,Number(x.likes||0)+(x.likedByMe?1:-1));write(K_ROUTES,routes);render("feed");return}
+ await GaZonAuth.ready;if(!GaZonAuth.state.user){location.href="login.html?next="+encodeURIComponent(location.href);return}
+ if(!x.submissionId){x.likedByMe=!x.likedByMe;x.likes=Math.max(0,Number(x.likes||0)+(x.likedByMe?1:-1));write(K_ROUTES,routes);render("feed");return}
+ var liked=!!x.likedByMe;
+ if(liked){
+  var d=await GaZonAuth.client.from("route_likes").delete().eq("user_id",GaZonAuth.state.user.id).eq("submission_id",x.submissionId);
+  if(d.error){console.warn("unlike",d.error);return}
+  x.likedByMe=false;x.likes=Math.max(0,Number(x.likes||0)-1)
+ }else{
+  var r=await GaZonAuth.client.from("route_likes").upsert({user_id:GaZonAuth.state.user.id,submission_id:x.submissionId},{onConflict:"user_id,submission_id"});
+  if(r.error){console.warn("like",r.error);return}
+  x.likedByMe=true;x.likes=Number(x.likes||0)+1
+ }
+ write(K_ROUTES,routes);render("feed")
+}
 function card(kind,x,i){
  var icon=kind==="route"?"two_wheeler":"local_cafe",type=kind==="route"?(x.difficulty||"Rota"):(x.type||"Mola"),photos=Array.isArray(x.photos)?x.photos.slice(0,5):[],stops=Array.isArray(x.stops)?x.stops:[],m=x.ride_meta||{},isPost=kind==="route"&&m.socialPost===true;
  var gallery="";
@@ -317,7 +334,7 @@ function card(kind,x,i){
  var navText=kind==="route"&&x.track&&x.track.length>1?"Rotayı Sür":"Git";
  var lp=profile(),avatar=x.avatar||((x.author&&lp.name&&x.author===lp.name)?lp.avatar:""),head='<div class="gr-post-head"><div class="gr-post-avatar">'+(avatar?'<img src="'+esc(avatar)+'" alt="Profil">':'<span class="mi">'+icon+'</span>')+'</div><div class="gr-post-user"><b>'+esc(x.author||"GaZonRide Sürücüsü")+'</b><small>'+esc(x.bike||"Motosiklet")+' · '+esc(x.createdAt||"")+'</small></div><button class="gr-post-more"><span class="mi">more_horiz</span></button></div>';
  var body=isPost
-  ? '<div class="gr-insta-actions"><button data-gr-like="'+kind+':'+i+'"><span class="mi">favorite_border</span></button><button data-gr-share="'+kind+':'+i+'"><span class="mi">send</span></button><button data-gr-nav="'+kind+':'+i+'"><span class="mi">route</span></button></div><div class="gr-post-caption"><b>'+esc(x.author||"Sürücü")+'</b> '+esc(x.description||"")+'</div><div class="gr-post-routechip"><span class="mi">route</span><div><b>'+esc(x.title||x.destination||"Sürüş")+'</b><small>'+Number(m.km||0).toFixed(1)+' km · '+esc(m.duration||"—")+'</small></div><button data-gr-nav="'+kind+':'+i+'">Rotayı Aç</button></div>'
+  ? '<div class="gr-insta-actions"><button class="'+(x.likedByMe?'liked':'')+'" data-gr-postlike="'+i+'"><span class="mi">'+(x.likedByMe?'favorite':'favorite_border')+'</span></button><button data-gr-share="'+kind+':'+i+'"><span class="mi">send</span></button><button data-gr-nav="'+kind+':'+i+'"><span class="mi">route</span></button><b class="gr-like-count">'+Number(x.likes||0)+' beğeni</b></div><div class="gr-post-caption"><b>'+esc(x.author||"Sürücü")+'</b> '+esc(x.description||"")+'</div><div class="gr-post-routechip"><span class="mi">route</span><div><b>'+esc(x.title||x.destination||"Sürüş")+'</b><small>'+Number(m.km||0).toFixed(1)+' km · '+esc(m.duration||"—")+'</small></div><button data-gr-nav="'+kind+':'+i+'">Rotayı Aç</button></div>'
   : '<div class="gr-post-title">'+esc(x.title)+'</div><div class="gr-post-text">'+esc(x.description||"")+'</div>'+stats+stopHtml+'<div class="gr-post-meta">'+esc(type)+'</div><div class="gr-post-actions"><button class="gr-drive-route" data-gr-nav="'+kind+':'+i+'"><span class="mi" style="font-size:15px">navigation</span> '+navText+'</button><button data-gr-like="'+kind+':'+i+'"><span class="mi" style="font-size:15px">favorite</span> '+(isFavorite(kind,x)?"Favoride":"Favori")+'</button>'+(kind==="route"&&x.track&&x.track.length>1?'<button data-gr-replay-route="'+i+'"><span class="mi" style="font-size:15px">3d_rotation</span> Sürüş</button>':'')+'<button data-gr-share="'+kind+':'+i+'"><span class="mi" style="font-size:15px">share</span> Paylaş</button></div>';
  return '<article class="gr-post '+(isPost?'gr-insta-post':'')+'">'+head+gallery+body+'</article>'
 }
@@ -337,7 +354,7 @@ function render(filter){
  }
  list.innerHTML=html.length?html.join(""):'<div class="gr-empty">Bu bölümde henüz içerik yok. İlk katkıyı sen ekleyebilirsin.</div>';
  document.querySelectorAll("[data-gr-nav]").forEach(function(b){b.onclick=function(){var p=b.getAttribute("data-gr-nav").split(":"),a=read(p[0]==="route"?K_ROUTES:K_PLACES),x=a[Number(p[1])];if(!x)return;if(p[0]==="route"&&x.track&&x.track.length>1&&window.GaZonNavigation&&window.GaZonNavigation.openCommunityRoute)window.GaZonNavigation.openCommunityRoute(x,true);else openNavigation(x)}});
- document.querySelectorAll("[data-gr-like]").forEach(function(b){b.onclick=function(){var p=b.getAttribute("data-gr-like").split(":");toggleFavorite(p[0],Number(p[1]))}});
+ document.querySelectorAll("[data-gr-postlike]").forEach(function(b){b.onclick=function(){togglePostLike(Number(b.getAttribute("data-gr-postlike")))}});document.querySelectorAll("[data-gr-like]").forEach(function(b){b.onclick=function(){var p=b.getAttribute("data-gr-like").split(":");toggleFavorite(p[0],Number(p[1]))}});
  document.querySelectorAll("[data-gr-share]").forEach(function(b){b.onclick=function(){var p=b.getAttribute("data-gr-share").split(":"),a=read(p[0]==="route"?K_ROUTES:K_PLACES),x=a[Number(p[1])];if(!x)return;var t="GaZonRide · "+x.title+"\n"+(x.description||"");if(navigator.share)navigator.share({title:x.title,text:t}).catch(function(){});else navigator.clipboard&&navigator.clipboard.writeText(t)}});
  document.querySelectorAll("[data-gr-replay-route]").forEach(function(b){b.onclick=function(){var a=read(K_ROUTES),x=a[Number(b.getAttribute("data-gr-replay-route"))],m=x&&x.ride_meta||{};if(x&&window.GaZonReplay)window.GaZonReplay.open({km:Number(m.km||0),duration:m.duration||"00:00",max:Number(m.max||0),date:m.date||x.createdAt||"",destination:x.title||m.destination||"",track:x.track||[]})}});
  var op=$("grOpenProfile");if(op)op.onclick=function(){var b=document.querySelector('[data-page="profile"]');if(b)b.click()};
@@ -357,6 +374,15 @@ function syncRemoteCommunity(){
     else{item={submissionId:s.id,title:s.title,type:s.place_type||"Mola",description:s.description||"",lat:s.lat,lon:s.lon,author:s.author_name||"Sürücü",bike:s.bike||"Motosiklet",createdAt:new Date(s.created_at).toLocaleString("tr-TR")};places.push(item)}
     byId[s.id]=item;
    });
+   var routeIds=routes.map(function(z){return z.submissionId}).filter(Boolean);
+   if(routeIds.length){
+    var lr=await GaZonAuth.client.from("route_likes").select("submission_id,user_id").in("submission_id",routeIds);
+    if(!lr.error){
+     var counts={},me=GaZonAuth.state.user.id;
+     (lr.data||[]).forEach(function(z){counts[z.submission_id]=(counts[z.submission_id]||0)+1;var rr=routes.find(function(q){return q.submissionId===z.submission_id});if(rr&&z.user_id===me)rr.likedByMe=true});
+     routes.forEach(function(rr){rr.likes=Number(counts[rr.submissionId]||0);rr.likedByMe=!!rr.likedByMe})
+    }
+   }
    write(K_ROUTES,routes);write(K_PLACES,places);
    var fr=await GaZonAuth.client.from("favorites").select("submission_id").eq("user_id",GaZonAuth.state.user.id);
    if(!fr.error){
@@ -372,6 +398,7 @@ function syncRemoteCommunity(){
    GaZonAuth.client.channel("gazon-community")
     .on("postgres_changes",{event:"*",schema:"public",table:"submissions"},pull)
     .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},pull)
+    .on("postgres_changes",{event:"*",schema:"public",table:"route_likes"},pull)
     .subscribe();
   }catch(e){}
  });

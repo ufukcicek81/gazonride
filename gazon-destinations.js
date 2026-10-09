@@ -109,6 +109,65 @@ function openCatalogue(){
  var chip=$("grTravelTab");if(chip)chip.classList.add("active");
  if($("grTravelCatalogue"))$("grTravelCatalogue").scrollIntoView({block:"start",behavior:"smooth"})
 }
+function categoryForText(text){
+ var t=String(text).toLocaleLowerCase("tr-TR");
+ if(/şelale|yayla|vadi|göl|dağ|kanyon|orman|mağara|nehir|tabiat|rafting/.test(t))return "Doğa";
+ if(/antik|müze|kale|tapınak|türbe|kilise|manastır|höyük|köprü|ören|mezar|saray/.test(t))return "Tarih";
+ if(/plaj|koy|deniz|sahil|dalış|ada|yüz/.test(t))return "Deniz";
+ if(/festival|şenlik|kutla|maraton|konser/.test(t))return "Etkinlik";
+ if(/kahve|kahvaltı|tat|gurme|kebap/.test(t))return "Lezzet";
+ return "Keşif"
+}
+function parseGuideSource(text){
+ var provinces="Adana|Adıyaman|Afyonkarahisar|Ağrı|Aksaray|Amasya|Ankara|Antalya|Ardahan|Artvin|Aydın|Balıkesir|Bartın|Batman|Bayburt|Bilecik|Bingöl|Bitlis|Bolu|Burdur|Bursa|Çanakkale|Çankırı|Çorum|Denizli|Diyarbakır|Düzce|Edirne|Elazığ|Erzincan|Erzurum|Eskişehir|Gaziantep|Giresun|Gümüşhane|Hakkari|Hatay|Iğdır|Isparta|İstanbul|İzmir|Kahramanmaraş|Karabük|Karaman|Kars|Kastamonu|Kayseri|Kırıkkale|Kırklareli|Kırşehir|Kilis|Kocaeli|Konya|Kütahya|Malatya|Manisa|Mardin|Mersin|Muğla|Muş|Nevşehir|Niğde|Ordu|Osmaniye|Rize|Sakarya|Samsun|Siirt|Sinop|Sivas|Şanlıurfa|Şırnak|Tekirdağ|Tokat|Trabzon|Tunceli|Uşak|Van|Yalova|Yozgat|Zonguldak".split("|");
+ var names={};provinces.forEach(function(p){names[p]=1});
+ if(/<html|<article|<p\b/i.test(text)){
+  try{
+   var dom=new DOMParser().parseFromString(text.replace(/<br\s*\/?>/gi,"\n").replace(/<\/(?:p|div|li)>/gi,"\n"),"text/html");
+   var main=dom.querySelector("article")||dom.querySelector("main")||dom.body;
+   text=main&&main.textContent||text
+  }catch(e){}
+ }
+ var lines=text.split(/\r?\n/),raw=[],seenStart=false;
+ for(var i=0;i<lines.length;i++){
+  var line=lines[i].replace(/\s+/g," ").trim(),m=line.match(/^(\d{1,4})\s+(.{4,})$/);
+  if(!m)continue;
+  var num=Number(m[1]),body=m[2];
+  if(num<1||num>1021)continue;
+  var part=body.split(/[\s\-–]/)[0],city=part==="Şanliurfa"?"Şanlıurfa":part.indexOf("Uludağ")===0?"Bursa":part;
+  if(!names[city])continue;
+  raw.push({sourceNumber:num,city:city,body:body});
+  seenStart=true
+ }
+ var rows=raw.map(function(x,i){
+  var title=x.body.replace(new RegExp("^"+x.city+"(?:\\s*[-–])?\\s*"),"").trim()||x.body;
+  return {id:i+1,sourceNumber:x.sourceNumber,city:x.city,title:title,category:categoryForText(title),search:title+" "+x.city+" Türkiye"}
+ });
+ if(rows.length<1000)throw new Error("Uzaktaki gezi kaynağı eksik: "+rows.length+" kayıt");
+ return {cities:provinces,items:rows}
+}
+function remoteCatalogue(){
+ var cacheKey="gazon_destinations_cache_20261009",old=null;
+ try{old=JSON.parse(localStorage.getItem(cacheKey)||"null")}catch(e){}
+ if(old&&Array.isArray(old.items)&&old.items.length>=1000)return Promise.resolve(old);
+ var src="https://www.turkishnews.com/2021/07/05/1001-turkiye/";
+ var proxies=[
+  "https://r.jina.ai/"+src,
+  "https://api.allorigins.win/raw?url="+encodeURIComponent(src)
+ ];
+ function attempt(index){
+  if(index>=proxies.length)return Promise.reject(new Error("1021 gezi noktası kaynağı şu anda erişilemiyor"));
+  return fetch(proxies[index]).then(function(r){if(!r.ok)throw Error("Proxy "+r.status);return r.text()}).then(parseGuideSource)
+   .catch(function(){return attempt(index+1)})
+ }
+ return attempt(0).then(function(catalog){try{localStorage.setItem(cacheKey,JSON.stringify(catalog))}catch(e){}return catalog})
+}
+function loadCatalogue(){
+ return fetch("gazon-destinations.json?v=20261009-81il",{cache:"no-cache"})
+ .then(function(r){if(!r.ok)throw Error("Statik liste bulunamadı");return r.json()})
+ .then(function(c){if(!c.items||c.items.length<1000)throw Error("Statik katalog eksik");return c})
+ .catch(remoteCatalogue)
+}
 function install(){
  var host=$("discoverSection"),tabs=host&&host.querySelector(".discoverTabs"),grid=document.querySelector(".homeMenuGrid");
  if(!host||!tabs||!grid){setTimeout(install,250);return}
@@ -131,9 +190,7 @@ function install(){
  $("grTravelCity").onchange=function(){selectedCity=this.value;page=0;draw()};
  $("grTravelBack").onclick=function(){page=Math.max(0,page-1);draw()};
  $("grTravelNext").onclick=function(){page++;draw()};
- fetch("gazon-destinations.json?v=20261009-81il",{cache:"no-cache"}).then(function(response){
-  if(!response.ok)throw new Error("Liste dosyası henüz yayınlanmadı");return response.json()
- }).then(function(result){
+ loadCatalogue().then(function(result){
   var a=result&&result.items||[];
   if(!Array.isArray(a)||a.length<1000)throw Error("Liste doğrulaması başarısız");
   data=a;cities=Array.isArray(result.cities)?result.cities:[];

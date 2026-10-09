@@ -641,6 +641,45 @@ function calibrateLeanSensor(){
   }else{var x2=$("leanStatus");if(x2)x2.textContent="Yatış ölçümü için Android uygulaması gerekli"}
  }catch(e){var x3=$("leanStatus");if(x3)x3.textContent="Kalibrasyon yapılamadı"}
 }
+function nativeRidePoints(){
+ try{
+  if(window.AndroidBridge&&typeof AndroidBridge.getBufferedPoints==="function"){
+   var a=JSON.parse(AndroidBridge.getBufferedPoints()||"[]");
+   return (Array.isArray(a)?a:[]).filter(function(p){return p&&isFinite(Number(p.lat))&&isFinite(Number(p.lon))}).map(function(p){return [Number(p.lat),Number(p.lon),p.altitude==null?null:Number(p.altitude),Number(p.time||Date.now())]})
+  }
+ }catch(e){}
+ return []
+}
+function trackDistanceKm(points){
+ var sum=0,last=null;
+ (points||[]).forEach(function(q){
+  var p={lat:Number(q[0]),lon:Number(q[1])};
+  if(last){
+   var d=hav(last,p),dt=Math.max(.5,(Number(q[3]||0)-Number(last.t||0))/1000);
+   var implied=dt>0?d*3600/dt:999;
+   if(d>.003&&d<.8&&implied<=200)sum+=d
+  }
+  last={lat:p.lat,lon:p.lon,t:Number(q[3]||0)}
+ });
+ return sum
+}
+function restoreActiveRideFromNative(){
+ try{
+  if(!(window.AndroidBridge&&typeof AndroidBridge.isRideActive==="function"&&AndroidBridge.isRideActive()))return false;
+  var pts=nativeRidePoints(),started=typeof AndroidBridge.getRideStartedAt==="function"?Number(AndroidBridge.getRideStartedAt()||0):0;
+  riding=true;startTime=started>0?started:Date.now();track=pts;lastPoint=null;lastGpsTs=0;totalKm=trackDistanceKm(track);
+  if(route)setPolyline(route,track);
+  $("distance").textContent=totalKm.toFixed(2);
+  $("duration").textContent=fmt(Math.max(0,Math.floor((Date.now()-startTime)/1000)));
+  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';
+  $("status").textContent="Sürüş arka planda devam ediyor.";
+  if(timer)clearInterval(timer);timer=setInterval(function(){$("duration").textContent=fmt(Math.max(0,Math.floor((Date.now()-startTime)/1000)))},1000);
+  if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+  watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası"},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+  startLeanSensor();
+  return true
+ }catch(e){console.warn("ride restore",e);return false}
+}
 function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
  riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;try{if(window.AndroidBridge&&typeof AndroidBridge.resetLeanSession==="function")AndroidBridge.resetLeanSession();else startLeanSensor()}catch(e){}
@@ -650,6 +689,8 @@ function startRide(){
  watchId=navigator.geolocation.watchPosition(applyPosition,function(){$("gps").textContent="GPS hatası";},{enableHighAccuracy:true,maximumAge:1000,timeout:15000}); if(window.AndroidBridge&&window.AndroidBridge.startRide)try{window.AndroidBridge.startRide();}catch(e){}
 }
 function finishRide(){
+ var nativePts=nativeRidePoints();
+ if(nativePts.length>1){track=nativePts;totalKm=trackDistanceKm(track);if(route)setPolyline(route,track)}
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;clearInterval(timer);
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var rp=getRiderProfile(),ci=$("rideConsumptionInput"),cv=ci?Number(String(ci.value||"0").replace(",",".")):0;if(cv>0){rp.motor=rp.motor||{};rp.motor.consumption=cv;saveRiderProfileLocal(rp)}var fe=fuelEstimate(totalKm,rp),ride={km:totalKm,duration:$("duration").textContent,max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{},leanMaxLeft:Number(leanMaxLeft.toFixed(1)),leanMaxRight:Number(leanMaxRight.toFixed(1)),leanSamples:leanSamples.slice()};
@@ -719,7 +760,12 @@ window.addEventListener("popstate",function(e){
 async function requestWakeLock(){
  try{if("wakeLock" in navigator){wakeLock=await navigator.wakeLock.request("screen");}}catch(e){}
 }
-document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")requestWakeLock();});
+document.addEventListener("visibilitychange",function(){
+ if(document.visibilityState==="visible"){
+  requestWakeLock();
+  try{if(!riding&&window.AndroidBridge&&typeof AndroidBridge.isRideActive==="function"&&AndroidBridge.isRideActive())restoreActiveRideFromNative()}catch(e){}
+ }
+});
 
 function maneuverText(step){
  if(!step||!step.maneuver)return "Rotayı takip et";
@@ -1349,10 +1395,9 @@ function boot(){
    mapReady=ok;
    if(ok){startGPS();if(currentPoint)setTimeout(function(){setMapCenter(currentPoint,16);},200);}
  }).catch(function(e){console.warn("Google Maps init",e);});
- if(window.AndroidBridge&&window.AndroidBridge.getBufferedPoints){
-  try{var raw=window.AndroidBridge.getBufferedPoints(),bg=JSON.parse(raw||"[]");
-   if(bg.length){bg.forEach(function(p){applyPosition({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy||20,altitude:p.altitude,speed:p.speed,timestamp:p.time}});});window.AndroidBridge.clearBufferedPoints();}
-  }catch(e){}
+ var restoredRide=restoreActiveRideFromNative();
+ if(!restoredRide&&window.AndroidBridge&&window.AndroidBridge.clearBufferedPoints){
+  try{window.AndroidBridge.clearBufferedPoints()}catch(e){}
  }
  renderHistory();
  syncMemberRideHistory();

@@ -76,7 +76,7 @@ function update(){
  var focus=$("grMusicFocus");
  if(focus){
   if(!native)focus.textContent="Ses odağı: web sürümünde kullanılamaz";
-  else if(state.focusStatus==="granted")focus.textContent="Android ses odağı: başarılı. Müzik yine kısılmıyorsa oynatıcı bu isteği uygulamıyor.";
+  else if(state.focusStatus==="granted")focus.textContent="Android ses odağı: son istek kabul edildi. Müzik yine kısılmıyorsa oynatıcı bu isteği uygulamıyor.";
   else if(state.focusStatus==="denied")focus.textContent="Android ses odağı: reddedildi. Müziğin kısılmaması bu nedenle olabilir.";
   else focus.textContent=state.nativeNarrationReady?"Ses odağı: test bekleniyor · Android sesli navigasyon hazır":state.narratorFailed?"Android sesli navigasyon başlatılamadı":"Android sesli navigasyon hazırlanıyor…";
  }
@@ -103,7 +103,7 @@ function nativeSpeak(text){
  try{return !!(android&&typeof android.speakNavigation==="function"&&android.speakNavigation(text))}catch(e){return false}
 }
 function playDemo(){
- var message="İki yüz metre sonra sağa dön.";
+ var message="Müzik kısılma testi başladı. Üç yüz metre sonra sağa dön. Yönlendirmeyi dinlerken müziğin sesi azalmalı. Konuşma bitince müzik eski seviyesine dönmeli.";
  if(nativeSpeak(message)){
   $("grMusicStatus").textContent="Android navigasyon sesi başlatıldı; müzikte kısılma olup olmadığını dinle.";
   setTimeout(update,650);

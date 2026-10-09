@@ -431,7 +431,7 @@ function updateScene(progress,ts){
  var x=pointAtDistance(progress);if(!x)return;
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
  if(using3d&&map3d){
-  if(bike3d&&(now-lastBikeTs>75||progress>=1)){
+  if(bike3d&&(now-lastBikeTs>=32||progress>=1)){
    try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
    lastBikeTs=now
   }

@@ -511,11 +511,11 @@ function backOverview(){
 }
 function replayShareText(){
  var ride=currentRide||{},track=pts(ride),label=ride.destination||"Motosiklet sürüşü";
- var text="🏍 GaZonRide sürüşü\\n"+label+"\\n"+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"");
+ var text="🏍 GaZonRide sürüşü\n"+label+"\n"+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"");
  if(track.length>1){
   var a=track[0],b=track[track.length-1];
   var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a.lat.toFixed(6)+","+a.lng.toFixed(6))+"&destination="+encodeURIComponent(b.lat.toFixed(6)+","+b.lng.toFixed(6))+"&travelmode=driving";
-  text+="\\n📍 Başlangıç / varış: "+url
+  text+="\n📍 Başlangıç / varış: "+url
  }
  return text
 }

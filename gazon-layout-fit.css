@@ -105,3 +105,172 @@ body.mode-discover #grSocial>.gr-social-list{min-width:0;max-width:100%}
  .gr-route-source-tabs>button{font-size:9px}
  .bottom>.navBtn{font-size:9px}
 }
+
+
+/* 2026-10-09 · Card title / photo-guide / bottom navigation final fit.
+   The guide hint has been moved into the CARD BODY, never over the image title. */
+#grRouteHubList .gr-route-tile{min-width:0;max-width:100%;overflow:hidden}
+#grRouteHubList .gr-route-visual{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px;
+}
+#grRouteHubList .gr-route-visual .gr-route-title{
+  position:relative;
+  display:block;
+  z-index:2;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin-top:auto;
+  font-size:clamp(21px,5.65vw,29px);
+  line-height:1.17;
+  overflow-wrap:anywhere;
+  white-space:normal;
+  text-align:left;
+}
+#grRouteHubList .gr-route-tile-body{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  padding:15px 16px 17px;
+}
+#grRouteHubList .gr-route-tile-body > .gr-gallery-hint{
+  position:static!important;
+  inset:auto!important;
+  z-index:auto;
+  width:fit-content;
+  max-width:100%;
+  margin:0 0 14px 0;
+  padding:9px 11px;
+  display:inline-flex;
+  align-self:flex-start;
+  align-items:center;
+  gap:7px;
+  background:var(--card2);
+  color:var(--accent);
+  border:1px solid var(--line);
+  border-radius:11px;
+  box-shadow:none;
+  font-size:11px;
+  font-weight:850;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+}
+#grRouteHubList .gr-route-tile-body > .gr-gallery-hint > .mi{
+  font-size:17px;
+  flex:0 0 17px;
+}
+#grRouteHubList .gr-route-tile-body > .gr-gallery-hint > span:last-child{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex-wrap:wrap;
+}
+#grRouteHubList .gr-gallery-hint .mi:last-child{
+  font-size:15px;
+  flex:0 0 auto;
+}
+#grRouteHubList .gr-route-tile-body p{
+  margin:11px 0 15px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+#grRouteHubList .gr-route-tile-actions{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  gap:9px;
+  margin-top:auto;
+}
+#grRouteHubList .gr-route-tile-actions button{
+  min-width:0;
+  width:100%;
+  min-height:49px;
+  padding:10px 5px;
+  text-align:center;
+  font-size:clamp(10px,2.8vw,12px);
+  line-height:1.25;
+  border-radius:13px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+/* No negative offset on the motorcycle icon: it is fully visible inside the bar.
+   The earlier inline .bottom .navBtn overflow:hidden clipped its upper half. */
+.bottom{
+  min-height:calc(94px + env(safe-area-inset-bottom, 0px));
+  padding:9px 5px calc(10px + env(safe-area-inset-bottom, 0px));
+  overflow:visible!important;
+  align-items:end;
+  box-sizing:border-box;
+}
+.bottom > .navBtn{
+  overflow:visible!important;
+  min-height:73px;
+  height:auto;
+  padding:4px 1px 3px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  box-sizing:border-box;
+  text-overflow:clip;
+}
+.bottom > .navBtn > b{
+  overflow:visible!important;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  margin:0 auto 0;
+}
+.bottom > .navBtn .mi{
+  overflow:visible!important;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.bottom > .navBtn.navCenter > b,
+.bottom .navCenter b{
+  width:54px!important;
+  height:54px!important;
+  min-width:54px;
+  min-height:54px;
+  margin:0 auto!important;
+  border-radius:50%;
+  display:grid!important;
+  place-items:center!important;
+  overflow:visible!important;
+  position:relative;
+  z-index:1;
+}
+.bottom > .navBtn.navCenter .mi{
+  font-size:28px!important;
+  line-height:1;
+}
+body.mode-discover .discoverSection{
+  padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));
+}
+@media(max-width:360px){
+  #grRouteHubList .gr-route-visual .gr-route-title{
+    font-size:clamp(19px,5.9vw,23px);
+  }
+  #grRouteHubList .gr-route-tile-body > .gr-gallery-hint{
+    font-size:10px;
+    padding:8px 9px;
+  }
+  .bottom > .navBtn.navCenter > b{
+    width:50px!important;
+    min-width:50px!important;
+    height:50px!important;
+    min-height:50px!important;
+  }
+}

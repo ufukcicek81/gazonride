@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null;
+var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
@@ -120,11 +120,33 @@ function parseDuration(s){var a=String(s||"0").split(":").map(Number);if(a.lengt
 function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
 function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
 function replayDurationMs(ride){
- var km=Math.max(1,Number(ride&&ride.km||0));
- var base=km*460;
- return Math.max(30000,Math.min(72000,base));
+ var km=Math.max(1,playTotal||Number(ride&&ride.km||0));
+ return Math.max(22000,Math.min(90000,km*2500));
 }
-
+function routeIntegrity(ride){
+ var reported=Number(ride&&ride.km||0),actual=pathLength(replaySource(ride));
+ return {reportedKm:reported,playableKm:actual,coverage:reported>0?actual/reported:1,missing:reported>2&&actual<reported*.78,pointCount:replaySource(ride).length}
+}
+function qualityLabel(ride){
+ var q=routeIntegrity(ride);
+ return q.missing?"GPS izi eksik: "+q.playableKm.toFixed(1)+" / "+q.reportedKm.toFixed(1)+" km · Kaydedilmeyen bölüm oynatılamaz":
+ "Gerçek rota · "+q.playableKm.toFixed(1)+" km · "+q.pointCount+" nokta";
+}
+function setDistanceLabel(progress){
+ var el=$("grReplayDistance");
+ if(el)el.textContent=(Math.max(0,Math.min(1,progress))*playTotal).toFixed(1)+" / "+playTotal.toFixed(1)+" km";
+}
+function updateSpeedControls(){
+ if(!modal)return;
+ modal.querySelectorAll("[data-replay-speed]").forEach(function(el){el.classList.toggle("active",Number(el.getAttribute("data-replay-speed"))===playbackSpeed)})
+}
+function setSpeed(next){
+ var now=performance.now();
+ if(auto)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
+ playbackSpeed=next;
+ if(auto)start=now-lastProgress*(duration/playbackSpeed);
+ updateSpeedControls()
+}
 async function computeDemoRouteNewApi(start,end){
  var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
  var req={origin:{lat:start.lat,lng:start.lng},destination:{lat:end.lat,lng:end.lng},travelMode:"DRIVING",routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","distanceMeters","durationMillis","legs"]};
@@ -181,26 +203,26 @@ function clearMaps(){
 }
 function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
 function buildOverviewMap(ride){
- var a=cleanTrack(pts(ride)),host=$("grReplayMap");if(!host||a.length<2)a=replaySource(ride);if(!host||a.length<2)throw new Error("Rota izi yok");
+ var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  overviewMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:10,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
- overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#d9272e",strokeWeight:6,strokeOpacity:1});
+ overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#ff5926",strokeWeight:14,strokeOpacity:1});
  startMarker=new google.maps.Marker({map:overviewMap,position:{lat:a[0].lat,lng:a[0].lng},icon:makeDotIcon("#27c46b",8),title:"Başlangıç"});
  var e=a[a.length-1];
  endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#d9272e",9),title:"Varış"});
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
- mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent="Gerçek yol rotası";
+ mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
 }
 async function buildClassicFollowMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  using3d=false;map3d=null;route3d=null;travel3d=null;bike3d=null;
  classicMap=new google.maps.Map(host,{
-  center:{lat:a[0].lat,lng:a[0].lng},zoom:15,mapTypeId:"hybrid",
+  center:{lat:a[0].lat,lng:a[0].lng},zoom:14.2,mapTypeId:"hybrid",
   disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false,
   streetViewControl:false,fullscreenControl:false,mapTypeControl:false
  });
- classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:10,strokeOpacity:.98});
+ classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:16,strokeOpacity:1});
  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#ffffff",strokeWeight:3,strokeOpacity:.9});
  classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",13),zIndex:50});
  lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};
@@ -222,7 +244,7 @@ function startReplayPlayback(ride,label){
  auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(ride);cancelAnimationFrame(anim);
  setTimeout(function(){
   if(mode!=="3d")return;
-  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay v4 · Google Earth görünümü":"Sürüş takip görünümü";
+  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay v5 · Google Earth görünümü":"Sürüş takip görünümü";
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
@@ -331,19 +353,19 @@ function updateScene(progress,ts){
    lastCameraTs=now
   }
  }
- var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%"
+ var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";setDistanceLabel(progress)
 }
 function loop(ts){
  if(!auto)return;
  if(!start)start=ts;
- var p=Math.min(1,(ts-start)/duration);
+ var p=Math.min(1,(ts-start)/(duration/playbackSpeed));
  if(p<lastProgress)p=lastProgress;
  lastProgress=p;updateScene(p,ts);
- if(p>=1){auto=false;$("grReplayState").textContent="Sürüş tamamlandı";$("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return}
+ if(p>=1){auto=false;$("grReplayState").textContent=routeIntegrity(currentRide).missing?"Kaydedilen GPS bölümü tamamlandı":"Sürüş tamamlandı · Tam rota";$("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return}
  anim=requestAnimationFrame(loop)
 }
 async function open(ride){
- currentRide=ride;if(!modal)install();modal.classList.add("active");document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
+ currentRide=ride;playbackSpeed=2;if(!modal)install();modal.classList.add("active");updateSpeedControls();document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
   await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);currentRide._matchedReplayPath=await matchRideToRoads(currentRide);
   $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);
@@ -354,7 +376,7 @@ async function open(ride){
   var lm=$("grReplayLean");if(lm)lm.textContent=Math.max(Number(currentRide.leanMaxLeft||0),Number(currentRide.leanMaxRight||0)).toFixed(1)+"°";
   var fuel=$("grReplayFuel");if(fuel)fuel.textContent=Number(currentRide.fuelLiters||0).toFixed(1)+" L";
   $("grReplayName").textContent=currentRide.destination||"Sürüş Tekrarı";$("grReplayDate").textContent=currentRide.date||"";
-  duration=replayDurationMs(currentRide);lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(currentRide);
+  preparePlayback(currentRide);duration=replayDurationMs(currentRide);lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(currentRide);
   buildOverviewMap(currentRide)
  }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#ff8a65;font-weight:800">Örnek rota açılamadı: '+String(e&&e.message||e).replace(/[&<>]/g,"")+'</div>';console.warn(e)}
 }
@@ -362,7 +384,7 @@ function close(){clearMaps();if(modal)modal.classList.remove("active");document.
 function pauseResume(){
  if(!auto&&lastProgress>=.999){lastProgress=0;start=0;lastCameraTs=0;lastTrailTs=0;updateScene(0,performance.now())}
  auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';
- if(auto){start=performance.now()-lastProgress*duration;anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)
+ if(auto){start=performance.now()-lastProgress*(duration/playbackSpeed);anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)
 }
 function backOverview(){auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);buildOverviewMap(currentRide)}
 async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
@@ -372,9 +394,9 @@ function scan(){
 }
 function install(){
  modal=document.createElement("div");modal.id="grReplay";modal.className="gr-replay";
- modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Paylaş</button></div></div>';
- document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Paylaş</button></div></div>';
+ document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonReplay={open:open,scan:scan};
+window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)}};
 })();

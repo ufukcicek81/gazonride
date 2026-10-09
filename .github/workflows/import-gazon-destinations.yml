@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - feature/gazonride-ui-travel-catalog
-    paths:
-      - .github/workflows/import-gazon-destinations.yml
   workflow_dispatch:
 permissions:
   contents: write

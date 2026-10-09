@@ -1157,12 +1157,17 @@ function guidanceDistanceText(m){
 }
 function cleanInstruction(t){return String(t||"Rotayı takip et").replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();}
 function speakGuidance(text){
- if(guidanceMuted||!("speechSynthesis" in window)||!text)return;
+ if(guidanceMuted||!text)return;
  var music=window.GaZonMusic,speechId=0;
  try{
   if(music&&music.stopSpeech)music.stopSpeech();
-  speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(cleanInstruction(text));
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  var instruction=cleanInstruction(text);
+  // Native TTS requests transient audio focus BEFORE Android reads the instruction.
+  // Web speech stays as a fallback for browser use and unavailable Android TTS.
+  if(music&&music.nativeSpeak&&music.nativeSpeak(instruction))return;
+  if(!("speechSynthesis" in window))return;
+  var u=new SpeechSynthesisUtterance(instruction);
   u.lang="tr-TR";u.rate=1.02;
   speechId=music&&music.beginSpeech?music.beginSpeech():0;
   u.onend=function(){if(music&&music.endSpeech)music.endSpeech(speechId)};
@@ -1616,6 +1621,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-guides.js?v=20261009-guide2-no-overlap"></script>
 <script src="gazon-destinations.js?v=20261009-81city-restored"></script>
 <script src="replay.js?v=20261009-ui-share-fix1"></script>
-<script src="gazon-music.js?v=20261009-music1"></script>
+<script src="gazon-music.js?v=20261009-native-duck2"></script>
 </body>
 </html>

@@ -142,9 +142,9 @@ function updateSpeedControls(){
 }
 function setSpeed(next){
  var now=performance.now();
- if(auto)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
+ if(auto&&start>0)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
  playbackSpeed=next;
- if(auto)start=now-lastProgress*(duration/playbackSpeed);
+ if(auto&&start>0)start=now-lastProgress*(duration/playbackSpeed);
  updateSpeedControls()
 }
 async function computeDemoRouteNewApi(start,end){
@@ -196,7 +196,7 @@ async function resolveDemoRoadRoute(ride){
  return ride
 }
 function clearMaps(){
- cancelAnimationFrame(anim);anim=0;start=0;auto=false;
+ cancelAnimationFrame(anim);anim=0;start=0;auto=false;mode="overview";
  var host=$("grReplayMap");if(host)host.innerHTML="";
  overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
  map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
@@ -244,7 +244,7 @@ function startReplayPlayback(ride,label){
  auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(ride);cancelAnimationFrame(anim);
  setTimeout(function(){
   if(mode!=="3d")return;
-  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay v5 · Google Earth görünümü":"Sürüş takip görünümü";
+  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay v5 · "+qualityLabel(ride):qualityLabel(ride);
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
@@ -317,7 +317,7 @@ function updateScene(progress,ts){
   }
   if(now-lastCameraTs>140){
    var headPoint=pointAtDistance(Math.min(1,progress+Math.min(.065,.30/Math.max(playTotal,1))));
-   var ahead=headPoint&&headPoint.point||x.next||p,rawHead=bearing(p,ahead);
+   var ahead=headPoint&&headPoint.point||x.next||p,rawHead=geoKm(p,ahead)>.01?bearing(p,ahead):lastCameraHeading;
    lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.12);
    var desired={lat:p.lat+(ahead.lat-p.lat)*.18,lng:p.lng+(ahead.lng-p.lng)*.18};
    if(!lastCameraPoint)lastCameraPoint=desired;

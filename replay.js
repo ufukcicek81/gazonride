@@ -500,10 +500,18 @@ function loop(ts){
   auto=false;
   if(using3d&&map3d){
    try{
-    var full=routeBoundsInfo(playPoints),finalHeading=cinematicShots.length?cinematicShots[cinematicShots.length-1].camera.heading:0;
+    // Finish in front of the bike, on the SAME side as the last drone scene.
+    var finalPoint=routePoint(1),lastShot=cinematicShots[cinematicShots.length-1];
+    var finalSide=lastShot&&lastShot.side||"left",sign=finalSide==="left"?1:-1;
+    var finalDir=segmentDirection(.965,1);
+    var lateral=offsetCoordinate(finalPoint,finalDir+(sign>0?-90:90),120);
     map3d.flyCameraTo({
-     endCamera:{center:full.center,range:Math.max(4600,full.range),tilt:43,heading:finalHeading},
-     durationMillis:2600
+     endCamera:{
+      center:{lat:lateral.lat,lng:lateral.lng,altitude:125},
+      range:lastShot?Math.max(2450,Math.min(4600,lastShot.camera.range*.90)):3300,
+      tilt:55,heading:(finalDir+sign*138+360)%360
+     },
+     durationMillis:1900
     })
    }catch(e){console.warn("Final aerial pullback",e)}
   }

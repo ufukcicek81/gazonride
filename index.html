@@ -1201,27 +1201,32 @@ function speakGuidance(text){
  }catch(e){if(music&&music.endSpeech)music.endSpeech(speechId)}
 }
 function remainingGuidanceMeters(p){
- if(!navSteps.length)return Math.max(0,navTotalKm*1000);
- var s=navSteps[Math.min(navStepIndex,navSteps.length-1)],total=0;
- if(s&&s.end&&p)total=hav(p,s.end)*1000;else total=Number(s&&s.distance||0);
- for(var i=navStepIndex+1;i<navSteps.length;i++)total+=Number(navSteps[i].distance||0);
- return Math.max(0,total);
+ if(window.GaZonNavProgress){
+  var v=GaZonNavProgress.state();
+  if(v.measuredMeters>0)return Math.max(0,v.remainingMeters)
+ }
+ return Math.max(0,navTotalKm*1000)
 }
 function updateGuidanceHud(p){
  if(!navActive)return;
  var cur=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))]||{},next=navSteps[navStepIndex+1]||null;
  var curText=cleanInstruction(cur.instruction&&cur.instruction.instructions)||googleManeuverText(cur.instruction&&cur.instruction.maneuver);
  $("guidanceTurnIcon").textContent=guidanceIcon(cur.instruction&&cur.instruction.maneuver);
- var turnMeters=cur&&cur.end&&p?hav(p,cur.end)*1000:0,turnText=googleManeuverText(cur.instruction&&cur.instruction.maneuver);
+ var progress=window.GaZonNavProgress?GaZonNavProgress.state():null;
+ var turnMeters=progress&&progress.nextTurnMeters!=null?progress.nextTurnMeters:(cur&&cur.end&&p?hav(p,cur.end)*1000:0);
+ var turnText=googleManeuverText(cur.instruction&&cur.instruction.maneuver);
  $("guidanceTitle").textContent=(turnMeters>5?guidanceDistanceText(turnMeters)+" · ":"")+turnText;
- $("guidanceRoad").textContent=curText;
+ $("guidanceRoad").textContent=progress&&progress.hasProgress&&GaZonNavProgress.age()>12000?"GPS sinyali bekleniyor · mesafe güncellenemiyor":curText;
+ var nextInCard=$("navNext");if(nextInCard&&progress&&progress.nextTurnMeters!=null)nextInCard.textContent=guidanceDistanceText(progress.nextTurnMeters);
  if(next){$("guidanceNextIcon").textContent=guidanceIcon(next.instruction&&next.instruction.maneuver);$("guidanceNextText").textContent=googleManeuverText(next.instruction&&next.instruction.maneuver);}
  else{$("guidanceNextIcon").textContent="flag";$("guidanceNextText").textContent="Varış";}
- var remM=remainingGuidanceMeters(p),ratio=navTotalKm>0?Math.min(1,(remM/1000)/navTotalKm):0,remSec=Math.max(60,navTotalSec*ratio);
- var mins=Math.max(1,Math.round(remSec/60)),eta=new Date(Date.now()+remSec*1000),etaTxt=eta.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
- $("guidanceEta").textContent=mins>=60?(Math.floor(mins/60)+" sa. "+(mins%60)+" dk."):(mins+" dk.");
+ var remM=remainingGuidanceMeters(p),ratio=navTotalKm>0?Math.max(0,Math.min(1,(remM/1000)/navTotalKm)):1,remSec=Math.max(0,navTotalSec*ratio);
+ var mins=remM<=35?0:Math.max(1,Math.ceil(remSec/60)),eta=new Date(Date.now()+remSec*1000),etaTxt=eta.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+ var readable=mins>=60?(Math.floor(mins/60)+" sa. "+(mins%60)+" dk."):(mins+" dk.");
+ $("guidanceEta").textContent=readable;
  $("guidanceRemain").textContent=(remM/1000).toFixed(remM>=100000?0:1)+" km · "+etaTxt;
- var sp=$("speed");$("guidanceSpeed").textContent=sp?sp.textContent:"0";
+ if($("navKm"))$("navKm").textContent=(remM/1000).toFixed(1);
+ if($("navEta"))$("navEta").textContent=readable;
 }
 function enterGuidanceMode(){
  document.body.classList.add("guidance-active");
@@ -1300,6 +1305,7 @@ function startPlannedNavigation(){
  navActive=true;
  navReady=false;
  navGuidanceStart=Date.now();
+ navLastPanAt=0;navGpsErrorAt=0;resetNavProgress();
  lastGuidanceStep=-1;navOffRouteCount=0;navSteps.forEach(function(s){s._spokenStage=0});
  if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
  requestWakeLock();
@@ -1307,8 +1313,17 @@ function startPlannedNavigation(){
  renderNavStep();
  speakGuidance((navSteps[0]&&navSteps[0].instruction&&navSteps[0].instruction.instructions)||"Navigasyon başladı");
  var b=$("navDrive");if(b){b.disabled=true;b.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">navigation</span>Navigasyon Aktif';}
- $("status").textContent="Navigasyon ve sürüş kaydı birlikte başladı.";
+ $("status").textContent=navSteps.length?"Navigasyon ve sürüş kaydı birlikte başladı.":"Rota başladı ama Google dönüş adımlarını döndürmedi. Harita çizgisi tek başına yönlendirme değildir.";
  if(currentPoint&&map)recenterNavigationOnce();
+ if(navGuidanceTimer)clearInterval(navGuidanceTimer);
+ navGuidanceTimer=setInterval(function(){
+  if(!navActive)return;
+  updateGuidanceHud(currentPoint);
+  if(window.GaZonNavProgress&&GaZonNavProgress.age()>15000&&Date.now()-navGpsErrorAt>15000){
+   navGpsErrorAt=Date.now();
+   $("status").textContent="GPS sinyali güncellenmiyor. Konum iznini ve doğruluğunu kontrol et."
+  }
+ },1800);
 }
 function renderNavStep(){
  var s=navSteps[Math.min(navStepIndex,Math.max(0,navSteps.length-1))];
@@ -1318,27 +1333,32 @@ function renderNavStep(){
  $("navNext").textContent=s.distance>=1000?(s.distance/1000).toFixed(1)+" km":Math.max(10,Math.round(s.distance/10)*10)+" m";
  updateGuidanceHud(currentPoint);
 }
-function updateNavigation(p){
- if(!navActive||!navSteps.length)return;
- var s=navSteps[navStepIndex];
- if(s&&s.end){
-   var meters=hav(p,s.end)*1000,stage=meters<=90?3:(meters<=280?2:(meters<=650?1:0));
-   if(stage>(s._spokenStage||0)){s._spokenStage=stage;speakGuidance(maneuverVoice(s,meters))}
-   if(meters<45&&navStepIndex<navSteps.length-1){
-     navStepIndex++;renderNavStep();
-     var ns=navSteps[navStepIndex];if(ns)ns._spokenStage=0;
+function updateNavigation(p,ts,accuracy,speed){
+ if(!navActive)return;
+ var state=null,engine=window.GaZonNavProgress;
+ if(engine&&engine.state().measuredMeters>0){
+  state=engine.update(p,ts,accuracy);
+  if(state.valid&&navSteps.length){
+   var idx=Math.min(navSteps.length-1,state.stepIndex);
+   if(idx>navStepIndex){navStepIndex=idx;renderNavStep()}
+   var step=navSteps[navStepIndex],meters=state.nextTurnMeters;
+   if(step&&meters!=null&&isFinite(meters)){
+    var stage=meters<=90?3:(meters<=280?2:(meters<=650?1:0));
+    if(stage>(step._spokenStage||0)){step._spokenStage=stage;speakGuidance(maneuverVoice(step,meters))}
    }
+  }
  }
- var offKm=distanceToActiveRouteKm(p);
- if(offKm>0.10){navOffRouteCount++}else if(offKm<0.065){navOffRouteCount=0}
+ var offKm=state&&isFinite(state.accuracyMeters)?state.accuracyMeters/1000:distanceToActiveRouteKm(p);
+ if(offKm>0.10)navOffRouteCount++;else if(offKm<0.065)navOffRouteCount=0;
  if(navOffRouteCount>=3&&!navRecalculating)recalculateNavigation();
- updateGuidanceHud(p);
- 
+ updateGuidanceHud(p)
 }
 function stopNavigation(){
  if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();
  try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}
+ if(navGuidanceTimer){clearInterval(navGuidanceTimer);navGuidanceTimer=null}
  navActive=false;navReady=false;navSteps=[];navStepIndex=0;activeNavDestination=null;navPathPoints=[];navOffRouteCount=0;navRecalculating=false;
+ resetNavProgress();
  exitGuidanceMode();
  clearAlternativeRoutes();if(navRoute){try{navRoute.setMap(null)}catch(e){}navRoute=null;}
  $("navInstruction").classList.remove("active");

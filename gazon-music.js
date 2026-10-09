@@ -40,6 +40,7 @@ function markup(){
     '<p>Spotify ve YouTube Music şarkılarını bu ekrandan yönetmek için bir defalık Android Bildirim erişimi izni gerekir. GaZonRide bildirim mesajlarını okumaz veya kaydetmez.</p>'+
     '<button type="button" id="grMusicGrant">'+icon("settings")+' İzin ekranını aç</button></div>'+
    '<p class="gr-music-status" id="grMusicStatus" aria-live="polite"></p>'+
+   '<p class="gr-music-focus" id="grMusicFocus" aria-live="polite">Ses odağı: henüz denenmedi</p>'+
    '<p class="gr-music-foot">İlk kez şarkı seçmek için müzik uygulamasını aç, müziği başlat ve GaZonRide’a dön. Çalma kontrolleri burada kalır.</p>'+
   '</section>'
 }
@@ -72,6 +73,13 @@ function update(){
   status.textContent=(state.playing?"Çalıyor":"Duraklatıldı")+" · "+state.provider+" · "+(state.duckEnabled?"Otomatik kısılma açık":"Otomatik kısılma kapalı");
  }
  $("grMusicDuck").checked=native?!!state.duckEnabled:getDuckSetting();
+ var focus=$("grMusicFocus");
+ if(focus){
+  if(!native)focus.textContent="Ses odağı: web sürümünde kullanılamaz";
+  else if(state.focusStatus==="granted")focus.textContent="Android ses odağı: başarılı. Müzik yine kısılmıyorsa oynatıcı bu isteği uygulamıyor.";
+  else if(state.focusStatus==="denied")focus.textContent="Android ses odağı: reddedildi. Müziğin kısılmaması bu nedenle olabilir.";
+  else focus.textContent=state.nativeNarrationReady?"Ses odağı: test bekleniyor · Android sesli navigasyon hazır":state.narratorFailed?"Android sesli navigasyon başlatılamadı":"Android sesli navigasyon hazırlanıyor…";
+ }
  var launch=$("grMusicLaunch");
  launch.classList.toggle("active",session&&state.playing);
  launch.title=session?(state.title||"Müzik Merkezi"):"Müzik Merkezi";
@@ -91,7 +99,16 @@ function openPlayer(provider){
   window.open(url,"_blank","noopener,noreferrer");
  }
 }
+function nativeSpeak(text){
+ try{return !!(android&&typeof android.speakNavigation==="function"&&android.speakNavigation(text))}catch(e){return false}
+}
 function playDemo(){
+ var message="İki yüz metre sonra sağa dön.";
+ if(nativeSpeak(message)){
+  $("grMusicStatus").textContent="Android navigasyon sesi başlatıldı; müzikte kısılma olup olmadığını dinle.";
+  setTimeout(update,650);
+  return
+ }
  if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance!=="function"){
   $("grMusicStatus").textContent="Bu cihazda sesli test desteklenmiyor.";return
  }
@@ -118,6 +135,7 @@ function endSpeech(token){
 }
 function stopSpeech(){
  duckToken++;
+ safeCall("stopNavigationSpeech");
  safeCall("endNavSpeech")
 }
 function install(){
@@ -146,6 +164,7 @@ window.GaZonMusic={
  open:function(){setOpen(true)},
  close:function(){setOpen(false)},
  refresh:update,
+ nativeSpeak:nativeSpeak,
  beginSpeech:beginSpeech,
  endSpeech:endSpeech,
  stopSpeech:stopSpeech,

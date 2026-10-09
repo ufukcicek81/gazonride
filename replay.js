@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2;
+var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2,cinematicShots=[],cameraSceneIndex=-1,playSessionId=0,lastBikeTs=0;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
@@ -179,10 +179,14 @@ function updateSpeedControls(){
  modal.querySelectorAll("[data-replay-speed]").forEach(function(el){el.classList.toggle("active",Number(el.getAttribute("data-replay-speed"))===playbackSpeed)})
 }
 function setSpeed(next){
- var now=performance.now();
- if(auto&&start>0)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
+ var now=performance.now(),wasPlaying=auto&&start>0;
+ if(wasPlaying)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
  playbackSpeed=next;
- if(auto&&start>0)start=now-lastProgress*(duration/playbackSpeed);
+ if(wasPlaying)start=now-lastProgress*(duration/playbackSpeed);
+ if(mode==="3d"){
+  stopCinematicFlight();
+  buildCinematicPlan();
+ }
  updateSpeedControls()
 }
 async function computeDemoRouteNewApi(start,end){
@@ -234,6 +238,7 @@ async function resolveDemoRoadRoute(ride){
  return ride
 }
 function clearMaps(){
+ playSessionId++;stopCinematicFlight();cinematicShots=[];cameraSceneIndex=-1;
  cancelAnimationFrame(anim);anim=0;start=0;auto=false;mode="overview";
  var host=$("grReplayMap");if(host)host.innerHTML="";
  overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
@@ -276,13 +281,67 @@ function routeBoundsInfo(a){
  return {center:center,range:Math.max(1800,Math.min(18000,diag*1150))}
 }
 
+
+function stopCinematicFlight(){
+ if(map3d&&typeof map3d.stopCameraAnimation==="function"){
+  try{map3d.stopCameraAnimation()}catch(e){console.warn("Camera stop",e)}
+ }
+}
+function buildCinematicPlan(){
+ // Camera positions come from the COMPLETE route, never from noisy frame-by-frame GPS.
+ var realMs=duration/Math.max(.5,playbackSpeed),count=Math.max(3,Math.min(8,Math.floor(realMs/3300)));
+ var moveMs=Math.max(1400,Math.min(6200,(realMs*.80/Math.max(1,count-1))*.80));
+ var offsets=[-18,22,-24,16,-12,24,-17,12],tilts=[49,53,48,51,50,54,49,52];
+ var width=Math.max(3300,Math.min(14500,2200+(playTotal/Math.max(1,count))*1100));
+ cinematicShots=[];cameraSceneIndex=-1;
+ if(playPoints.length<2)return;
+ for(var i=0;i<count;i++){
+  var trigger=.075+i*(.80/Math.max(1,count-1)),focus=Math.min(.985,trigger+.45/count);
+  var mid=pointAtDistance(focus),prev=pointAtDistance(Math.max(0,focus-.065)),next=pointAtDistance(Math.min(1,focus+.065));
+  if(!mid||!prev||!next)continue;
+  var dir=geoKm(prev.point,next.point)>.02?bearing(prev.point,next.point):lastCameraHeading;
+  var heading=(dir+offsets[i%offsets.length]+360)%360;
+  cinematicShots.push({
+   at:trigger,durationMillis:moveMs,
+   camera:{center:{lat:mid.point.lat,lng:mid.point.lng,altitude:120},range:width*(i%3===1?1.08:1),tilt:tilts[i%tilts.length],heading:heading}
+  })
+ }
+}
+function updateCinematicCamera(progress){
+ if(!cinematicShots.length)return;
+ var nextIndex=-1;
+ for(var i=0;i<cinematicShots.length;i++)if(progress>=cinematicShots[i].at)nextIndex=i;
+ if(nextIndex<0||nextIndex===cameraSceneIndex)return;
+ cameraSceneIndex=nextIndex;
+ var shot=cinematicShots[nextIndex],view=shot.camera;
+ if(using3d&&map3d){
+  try{
+   map3d.flyCameraTo({endCamera:view,durationMillis:shot.durationMillis})
+  }catch(e){
+   console.warn("Cinematic shot fallback",e);
+   try{map3d.center=view.center;map3d.range=view.range;map3d.tilt=view.tilt;map3d.heading=view.heading}catch(ignore){}
+  }
+ }else if(classicMap){
+  // Compatible 2D map also uses a handful of planned views, not GPS-follow.
+  try{
+   var center={lat:view.center.lat,lng:view.center.lng};
+   classicMap.panTo(center);
+   classicMap.setZoom(Math.max(11,Math.min(14.2,15.0-Math.log2(view.range/1800))));
+   classicMap.setTilt(35);
+   classicMap.setHeading(view.heading)
+  }catch(e){console.warn("Classic cinematic view",e)}
+ }
+}
 function startReplayPlayback(ride,label){
  mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";
  $("grReplayState").textContent=label||"Sinematik sürüş hazırlanıyor";
- auto=false;start=0;lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(ride);cancelAnimationFrame(anim);
+ auto=false;start=0;lastProgress=0;lastTrailTs=0;lastBikeTs=0;
+ preparePlayback(ride);buildCinematicPlan();cancelAnimationFrame(anim);
+ var thisSession=++playSessionId;
  setTimeout(function(){
-  if(mode!=="3d")return;
-  auto=true;start=0;$("grReplayState").textContent=using3d?"Cinematic Replay v5 · "+qualityLabel(ride):qualityLabel(ride);
+  if(mode!=="3d"||thisSession!==playSessionId)return;
+  auto=true;start=0;
+  $("grReplayState").textContent=using3d?"Cinematic Replay v6 · drone kamera · "+qualityLabel(ride):"Sinematik rota · "+qualityLabel(ride);
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
@@ -346,49 +405,31 @@ function updateScene(progress,ts){
  if(playPoints.length<2)preparePlayback(currentRide);
  var x=pointAtDistance(progress);if(!x)return;
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
-
  if(using3d&&map3d){
-  if(bike3d)try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
-  if(now-lastTrailTs>240&&travel3d){
-   try{travel3d.path=playPoints.slice(0,x.i+1).filter(function(q,i){return i%3===0}).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}})}catch(e){}
-   lastTrailTs=now
+  if(bike3d&&(now-lastBikeTs>75||progress>=1)){
+   try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
+   lastBikeTs=now
   }
-  if(now-lastCameraTs>140){
-   var headPoint=pointAtDistance(Math.min(1,progress+Math.min(.065,.30/Math.max(playTotal,1))));
-   var ahead=headPoint&&headPoint.point||x.next||p,rawHead=geoKm(p,ahead)>.01?bearing(p,ahead):lastCameraHeading;
-   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead,rawHead,.12);
-   var desired={lat:p.lat+(ahead.lat-p.lat)*.18,lng:p.lng+(ahead.lng-p.lng)*.18};
-   if(!lastCameraPoint)lastCameraPoint=desired;
-   lastCameraPoint={lat:lastCameraPoint.lat+(desired.lat-lastCameraPoint.lat)*.24,lng:lastCameraPoint.lng+(desired.lng-lastCameraPoint.lng)*.24};
-   var nearEnd=progress>.92?(progress-.92)/.08:0;
-   var cinematicRange=4500+600*Math.sin(progress*Math.PI)+nearEnd*1300;
+  // The thick full route stays static. Update only the travelled highlight at a modest rate.
+  if(travel3d&&(now-lastTrailTs>480||progress>=1)){
    try{
-    map3d.center={lat:lastCameraPoint.lat,lng:lastCameraPoint.lng,altitude:140};
-    map3d.heading=lastCameraHeading;
-    map3d.tilt=47;
-    map3d.range=cinematicRange
-   }catch(e){}
-   lastCameraTs=now
+    var traveled=simplifyForMatch(playPoints.slice(0,x.i+1).concat([p]),520);
+    travel3d.path=traveled.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}})
+   }catch(e){console.warn("Travel trace update",e)}
+   lastTrailTs=now
   }
  }else if(classicMap){
-  classicBike.setPosition(pos);
-  if(now-lastTrailTs>180){
-   classicTravel.setPath(playPoints.slice(0,x.i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng}}));
+  if(classicBike)classicBike.setPosition(pos);
+  if(classicTravel&&(now-lastTrailTs>480||progress>=1)){
+   var tail=simplifyForMatch(playPoints.slice(0,x.i+1).concat([p]),520);
+   classicTravel.setPath(tail.map(function(q){return {lat:q.lat,lng:q.lng}}));
    lastTrailTs=now
   }
-  if(now-lastCameraTs>140){
-   var look2=Math.max(8,Math.min(28,Math.round(playPoints.length*.009)));
-   var ahead2=playPoints[Math.min(playPoints.length-1,x.i+look2)]||x.next||p;
-   var rawHead2=bearing(p,ahead2);
-   lastCameraHeading=lerpAngle(lastCameraHeading||rawHead2,rawHead2,.09);
-   if(!lastCameraPoint)lastCameraPoint={lat:pos.lat,lng:pos.lng};
-   lastCameraPoint={lat:lastCameraPoint.lat+(pos.lat-lastCameraPoint.lat)*.10,lng:lastCameraPoint.lng+(pos.lng-lastCameraPoint.lng)*.10};
-   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:lastCameraPoint,zoom:14.2,heading:lastCameraHeading,tilt:32});
-   else{classicMap.panTo(lastCameraPoint);try{classicMap.setZoom(14.2);classicMap.setHeading(lastCameraHeading);classicMap.setTilt(32)}catch(e){}}
-   lastCameraTs=now
-  }
  }
- var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";setDistanceLabel(progress)
+ // Crucial: no map.center/heading/range assignments on every animation frame.
+ updateCinematicCamera(progress);
+ var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";
+ setDistanceLabel(progress)
 }
 function loop(ts){
  if(!auto)return;
@@ -396,7 +437,20 @@ function loop(ts){
  var p=Math.min(1,(ts-start)/(duration/playbackSpeed));
  if(p<lastProgress)p=lastProgress;
  lastProgress=p;updateScene(p,ts);
- if(p>=1){auto=false;$("grReplayState").textContent=routeIntegrity(currentRide).missing?"Kaydedilen GPS bölümü tamamlandı":"Sürüş tamamlandı · Tam rota";$("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return}
+ if(p>=1){
+  auto=false;
+  if(using3d&&map3d){
+   try{
+    var full=routeBoundsInfo(playPoints),finalHeading=cinematicShots.length?cinematicShots[cinematicShots.length-1].camera.heading:0;
+    map3d.flyCameraTo({
+     endCamera:{center:full.center,range:Math.max(4600,full.range),tilt:43,heading:finalHeading},
+     durationMillis:2600
+    })
+   }catch(e){console.warn("Final aerial pullback",e)}
+  }
+  $("grReplayState").textContent=routeIntegrity(currentRide).missing?"Kaydedilen GPS bölümü tamamlandı":"Sürüş tamamlandı · Tam rota";
+  $("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return
+ }
  anim=requestAnimationFrame(loop)
 }
 async function open(ride){
@@ -411,17 +465,36 @@ async function open(ride){
   var lm=$("grReplayLean");if(lm)lm.textContent=Math.max(Number(currentRide.leanMaxLeft||0),Number(currentRide.leanMaxRight||0)).toFixed(1)+"°";
   var fuel=$("grReplayFuel");if(fuel)fuel.textContent=Number(currentRide.fuelLiters||0).toFixed(1)+" L";
   $("grReplayName").textContent=currentRide.destination||"Sürüş Tekrarı";$("grReplayDate").textContent=currentRide.date||"";
-  preparePlayback(currentRide);duration=replayDurationMs(currentRide);lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;preparePlayback(currentRide);
+  preparePlayback(currentRide);duration=replayDurationMs(currentRide);lastProgress=0;lastCameraTs=0;lastTrailTs=0;lastCameraPoint=null;lastCameraHeading=0;
   buildOverviewMap(currentRide)
  }catch(e){$("grReplayState").textContent="Rota hazırlanamadı";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#ff8a65;font-weight:800">Örnek rota açılamadı: '+String(e&&e.message||e).replace(/[&<>]/g,"")+'</div>';console.warn(e)}
 }
 function close(){clearMaps();if(modal)modal.classList.remove("active");document.body.style.overflow=""}
 function pauseResume(){
- if(!auto&&lastProgress>=.999){lastProgress=0;start=0;lastCameraTs=0;lastTrailTs=0;updateScene(0,performance.now())}
- auto=!auto;$("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';
- if(auto){start=performance.now()-lastProgress*(duration/playbackSpeed);anim=requestAnimationFrame(loop)}else cancelAnimationFrame(anim)
+ var restarting=!auto&&lastProgress>=.999;
+ if(restarting){
+  stopCinematicFlight();
+  lastProgress=0;start=0;lastTrailTs=0;lastBikeTs=0;
+  buildCinematicPlan();updateScene(0,performance.now());
+  if(using3d&&map3d&&playPoints.length){
+   var first=playPoints[0],head=bearing(first,playPoints[Math.min(12,playPoints.length-1)]);
+   try{map3d.flyCameraTo({endCamera:{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},durationMillis:1300})}catch(e){}
+  }
+ }
+ auto=!auto;
+ $("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';
+ if(auto){
+  if(!restarting){cameraSceneIndex=-1;stopCinematicFlight()}
+  start=performance.now()-lastProgress*(duration/playbackSpeed);
+  anim=requestAnimationFrame(loop)
+ }else{
+  cancelAnimationFrame(anim);stopCinematicFlight();cameraSceneIndex=-1
+ }
 }
-function backOverview(){auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);buildOverviewMap(currentRide)}
+function backOverview(){
+ playSessionId++;auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);
+ stopCinematicFlight();cinematicShots=[];cameraSceneIndex=-1;buildOverviewMap(currentRide)
+}
 async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
 function scan(){
  document.querySelectorAll("#historyList .ride").forEach(function(row,i){if(row.querySelector("[data-gr-replay]"))return;var b=document.createElement("button");b.className="mapBtn";b.setAttribute("data-gr-replay",String(i));b.title="Sürüş Tekrarı";b.innerHTML='<span class="mi">3d_rotation</span>';b.onclick=function(){var r=rides()[Number(b.getAttribute("data-gr-replay"))];if(r)open(r)};row.appendChild(b)});
@@ -433,5 +506,5 @@ function install(){
  document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)}};
+window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {shotCount:cinematicShots.length,sceneIndex:cameraSceneIndex,mode:using3d?"3d":"classic",shots:cinematicShots.map(function(s){return {at:s.at,heading:s.camera.heading,center:s.camera.center,range:s.camera.range}})}}};
 })();

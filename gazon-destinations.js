@@ -130,17 +130,18 @@ function parseGuideSource(text){
  }
  var lines=text.split(/\r?\n/),raw=[],seenStart=false;
  for(var i=0;i<lines.length;i++){
-  var line=lines[i].replace(/\s+/g," ").trim(),m=line.match(/^(\d{1,4})\s+(.{4,})$/);
+  var line=lines[i].replace(/\s+/g," ").trim().replace(/^#+\s*/,""),m=line.match(/^(\d{1,4})\s+(.{4,})$/);
   if(!m)continue;
   var num=Number(m[1]),body=m[2];
   if(num<1||num>1021)continue;
   var part=body.split(/[\s\-–]/)[0],city=part==="Şanliurfa"?"Şanlıurfa":part.indexOf("Uludağ")===0?"Bursa":part;
+  if(!names[city]){for(var n=0;n<provinces.length;n++){var p=provinces[n];if(part.indexOf(p)===0&&/[\u0027’‘\-]/.test(part.charAt(p.length))){city=p;break}}}
   if(!names[city])continue;
   raw.push({sourceNumber:num,city:city,body:body});
   seenStart=true
  }
  var rows=raw.map(function(x,i){
-  var title=x.body.replace(new RegExp("^"+x.city+"(?:\\s*[-–])?\\s*"),"").trim()||x.body;
+  var title=x.body.replace(new RegExp("^"+x.city+"(?:(?:[\\u0027’‘][A-Za-zçğıöşüÇĞİÖŞÜ]+)|\\s*[-–])?\\s*"),"").trim()||x.body;
   return {id:i+1,sourceNumber:x.sourceNumber,city:x.city,title:title,category:categoryForText(title),search:title+" "+x.city+" Türkiye"}
  });
  if(rows.length<1000)throw new Error("Uzaktaki gezi kaynağı eksik: "+rows.length+" kayıt");

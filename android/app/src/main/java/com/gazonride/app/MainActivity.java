@@ -188,6 +188,17 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        @JavascriptInterface public void openExternal(String url){
+            runOnUiThread(() -> {
+                try {
+                    Intent i=new Intent(Intent.ACTION_VIEW,Uri.parse(url));
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch(Exception e) {
+                    Toast.makeText(MainActivity.this,"Harita açılamadı.",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
         @JavascriptInterface public String getGoogleMapsApiKey(){
             try {
                 java.io.BufferedReader r = new java.io.BufferedReader(

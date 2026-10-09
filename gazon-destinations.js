@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var data=[],cities=[],selectedCity="",selectedCategory="Tümü",searchText="",page=0,pageSize=24,visitedKey="gazon_travel_visited_v1",galleryCache={};
+var data=[],cities=[],selectedCity="",selectedCategory="Tümü",searchText="",page=0,pageSize=24,visitedKey="gazon_travel_visited_v1",galleryCache={},cataloguePartial=false;
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function visited(){
@@ -31,7 +31,7 @@ function draw(){
  var all=filtered(),totalPages=Math.max(1,Math.ceil(all.length/pageSize)),v=visited();
  page=Math.min(page,totalPages-1);
  var items=all.slice(page*pageSize,(page+1)*pageSize);
- $("grTravelCount").textContent=all.length+" etkinlik gösteriliyor · "+Object.keys(v).length+" ziyaret edildi";
+ $("grTravelCount").textContent=all.length+(cataloguePartial?" başlangıç önerisi · 1021 maddelik tam liste henüz doğrulanmadı":" etkinlik gösteriliyor")+" · "+Object.keys(v).length+" ziyaret edildi";
  $("grTravelPage").textContent=(page+1)+" / "+totalPages+" sayfa";
  $("grTravelBack").disabled=page===0;
  $("grTravelNext").disabled=page>=totalPages-1;
@@ -168,7 +168,7 @@ function remoteCatalogue(){
 function loadCatalogue(){
  return fetch("gazon-destinations.json?v=20261009-81il",{cache:"no-cache"})
  .then(function(r){if(!r.ok)throw Error("Statik liste bulunamadı");return r.json()})
- .then(function(c){if(!c.items||c.items.length<1000)throw Error("Statik katalog eksik");return c})
+ .then(function(c){if(!c.items||c.items.length<81||!Array.isArray(c.cities)||c.cities.length!==81)throw Error("Statik katalog eksik");return c})
  .catch(remoteCatalogue)
 }
 function install(){
@@ -195,12 +195,21 @@ function install(){
  $("grTravelNext").onclick=function(){page++;draw()};
  loadCatalogue().then(function(result){
   var a=result&&result.items||[];
-  if(!Array.isArray(a)||a.length<1000)throw Error("Liste doğrulaması başarısız");
-  data=a;cities=Array.isArray(result.cities)?result.cities:[];
+  if(!Array.isArray(a)||a.length<81)throw Error("Liste doğrulaması başarısız");
+  data=a;cities=Array.isArray(result.cities)?result.cities:[];cataloguePartial=result.status==="partial"||a.length<1000;
   $("grTravelCity").innerHTML='<option value="">Tüm iller</option>'+cities.map(function(city){return '<option value="'+esc(city)+'">'+esc(city)+'</option>'}).join("");
   $("grTravelCategories").innerHTML=["Tümü","Doğa","Tarih","Deniz","Etkinlik","Lezzet","Keşif"].map(function(c){return '<button type="button" data-travel-category="'+esc(c)+'" class="'+(c==="Tümü"?"active":"")+'">'+esc(c)+'</button>'}).join("");
   $("grTravelCategories").querySelectorAll("button").forEach(function(b){b.onclick=function(){selectedCategory=b.dataset.travelCategory;page=0;root.querySelectorAll("[data-travel-category]").forEach(function(n){n.classList.toggle("active",n===b)});draw()}});
-  root.dataset.ready="1";draw()
+  root.dataset.ready="1";draw();
+  if(cataloguePartial){
+   remoteCatalogue().then(function(full){
+    if(!full||!Array.isArray(full.items)||full.items.length<1000)return;
+    data=full.items;cities=Array.isArray(full.cities)?full.cities:cities;cataloguePartial=false;
+    $("grTravelCity").innerHTML='<option value="">Tüm iller</option>'+cities.map(function(city){return '<option value="'+esc(city)+'">'+esc(city)+'</option>'}).join("");
+    if(selectedCity)$("grTravelCity").value=selectedCity;
+    page=0;draw()
+   }).catch(function(){ /* Keep the verified 81-city starter catalogue visible offline. */ })
+  }
  }).catch(function(error){
   $("grTravelCount").textContent="Liste henüz yüklenemedi";
   $("grTravelItems").innerHTML='<div class="gr-travel-empty">'+esc(error.message)+' · Bu sırada <a href="https://www.turkishnews.com/2021/07/05/1001-turkiye/" target="_blank" rel="noopener noreferrer">gezi listesinin kaynağını açabilirsin.</a></div>'

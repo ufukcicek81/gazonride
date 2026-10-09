@@ -1,0 +1,107 @@
+/* GaZonRide fit & symmetry · 2026-10-09
+   Mobile-first, no changes to replay/map/camera animations. */
+html{width:100%;min-width:0;overflow-x:hidden}
+body{width:100%;min-width:0;overflow-x:hidden}
+.app{width:100%;max-width:540px;margin-inline:auto;min-width:0}
+.app > *{min-width:0}
+.appHeader,.homeSection,.discoverSection,.navigationPanel,.content,.history,.actions{max-width:100%;min-width:0}
+.appHeader{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));gap:8px;justify-content:space-between}
+.appHeader>.logoWrap{min-width:0;flex:1 1 auto;overflow:hidden}
+.appHeader .logo{font-size:clamp(17px,5.3vw,25px);letter-spacing:-.35px}
+.appHeader>.motor{flex:0 1 145px;min-width:102px;width:auto}
+.homeSection,.discoverSection{padding-left:14px;padding-right:14px}
+.homeHero{min-width:0;max-width:100%}
+.homeMenuGrid{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+.homeMenuGrid>.homeMenuBtn{min-width:0;width:100%;max-width:100%;padding:12px;border-radius:16px;box-sizing:border-box}
+.homeMenuBtn>div,.homeMenuBtn>div>*{min-width:0;overflow-wrap:anywhere}
+.homeMenuBtn>b{font-size:clamp(12px,3.8vw,15px)}
+.bottom{width:min(540px,100%);max-width:100%;grid-template-columns:repeat(5,minmax(0,1fr));padding-left:3px;padding-right:3px}
+.bottom>.navBtn{width:100%;min-width:0;max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1.3;padding-left:1px;padding-right:1px;white-space:nowrap;letter-spacing:-.12px}
+.bottom>.navBtn>b{display:grid;place-items:center;margin-left:auto;margin-right:auto}
+.bottom>.navBtn .mi{margin:0 auto;flex:0 0 auto;justify-content:center}
+.bottom>.navCenter>b{width:48px}
+body.mode-discover #discoverSection{width:100%;max-width:540px}
+body.mode-discover #grSocial.gr-social{width:100%;min-width:0;max-width:100%;padding:2px 0 22px}
+body.mode-discover #grSocial>.gr-route-hub,
+body.mode-discover #grSocial>.gr-social-head,
+body.mode-discover #grSocial>.gr-social-actions,
+body.mode-discover #grSocial>.gr-social-list{min-width:0;max-width:100%}
+#grRouteHubList.gr-route-hub-list{
+ display:grid;
+ grid-template-columns:minmax(0,1fr);
+ gap:14px;
+ overflow-x:visible;
+ overflow-y:visible;
+ scroll-snap-type:none;
+ padding:3px 0 10px;
+ max-width:100%;
+}
+#grRouteHubList>.gr-route-tile{
+ width:100%;max-width:100%;min-width:0;flex:auto;
+ scroll-snap-align:none;
+ margin:0;
+ box-sizing:border-box
+}
+#grRouteHubList .gr-route-visual{
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ height:clamp(205px,54vw,270px);
+ min-height:0;
+ box-sizing:border-box;
+}
+#grRouteHubList .gr-route-title{max-width:100%;overflow-wrap:anywhere;line-height:1.15}
+#grRouteHubList .gr-route-tile-body{min-width:0}
+#grRouteHubList .gr-route-tile-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+#grRouteHubList .gr-route-tile-actions>button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.gr-route-source-tabs{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:7px;
+ overflow:visible;
+ max-width:100%;
+}
+.gr-route-source-tabs>button{
+ min-width:0;
+ flex:none;
+ white-space:normal;
+ line-height:1.25;
+ min-height:43px;
+ padding:8px 5px;
+ overflow-wrap:anywhere;
+ font-size:clamp(9px,2.65vw,11px)
+}
+.discoverTabs{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:6px;
+ overflow:visible;
+ width:100%;
+ max-width:100%;
+}
+.discoverTabs .chip{
+ min-width:0;
+ max-width:100%;
+ overflow-wrap:anywhere;
+ text-align:center;
+ white-space:normal;
+ padding:9px 4px;
+ min-height:39px;
+ font-size:clamp(9px,2.7vw,11px)
+}
+.discoverSearch,.quickRow{width:100%;min-width:0;max-width:100%}
+.discoverSearch input{min-width:0}
+.quickRow{grid-template-columns:repeat(2,minmax(0,1fr))}
+.quickRow>.quickBtn{min-width:0;white-space:normal;text-align:center;padding:10px 5px;gap:5px}
+.gr-social-actions-simple{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gr-social-actions-simple>.gr-social-btn{min-width:0;max-width:100%;padding:10px 5px;white-space:normal;font-size:11px}
+#grTravelCatalogue{width:100%;max-width:100%;min-width:0}
+#grTravelCatalogue .gr-travel-searchbar{grid-template-columns:minmax(0,1fr)}
+#grTravelCatalogue .gr-travel-items{grid-template-columns:repeat(2,minmax(0,1fr))}
+#grTravelCatalogue .gr-travel-item{min-width:0;max-width:100%}
+@media(max-width:345px){
+ .homeSection,.discoverSection{padding-left:11px;padding-right:11px}
+ #grTravelCatalogue .gr-travel-items{grid-template-columns:minmax(0,1fr)}
+ .gr-route-source-tabs>button{font-size:9px}
+ .bottom>.navBtn{font-size:9px}
+}

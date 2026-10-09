@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2,cinematicShots=[],cameraSceneIndex=-1,playSessionId=0,lastBikeTs=0;
+var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2,orbitRail=[],orbitStartHeading=0,orbitTotalDegrees=245,orbitLastFrame=0,orbitFrames=0,orbitLatest=null,playSessionId=0,lastBikeTs=0;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
 var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
@@ -183,10 +183,6 @@ function setSpeed(next){
  if(wasPlaying)lastProgress=Math.min(1,Math.max(lastProgress,(now-start)/(duration/playbackSpeed)));
  playbackSpeed=next;
  if(wasPlaying)start=now-lastProgress*(duration/playbackSpeed);
- if(mode==="3d"){
-  stopCinematicFlight();
-  buildCinematicPlan();
- }
  updateSpeedControls()
 }
 async function computeDemoRouteNewApi(start,end){
@@ -238,7 +234,7 @@ async function resolveDemoRoadRoute(ride){
  return ride
 }
 function clearMaps(){
- playSessionId++;stopCinematicFlight();cinematicShots=[];cameraSceneIndex=-1;
+ playSessionId++;stopCinematicFlight();orbitRail=[];orbitLatest=null;orbitLastFrame=0;orbitFrames=0;
  cancelAnimationFrame(anim);anim=0;start=0;auto=false;mode="overview";
  var host=$("grReplayMap");if(host)host.innerHTML="";
  overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
@@ -287,124 +283,94 @@ function stopCinematicFlight(){
   try{map3d.stopCameraAnimation()}catch(e){console.warn("Camera stop",e)}
  }
 }
-function normalizeTurnDegrees(deg){return ((deg+540)%360)-180}
-function offsetCoordinate(p,heading,meters){
- // Destination point on the sphere: safe for routes throughout Türkiye.
- var rad=Math.PI/180,earth=6371000,lat=Number(p.lat)*rad,lng=Number(p.lng)*rad;
- var travel=Math.max(0,meters)/earth,angle=heading*rad;
- var phi=Math.asin(Math.sin(lat)*Math.cos(travel)+Math.cos(lat)*Math.sin(travel)*Math.cos(angle));
- var lambda=lng+Math.atan2(Math.sin(angle)*Math.sin(travel)*Math.cos(lat),Math.cos(travel)-Math.sin(lat)*Math.sin(phi));
- return {lat:phi/rad,lng:((lambda/rad+540)%360)-180}
-}
+
 function routePoint(progress){
- var p=pointAtDistance(Math.max(0,Math.min(1,progress)));
- return p&&p.point
+ var at=pointAtDistance(Math.max(0,Math.min(1,progress)));
+ return at&&at.point
 }
-function segmentDirection(from,to){
- var p=routePoint(Math.max(0,Math.min(1,from))),q=routePoint(Math.max(0,Math.min(1,to)));
- return p&&q&&geoKm(p,q)>.015?bearing(p,q):lastCameraHeading
-}
-function candidateRouteClearance(candidate,sceneMid,sceneWidth){
- // Approximate free space from OTHER segments of the recorded route.
- // This is not building/terrain detection and does not claim an unobstructed flight corridor.
- var closest=1500,skip=Math.max(sceneWidth*.6,.06),stride=Math.max(1,Math.ceil(playPoints.length/300));
- for(var j=0;j<playPoints.length;j+=stride){
-  var distProgress=playTotal>0?playCum[j]/playTotal:0;
-  if(Math.abs(distProgress-sceneMid)<skip)continue;
-  closest=Math.min(closest,geoKm(candidate,playPoints[j])*1000)
- }
- return closest
-}
-function chooseDroneSide(startProgress,endProgress,previousSide){
- var width=Math.max(.001,endProgress-startProgress),middle=(startProgress+endProgress)/2;
- var entry=segmentDirection(startProgress+.01*width,startProgress+.22*width),exit=segmentDirection(endProgress-.22*width,endProgress-.01*width);
- var turn=normalizeTurnDegrees(exit-entry),mid=routePoint(middle);
- var heading=segmentDirection(startProgress+.12*width,endProgress-.12*width);
- var sampleSide=Math.max(160,Math.min(380,playTotal*1000*width*.095));
- var left=candidateRouteClearance(offsetCoordinate(mid,heading-90,sampleSide),middle,width);
- var right=candidateRouteClearance(offsetCoordinate(mid,heading+90,sampleSide),middle,width);
- // Exterior of a bend is generally better for showing both the bike and the route.
- if(turn>14)left+=Math.min(500,Math.abs(turn)*7);
- if(turn<-14)right+=Math.min(500,Math.abs(turn)*7);
- // Hysteresis avoids needless left/right flips between adjacent camera scenes.
- if(previousSide==="left")left+=220;
- if(previousSide==="right")right+=220;
- return {side:left>=right?"left":"right",turn:turn,leftScore:left,rightScore:right}
-}
-function buildCinematicPlan(){
- // Each scene is one continuous drone sweep: rear quarter -> side -> front quarter.
- // Three Google-managed flyCameraTo transitions per scene, NEVER camera writes per GPS frame.
- var realMs=duration/Math.max(.5,playbackSpeed),sceneCount=Math.max(1,Math.min(7,Math.round(realMs/7000)));
- var sceneMillis=realMs/sceneCount;
- var flightMillis=Math.max(750,Math.min(3700,sceneMillis*.285));
- var phases=[{label:"rear",fraction:.025,headingOffset:44,tilt:47,sideRatio:.55},
-             {label:"side",fraction:.345,headingOffset:88,tilt:52,sideRatio:1},
-             {label:"front",fraction:.675,headingOffset:132,tilt:55,sideRatio:.72}];
- cinematicShots=[];cameraSceneIndex=-1;
+function buildOrbitRail(){
+ // A continuous camera axis is derived from the entire measured route.
+ // Smooth GPS noise spatially once, before playback; never chase each recorded sample.
+ orbitRail=[];orbitLatest=null;orbitLastFrame=0;orbitFrames=0;
  if(playPoints.length<2||playTotal<=0)return;
- var previousSide=null;
- for(var scene=0;scene<sceneCount;scene++){
-  var begin=scene/sceneCount,finish=(scene+1)/sceneCount,sceneWidth=finish-begin;
-  var decision=chooseDroneSide(begin,finish,previousSide),side=decision.side,sign=side==="left"?1:-1;
-  previousSide=side;
-  var sceneKm=playTotal/sceneCount,baseRange=Math.max(2450,Math.min(5300,1800+sceneKm*570));
-  var lateralMeters=Math.max(75,Math.min(190,sceneKm*42));
-  for(var k=0;k<phases.length;k++){
-   var phase=phases[k],progress=begin+phase.fraction*sceneWidth;
-   var focus=routePoint(progress),sampleStep=Math.min(.045,sceneWidth*.16);
-   var dir=segmentDirection(progress-sampleStep,progress+sampleStep);
-   var target=offsetCoordinate(focus,dir+(side==="left"?-90:90),lateralMeters*phase.sideRatio);
-   cinematicShots.push({
-    at:progress,scene:scene,phase:phase.label,side:side,routeHeading:dir,turn:decision.turn,
-    durationMillis:flightMillis,
-    camera:{
-     center:{lat:target.lat,lng:target.lng,altitude:125},
-     range:baseRange*(phase.label==="side"?1.025:1),tilt:phase.tilt,
-     heading:(dir+sign*phase.headingOffset+360)%360
-    }
-   })
+ orbitStartHeading=bearing(playPoints[0],playPoints[Math.min(playPoints.length-1,4)]);
+ var count=Math.min(750,Math.max(42,Math.ceil(playTotal/.075)));
+ var radiusKm=Math.min(.22,Math.max(.055,playTotal*.012));
+ var weights=[1,3,5,3,1],stepKm=radiusKm*.5;
+ for(var i=0;i<=count;i++){
+  var progress=i/count,lat=0,lng=0,sum=0;
+  if(i===0||i===count){
+   var edge=routePoint(progress);
+   orbitRail.push({lat:edge.lat,lng:edge.lng});
+   continue
   }
+  for(var k=-2;k<=2;k++){
+   var targetKm=Math.max(0,Math.min(playTotal,progress*playTotal+k*stepKm));
+   var p=routePoint(targetKm/playTotal),w=weights[k+2];
+   lat+=p.lat*w;lng+=p.lng*w;sum+=w
+  }
+  orbitRail.push({lat:lat/sum,lng:lng/sum})
  }
 }
-function updateCinematicCamera(progress){
- if(!cinematicShots.length)return;
- var nextIndex=-1;
- for(var i=0;i<cinematicShots.length;i++)if(progress>=cinematicShots[i].at)nextIndex=i;
- if(nextIndex<0||nextIndex===cameraSceneIndex)return;
- cameraSceneIndex=nextIndex;
- var shot=cinematicShots[nextIndex],view=shot.camera;
+function orbitRailAt(progress){
+ var rail=orbitRail,p=Math.max(0,Math.min(1,progress));
+ if(!rail.length)return routePoint(p);
+ if(rail.length===1||p===0)return rail[0];
+ if(p===1)return rail[rail.length-1];
+ var at=p*(rail.length-1),i=Math.floor(at),t=at-i;
+ var a=rail[Math.max(0,i-1)],b=rail[i],c=rail[Math.min(rail.length-1,i+1)],d=rail[Math.min(rail.length-1,i+2)];
+ function spline(a,b,c,d,t){
+  return .5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t)
+ }
+ return {lat:spline(a.lat,b.lat,c.lat,d.lat,t),lng:spline(a.lng,b.lng,c.lng,d.lng,t)}
+}
+function orbitCameraPose(progress){
+ // The route is the rotation axis, NOT the rear of the motorcycle.
+ // One unbroken orbit and a continuously sliding route-centered aerial focus.
+ var p=Math.max(0,Math.min(1,progress)),focus=orbitRailAt(p);
+ var orbitalEase=p*p*(3-2*p),arc=Math.sin(Math.PI*p);
+ return {
+  center:{lat:focus.lat,lng:focus.lng,altitude:140},
+  heading:(orbitStartHeading+orbitTotalDegrees*orbitalEase)%360,
+  tilt:47+5*arc*arc,
+  range:4500-750*arc*arc
+ }
+}
+function updateOrbitCamera(progress,ts,force){
+ var now=Number(ts||performance.now());
+ if(!force&&now-orbitLastFrame<32&&progress<1)return;
+ var view=orbitCameraPose(progress);if(!view)return;
+ orbitLastFrame=now;orbitFrames++;orbitLatest=view;
  if(using3d&&map3d){
+  // Assign interpolated pose at display cadence; NO flyCameraTo scene restart.
   try{
-   map3d.flyCameraTo({endCamera:view,durationMillis:shot.durationMillis})
-  }catch(e){
-   console.warn("Cinematic shot fallback",e);
-   try{map3d.center=view.center;map3d.range=view.range;map3d.tilt=view.tilt;map3d.heading=view.heading}catch(ignore){}
-  }
+   map3d.center=view.center;
+   map3d.heading=view.heading;
+   map3d.tilt=view.tilt;
+   map3d.range=view.range
+  }catch(e){console.warn("Smooth orbit camera",e)}
  }else if(classicMap){
-  // Compatible 2D map also uses a handful of planned views, not GPS-follow.
   try{
    var center={lat:view.center.lat,lng:view.center.lng};
-   classicMap.panTo(center);
-   classicMap.setZoom(Math.max(11,Math.min(14.2,15.0-Math.log2(view.range/1800))));
-   classicMap.setTilt(35);
-   classicMap.setHeading(view.heading)
-  }catch(e){console.warn("Classic cinematic view",e)}
+   var zoom=Math.max(11,Math.min(14.6,15-Math.log2(view.range/1800)));
+   if(typeof classicMap.moveCamera==="function")classicMap.moveCamera({center:center,zoom:zoom,heading:view.heading,tilt:35});
+   else classicMap.setCenter(center)
+  }catch(e){console.warn("2D orbit camera",e)}
  }
 }
 function startReplayPlayback(ride,label){
  mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";
- $("grReplayState").textContent=label||"Sinematik sürüş hazırlanıyor";
+ $("grReplayState").textContent=label||"Sinematik drone uçuşu hazırlanıyor";
  auto=false;start=0;lastProgress=0;lastTrailTs=0;lastBikeTs=0;
- preparePlayback(ride);buildCinematicPlan();cancelAnimationFrame(anim);
+ preparePlayback(ride);buildOrbitRail();cancelAnimationFrame(anim);
  var thisSession=++playSessionId;
  setTimeout(function(){
   if(mode!=="3d"||thisSession!==playSessionId)return;
   auto=true;start=0;
-  $("grReplayState").textContent=using3d?"Cinematic Replay v7 · yan drone çekimi · "+qualityLabel(ride):"Sinematik rota · "+qualityLabel(ride);
+  $("grReplayState").textContent=using3d?"Cinematic Replay v8 · kesintisiz rota ekseni · "+qualityLabel(ride):"Rota ekseninde uçuş · "+qualityLabel(ride);
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
-
 async function build3DMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";await waitForGoogle();
@@ -486,7 +452,7 @@ function updateScene(progress,ts){
   }
  }
  // Crucial: no map.center/heading/range assignments on every animation frame.
- updateCinematicCamera(progress);
+ updateOrbitCamera(progress,now,progress>=1);
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";
  setDistanceLabel(progress)
 }
@@ -498,25 +464,10 @@ function loop(ts){
  lastProgress=p;updateScene(p,ts);
  if(p>=1){
   auto=false;
-  if(using3d&&map3d){
-   try{
-    // Finish in front of the bike, on the SAME side as the last drone scene.
-    var finalPoint=routePoint(1),lastShot=cinematicShots[cinematicShots.length-1];
-    var finalSide=lastShot&&lastShot.side||"left",sign=finalSide==="left"?1:-1;
-    var finalDir=segmentDirection(.965,1);
-    var lateral=offsetCoordinate(finalPoint,finalDir+(sign>0?-90:90),120);
-    map3d.flyCameraTo({
-     endCamera:{
-      center:{lat:lateral.lat,lng:lateral.lng,altitude:125},
-      range:lastShot?Math.max(2450,Math.min(4600,lastShot.camera.range*.90)):3300,
-      tilt:55,heading:(finalDir+sign*138+360)%360
-     },
-     durationMillis:1900
-    })
-   }catch(e){console.warn("Final aerial pullback",e)}
-  }
-  $("grReplayState").textContent=routeIntegrity(currentRide).missing?"Kaydedilen GPS bölümü tamamlandı":"Sürüş tamamlandı · Tam rota";
-  $("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';return
+  // Freeze in the final continuously-computed orbit pose; no cut to a new scene.
+  $("grReplayState").textContent=routeIntegrity(currentRide).missing?"Kaydedilen GPS bölümü tamamlandı":"Sürüş tamamlandı · Kesintisiz uçuş";
+  $("grReplayPause").innerHTML='<span class="mi">replay</span> Tekrar oynat';
+  return
  }
  anim=requestAnimationFrame(loop)
 }
@@ -540,27 +491,23 @@ function close(){clearMaps();if(modal)modal.classList.remove("active");document.
 function pauseResume(){
  var restarting=!auto&&lastProgress>=.999;
  if(restarting){
-  stopCinematicFlight();
-  lastProgress=0;start=0;lastTrailTs=0;lastBikeTs=0;
-  buildCinematicPlan();updateScene(0,performance.now());
-  if(using3d&&map3d&&playPoints.length){
-   var first=playPoints[0],head=bearing(first,playPoints[Math.min(12,playPoints.length-1)]);
-   try{map3d.flyCameraTo({endCamera:{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},durationMillis:1300})}catch(e){}
-  }
+  lastProgress=0;start=0;lastTrailTs=0;lastBikeTs=0;orbitLastFrame=0;
+  updateScene(0,performance.now())
  }
  auto=!auto;
  $("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';
  if(auto){
-  if(!restarting){cameraSceneIndex=-1;stopCinematicFlight()}
   start=performance.now()-lastProgress*(duration/playbackSpeed);
   anim=requestAnimationFrame(loop)
  }else{
-  cancelAnimationFrame(anim);stopCinematicFlight();cameraSceneIndex=-1
+  cancelAnimationFrame(anim);
+  // Stop only an unfinished introductory Google flight, if present.
+  if(!orbitFrames)stopCinematicFlight()
  }
 }
 function backOverview(){
  playSessionId++;auto=false;lastProgress=0;start=0;cancelAnimationFrame(anim);
- stopCinematicFlight();cinematicShots=[];cameraSceneIndex=-1;buildOverviewMap(currentRide)
+ stopCinematicFlight();orbitRail=[];orbitLatest=null;orbitLastFrame=0;buildOverviewMap(currentRide)
 }
 async function shareRide(){var t=(currentRide.destination||"GaZonRide Sürüş")+" · "+Number(currentRide.km||0).toFixed(1)+" km · "+(currentRide.duration||"");try{if(navigator.share){await navigator.share({title:"GaZonRide Sürüş",text:t});return}}catch(e){}if(navigator.clipboard)try{await navigator.clipboard.writeText(t)}catch(e){}}
 function scan(){
@@ -573,5 +520,5 @@ function install(){
  document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
-window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {shotCount:cinematicShots.length,sceneIndex:cameraSceneIndex,mode:using3d?"3d":"classic",shots:cinematicShots.map(function(s){return {at:s.at,scene:s.scene,phase:s.phase,side:s.side,routeHeading:s.routeHeading,turn:s.turn,heading:s.camera.heading,center:s.camera.center,range:s.camera.range}})}}};
+window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {type:"continuous-route-axis-orbit",frames:orbitFrames,railPoints:orbitRail.length,orbitDegrees:orbitTotalDegrees,latest:orbitLatest,mode:using3d?"3d":"classic"}}};
 })();

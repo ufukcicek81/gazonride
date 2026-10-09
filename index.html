@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261008-r6">
+<link rel="stylesheet" href="social.css?v=20261009-fix1">
 <link rel="stylesheet" href="replay.css?v=20261008-r6">
 <script>
 (function(){
@@ -350,7 +350,7 @@ body.mode-discover #discoverSection>.quickRow{display:flex!important}
 <button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
 <button class="navBtn" data-page="profile"><b><span class="mi">person</span></b>Profil</button>
 </nav>
-<script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261008-profile1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -557,7 +557,7 @@ async function refreshCurrentFuelPrice(force){
   if(!price)throw new Error("Güncel fiyat alınamadı");
   cache={city:city,benzin:Number(d.benzin||0),motorin:Number(d.motorin||0),source:d.source||"Petrol Ofisi",updatedAt:d.updatedAt||new Date().toISOString(),time:Date.now()};
   localStorage.setItem("gazon_fuel_price_v1",JSON.stringify(cache));
-  m.fuelPrice=price;m.fuelCity=city;m.fuelSource=cache.source;m.fuelUpdatedAt=cache.updatedAt;p.motor=m;saveRiderProfileLocal(p);
+  m.fuelPrice=price;m.fuelCity=(d.scope==="national"?"Türkiye":city);m.fuelSource=cache.source;m.fuelUpdatedAt=cache.updatedAt;p.motor=m;saveRiderProfileLocal(p);
   try{await GaZonAuth.client.from("profiles").update({motor_data:m}).eq("id",GaZonAuth.state.user.id)}catch(_){}
   updateFuelPriceUi();return price
  }catch(e){
@@ -569,7 +569,7 @@ async function refreshCurrentFuelPrice(force){
 function updateFuelPriceUi(){
  var p=getRiderProfile(),m=p.motor||{},el=$("currentFuelPrice"),meta=$("currentFuelMeta");
  if(el)el.textContent=Number(m.fuelPrice||0)>0?Number(m.fuelPrice).toFixed(2)+" ₺/L":"Fiyat bekleniyor";
- if(meta)meta.textContent=(m.fuelCity?m.fuelCity+" · ":"")+(m.fuelSource||"Güncel fiyat otomatik alınır");
+ if(meta)meta.textContent=(m.fuelSource||"Güncel fiyat otomatik alınır")+(m.fuelUpdatedAt?" · "+new Date(m.fuelUpdatedAt).toLocaleDateString("tr-TR"):"");
 }
 function fuelEstimate(km,p){
  p=p||getRiderProfile();var m=p.motor||{},cons=Number(m.consumption||0),price=Number(m.fuelPrice||0),liters=cons>0?Number(km||0)*cons/100:0;
@@ -1406,7 +1406,7 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261008-r6"></script>
+<script src="social.js?v=20261009-fix1"></script>
 <script src="replay.js?v=20261008-r11"></script>
 </body>
 </html>

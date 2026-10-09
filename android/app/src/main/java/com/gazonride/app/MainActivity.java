@@ -213,6 +213,12 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void openMusicApp(String provider){
             if(musicController != null) musicController.openPlayer(provider);
         }
+        @JavascriptInterface public boolean speakNavigation(String text){
+            return musicController != null && musicController.speakNavigation(text);
+        }
+        @JavascriptInterface public void stopNavigationSpeech(){
+            if(musicController != null) musicController.stopNavigationSpeech();
+        }
         @JavascriptInterface public void beginNavSpeech(){
             if(musicController != null) musicController.beginNarration();
         }

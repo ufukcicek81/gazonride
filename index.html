@@ -1367,7 +1367,7 @@ function startPlannedNavigation(){
  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
   try{
    var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
-   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef")){
+   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",/Ücretsiz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""),/Otoyolsuz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""))){
     if(!riding)startRide(); // Native foreground ride recording continues in navigation screen.
     navStartedRide=false;
     $("status").textContent="Google canlı navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";

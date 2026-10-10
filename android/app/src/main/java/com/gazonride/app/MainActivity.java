@@ -47,6 +47,10 @@ public class MainActivity extends Activity {
     private static final int MIC_REQ = 43;
     private static final String URL = "https://ufukcicek81.github.io/gazonride/";
     private static final String RELEASES_API = "https://api.github.com/repos/ufukcicek81/gazonride/releases/latest";
+    // Only native Android changes need an APK. The WebView always opens the live
+    // GitHub Pages site, with browser storage preserved across app updates.
+    private static final long NATIVE_UPDATE_CHECK_INTERVAL_MS = 6L * 60 * 60 * 1000;
+    private static final long NATIVE_UPDATE_REMIND_INTERVAL_MS = 24L * 60 * 60 * 1000;
     private android.content.SharedPreferences prefs;
     private String pendingOAuthUrl = null;
     private PermissionRequest pendingWebPermission = null;
@@ -56,6 +60,7 @@ public class MainActivity extends Activity {
     private long updateDownloadId = -1L;
     private Uri pendingInstallUri = null;
     private boolean downloadReceiverRegistered = false;
+    private volatile boolean nativeUpdateCheckRunning = false;
 
     private SensorManager sensorManager;
     private Sensor rotationSensor;
@@ -403,7 +408,21 @@ public class MainActivity extends Activity {
         deliverPendingOAuth();
     }
 
+    // Compare the VERSION NAME (1.0.112) to release tags (v1.0.113).
+    // Earlier builds compared the short release number 113 against versionCode
+    // 1113 (=1000+run), so update notifications never appeared.
+    private static int parseReleaseNumber(String tag){
+        if(tag==null || !tag.matches("v?1\\.0\\.[0-9]+")) return -1;
+        try { return Integer.parseInt(tag.substring(tag.lastIndexOf('.')+1)); }
+        catch (NumberFormatException ignored){ return -1; }
+    }
+
     private void checkForNativeUpdate(){
+        if(prefs==null || prefs.getBoolean("ride_active",false) || nativeUpdateCheckRunning) return;
+        long now=System.currentTimeMillis();
+        if(now-prefs.getLong("native_update_last_check_ms",0L)<NATIVE_UPDATE_CHECK_INTERVAL_MS) return;
+        nativeUpdateCheckRunning=true;
+        prefs.edit().putLong("native_update_last_check_ms",now).apply();
         new Thread(() -> {
             HttpURLConnection c=null;
             try{
@@ -419,34 +438,51 @@ public class MainActivity extends Activity {
                 while((line=r.readLine())!=null)b.append(line);
                 r.close();
                 JSONObject o=new JSONObject(b.toString());
-                String tag=o.optString("tag_name","");
-                int remoteCode=0;
-                if(tag.startsWith("v")) {
-                    String[] p=tag.substring(1).split("\\.");
-                    if(p.length>2) remoteCode=Integer.parseInt(p[p.length-1]);
-                }
-                int localCode=getPackageManager().getPackageInfo(getPackageName(),0).versionCode;
-                if(remoteCode>localCode){
-                    String html=o.optString("html_url","https://github.com/ufukcicek81/gazonride/releases/latest");
-                    String assetUrl="";
-                    if(o.has("assets")){
-                        for(int i=0;i<o.getJSONArray("assets").length();i++){
-                            JSONObject a=o.getJSONArray("assets").getJSONObject(i);
-                            if(a.optString("name","").endsWith(".apk")) { assetUrl=a.optString("browser_download_url",""); break; }
+                int remoteCode=parseReleaseNumber(o.optString("tag_name",""));
+                String installedVersion=getPackageManager().getPackageInfo(getPackageName(),0).versionName;
+                int localCode=parseReleaseNumber(installedVersion);
+                if(remoteCode<=0 || localCode<0 || remoteCode<=localCode) return;
+
+                String assetUrl="";
+                if(o.has("assets")){
+                    for(int i=0;i<o.getJSONArray("assets").length();i++){
+                        JSONObject a=o.getJSONArray("assets").getJSONObject(i);
+                        String candidate=a.optString("browser_download_url","");
+                        if(a.optString("name","").endsWith(".apk")
+                                && candidate.startsWith("https://github.com/ufukcicek81/gazonride/releases/download/")){
+                            assetUrl=candidate;break;
                         }
                     }
-                    final String openUrl=assetUrl.isEmpty()?html:assetUrl;
-                    runOnUiThread(() -> new AlertDialog.Builder(this)
-                        .setTitle("GazonRide güncellemesi")
-                        .setMessage("Yeni Android sürümü hazır. Güncellemek ister misin?")
-                        .setNegativeButton("Daha sonra",null)
-                        .setPositiveButton("Güncelle", (d,w)-> startNativeUpdateDownload(openUrl))
-                        .show());
                 }
-            }catch(Exception ignored){} finally { if(c!=null)c.disconnect(); }
+                if(assetUrl.isEmpty()) return; // Never send a release HTML page to DownloadManager.
+                long promptedAt=prefs.getLong("native_update_prompt_ms",0L);
+                int promptedCode=prefs.getInt("native_update_prompt_code",-1);
+                if(promptedCode==remoteCode &&
+                        System.currentTimeMillis()-promptedAt<NATIVE_UPDATE_REMIND_INTERVAL_MS) return;
+                final int newCode=remoteCode;
+                final String apkUrl=assetUrl;
+                runOnUiThread(() -> {
+                    if(isFinishing() || (Build.VERSION.SDK_INT>=17 && isDestroyed())
+                            || prefs.getBoolean("ride_active",false)) return;
+                    new AlertDialog.Builder(this)
+                        .setTitle("GaZonRide v1.0."+newCode)
+                        .setMessage("Android navigasyon veya telefon özellikleri için yeni sürüm hazır. Sürüş kayıtların korunacak. Güncellemeyi uygulama içinden indirmek ister misin?")
+                        .setNegativeButton("Daha sonra",(d,w)->{
+                            prefs.edit().putInt("native_update_prompt_code",newCode)
+                                .putLong("native_update_prompt_ms",System.currentTimeMillis()).apply();
+                        })
+                        .setPositiveButton("Güncelle",(d,w)->{
+                            prefs.edit().putInt("native_update_prompt_code",newCode)
+                                .putLong("native_update_prompt_ms",System.currentTimeMillis()).apply();
+                            startNativeUpdateDownload(apkUrl);
+                        }).show();
+                });
+            }catch(Exception ignored){} finally {
+                if(c!=null)c.disconnect();
+                nativeUpdateCheckRunning=false;
+            }
         }).start();
     }
-
 
     private void registerUpdateDownloadReceiver(){
         if(downloadReceiverRegistered) return;
@@ -549,6 +585,9 @@ public class MainActivity extends Activity {
             if(pending!=null&&!pending.isEmpty()) pendingInstallUri=Uri.parse(pending);
         }
         if(pendingInstallUri!=null && canInstallDownloadedApks()) installDownloadedApk(pendingInstallUri);
+        if(updateDownloadId!=-1L) new Handler(Looper.getMainLooper()).postDelayed(() -> handleDownloadedApk(updateDownloadId),700);
+        // Check again when the user comes back later, but never during an active ride.
+        checkForNativeUpdate();
         if(leanTracking && sensorManager!=null && rotationSensor!=null){
             sensorManager.registerListener(leanSensorListener,rotationSensor,SensorManager.SENSOR_DELAY_GAME);
         }

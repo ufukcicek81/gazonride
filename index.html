@@ -553,7 +553,7 @@ function acceptLiveGpsFix(p,c,ts){
   if(!isFinite(dt)||dt<=0)return false;
   if(dt<180&&d>Math.max(35,dt*62+Math.max(acc,gpsRideReference.accuracy)*1.2))return false;
   if(dt<8&&d<Math.max(4,Math.min(9,acc*.27)))return false;
-  if(c.speed!=null&&Number(c.speed)>=0&&Number(c.speed)<1.2&&d<Math.max(10,Math.min(18,acc*.45)))return false;
+  if(c.speed!=null&&Number(c.speed)>=0&&Number(c.speed)<1.2)return false;
  }
  gpsRideReference={p:{lat:p.lat,lon:p.lon},ts:ts,accuracy:acc};return true;
 }
@@ -778,7 +778,7 @@ function nativeRidePoints(){
      var dt=(time-last.ts)/1000;
      if(dt<=0||dt<180&&dist>Math.max(35,dt*62+Math.max(acc,last.acc)*1.2))return;
      if(dt<8&&dist<Math.max(4,Math.min(9,acc*.27)))return;
-     if(p.speed!=null&&Number(p.speed)>=0&&Number(p.speed)<1.2&&dist<Math.max(10,Math.min(18,acc*.45)))return;
+     if(p.speed!=null&&Number(p.speed)>=0&&Number(p.speed)<1.2)return;
     }
     out.push([point.lat,point.lon,p.altitude==null?null:Number(p.altitude),time]);
     last={p:point,ts:time,acc:acc};

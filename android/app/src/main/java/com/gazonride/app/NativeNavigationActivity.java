@@ -143,7 +143,9 @@ public final class NativeNavigationActivity extends Activity {
         footer.addView(statusText);
         FrameLayout.LayoutParams footerParams =
                 new FrameLayout.LayoutParams(-1, dp(68), Gravity.BOTTOM);
-        footerParams.setMargins(dp(12), 0, dp(12), dp(110));
+        // Leave the Google Navigation SDK bottom ETA/route panel fully visible.
+        // Raise both floating cards together while preserving their vertical gap.
+        footerParams.setMargins(dp(12), 0, dp(12), dp(174));
         root.addView(footer, footerParams);
 
         // Spotify/YouTube Music remains available without leaving navigation.
@@ -174,7 +176,7 @@ public final class NativeNavigationActivity extends Activity {
         music.addView(next, nextParams);
         FrameLayout.LayoutParams musicParams =
                 new FrameLayout.LayoutParams(-1, dp(54), Gravity.BOTTOM);
-        musicParams.setMargins(dp(12), 0, dp(12), dp(48));
+        musicParams.setMargins(dp(12), 0, dp(12), dp(112));
         root.addView(music, musicParams);
         musicPanel = music;
         musicToggle = play;

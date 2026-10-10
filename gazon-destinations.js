@@ -92,13 +92,14 @@ function openDetails(id){
  $("grTravelVisited").onclick=function(){updateVisited(x.id,!visited()[x.id]);draw();this.textContent=visited()[x.id]?"✓ Ziyaret ettim":"○ Gittim Olarak İşaretle";this.classList.toggle("done",!!visited()[x.id])};
  $("grTravelMap").onclick=function(){
   closeDetails();
-  var tab=document.querySelector('.navBtn[data-page="navigation"]');
-  if(tab)tab.click();
-  setTimeout(function(){
-   var input=$("navDestination");if(!input)return;
-   input.value=x.search||x.title+", "+x.city;input.focus();
-   input.dispatchEvent(new Event("input",{bubbles:true}))
-  },180)
+  var destination=x.search||x.title+", "+x.city;
+  if(window.GaZonNavigation&&typeof window.GaZonNavigation.launchCardDestination==="function"){
+   window.GaZonNavigation.launchCardDestination({destination:destination,title:x.title+" · "+x.city});
+   return
+  }
+  var tab=document.querySelector('.navBtn[data-page="navigation"]');if(tab)tab.click();
+  var input=$("navDestination");if(input){input.value=destination;input.dispatchEvent(new Event("input",{bubbles:true}));}
+  var go=$("navGo");if(go)go.click()
  };
  travelMedia(x.search).then(function(images){if($("grTravelDetail")===dialog)paintDetailsPhotos(images)})
 }

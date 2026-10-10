@@ -1201,80 +1201,116 @@ async function recalculateNavigation(){
  finally{navRecalculating=false}
 }
 async function planNavigation(){
- var q=$("navDestination").value.trim(),originInput=$("navOrigin"),originQ=originInput?originInput.value.trim():"";
- if(!q){$("navDestination").focus();return;}
- if(originInput&&originInput.dataset.current==="1"&&!currentPoint){$("status").textContent="Mevcut konum için GPS bekleniyor.";startGPS();return;}
- if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor, birkaç saniye sonra tekrar dene.";return;}
- $("navGo").innerHTML='<span class="mi">hourglass_top</span>';
- try{
-   var input=$("navDestination"),d,o;
-   if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};
-   else d=await geocodeGoogle(q);
-   clearNavSuggestions();
-   if(!originInput||originInput.dataset.current==="1"||!originQ)o={lat:currentPoint.lat,lon:currentPoint.lon,label:"Mevcut konumum"};
-   else if(originInput.dataset.lat&&originInput.dataset.lon)o={lat:Number(originInput.dataset.lat),lon:Number(originInput.dataset.lon),label:originInput.dataset.label||originQ};
-   else{o=await geocodeGoogle(originQ);setOriginSummary(o.label||originQ);closeOriginEditor();}
-   clearOriginSuggestions();
-
-   var routesLib=await google.maps.importLibrary("routes");
-   var Route=routesLib.Route;
-   var inTurkey=o.lat>=35.5&&o.lat<=42.5&&o.lon>=25&&o.lon<=45.5;
-   var mode=inTurkey?"DRIVING":"TWO_WHEELER";
-   var req={
-     origin:{lat:o.lat,lng:o.lon},
-     destination:{lat:d.lat,lng:d.lon},
-     travelMode:mode,
-     routingPreference:"TRAFFIC_AWARE",
-     polylineQuality:"HIGH_QUALITY",
-     computeAlternativeRoutes:true,
-     fields:["path","legs","viewport","distanceMeters","durationMillis","routeLabels"]
-   };
-   var result;
-   try{result=await Route.computeRoutes(req);}
-   catch(routeErr){
-     if(mode==="TWO_WHEELER"){req.travelMode="DRIVING";mode="DRIVING";result=await Route.computeRoutes(req);}
-     else throw routeErr;
-   }
-   var routes=(result&&result.routes)||[];
-   if(!routes.length||!routes[0].path||!routes[0].path.length)throw new Error("noroute");
-   clearAlternativeRoutes();
-   var found=[];
-   routes.slice(0,4).forEach(function(rt,i){addUniqueRoute(found,routeToData(rt,{name:i===0?"Önerilen rota":"Google alternatifi "+i,tag:i===0?"En hızlı / uygun":"Google alternatifi"}))});
-
-   var variantRequests=[
-    {name:"Ücretsiz rota",tag:"Ücretli yollardan kaçın",mods:{avoidTolls:true}},
-    {name:"Otoyolsuz rota",tag:"Otoyoldan kaçın",mods:{avoidHighways:true}},
-    {name:"Sakin rota",tag:"Otoyol + ücretli yol yok",mods:{avoidTolls:true,avoidHighways:true}}
-   ];
-   for(var vr=0;vr<variantRequests.length&&found.length<6;vr++){
-    try{
-     var v=variantRequests[vr],vReq={origin:req.origin,destination:req.destination,travelMode:mode,routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",routeModifiers:v.mods,fields:["path","legs","viewport","distanceMeters","durationMillis"]};
-     var vRes=await Route.computeRoutes(vReq),vRt=vRes&&vRes.routes&&vRes.routes[0];
-     if(vRt&&vRt.path&&vRt.path.length)addUniqueRoute(found,routeToData(vRt,{name:v.name,tag:v.tag}));
-    }catch(ve){console.warn("Alternative route variant",v.name,ve)}
-   }
-
-   navAlternatives=found.slice(0,6);
-   navAlternativePolylines=navAlternatives.map(function(rd,i){
-    var p=new google.maps.Polyline({map:map,path:rd.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:i===0?"#ff5a1f":"#718096",strokeWeight:i===0?9:7,strokeOpacity:i===0?.98:.88,zIndex:i===0?30:12,clickable:true});
-    google.maps.event.addListener(p,"click",function(){selectAlternativeRoute(i)});return p
-   });
-   navAlternativeMarkers=navAlternatives.map(function(rd,i){
-    var mid=rd.pts[Math.max(0,Math.floor(rd.pts.length*.52))],m=new google.maps.Marker({map:map,position:{lat:mid.lat,lng:mid.lon},zIndex:60+i,label:{text:String(i+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"},icon:{path:google.maps.SymbolPath.CIRCLE,scale:i===0?16:14,fillColor:i===0?"#ff5a1f":"#66717f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3},title:(i+1)+". "+(rd.name||"Alternatif rota")});
-    m.addListener("click",function(){selectAlternativeRoute(i)});return m
-   });
-   navRoute=navAlternativePolylines[0];
-   activeNavLabel=d.label||q;activeRouteMode=mode;activeNavDestination={lat:Number(d.lat),lon:Number(d.lon)};navActive=false;navReady=true;navOffRouteCount=0;
-   fitAllAlternativeRoutes();
-   var choices=$("navChoices");if(choices){choices.innerHTML="";choices.classList.remove("active")}
-   selectAlternativeRoute(0);
-   navStartedRide=false;
-   $("status").textContent=navAlternatives.length>1?navAlternatives.length+" alternatif yol haritada çizildi. Gri bir rotaya dokunarak seçebilirsin.":"Bu hedef için farklı bir rota bulunamadı.";
- }catch(err){
-   console.warn("Route compute failed",err);
-   $("status").textContent="Rota oluşturulamadı. Hedefi listeden seçip tekrar dene.";
+ var input=$("navDestination"),q=input.value.trim(),originInput=$("navOrigin"),originQ=originInput?originInput.value.trim():"";
+ clearTimeout(navAutoPlanTimer);
+ if(!q){input.focus();return}
+ if((!originInput||originInput.dataset.current==="1"||!originQ)&&!currentPoint){
+  $("status").textContent="Konum bulununca rotalar gösterilecek. GPS bekleniyor.";startGPS();return
  }
- finally{$("navGo").innerHTML='<span class="mi">navigation</span>';}
+ if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor. Biraz sonra tekrar dene.";return}
+ var seq=++navPlanSeq;
+ var go=$("navGo"),box=$("navChoices");
+ if(go){go.disabled=true;go.innerHTML='<span class="mi">hourglass_top</span>'}
+ clearAlternativeRoutes();
+ navReady=false;
+ $("navInstruction").classList.remove("active");
+ if(box){
+  box.innerHTML='<div class="gr-route-chooser-loading"><span class="mi">route</span> '+navRouteLabel(q)+' için alternatif rotalar hazırlanıyor…</div>';
+  box.classList.add("active");
+ }
+ $("status").textContent="Google alternatif yolları hesaplıyor…";
+ try{
+  var d,o;
+  if(input.dataset.lat&&input.dataset.lon)d={lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q};
+  else d=await geocodeGoogle(q);
+  if(seq!==navPlanSeq)return;
+  clearNavSuggestions();
+  if(!originInput||originInput.dataset.current==="1"||!originQ){
+   o={lat:currentPoint.lat,lon:currentPoint.lon,label:"Mevcut konumum"};
+  }else if(originInput.dataset.lat&&originInput.dataset.lon){
+   o={lat:Number(originInput.dataset.lat),lon:Number(originInput.dataset.lon),label:originInput.dataset.label||originQ};
+  }else{
+   o=await geocodeGoogle(originQ);
+   if(seq!==navPlanSeq)return;
+   setOriginSummary(o.label||originQ);closeOriginEditor()
+  }
+  clearOriginSuggestions();
+  var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route;
+  if(seq!==navPlanSeq)return;
+  var inTurkey=o.lat>=35.5&&o.lat<=42.5&&o.lon>=25&&o.lon<=45.5,mode=inTurkey?"DRIVING":"TWO_WHEELER";
+  var req={
+   origin:{lat:o.lat,lng:o.lon},destination:{lat:d.lat,lng:d.lon},travelMode:mode,
+   routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",
+   computeAlternativeRoutes:true,
+   fields:["path","legs","viewport","distanceMeters","durationMillis","routeLabels"]
+  };
+  var result;
+  try{result=await Route.computeRoutes(req)}
+  catch(routeError){
+   if(mode!=="TWO_WHEELER")throw routeError;
+   req.travelMode="DRIVING";mode="DRIVING";
+   result=await Route.computeRoutes(req)
+  }
+  if(seq!==navPlanSeq)return;
+  var routes=result&&result.routes||[];
+  if(!routes.length||!routes[0].path||!routes[0].path.length)throw new Error("noroute");
+  var found=[];
+  routes.slice(0,4).forEach(function(rt,i){
+   var option=routeToData(rt,{name:i===0?"Önerilen rota":"Google alternatifi "+i,tag:i===0?"En hızlı / uygun":"Diğer güzergâh"});
+   if(option.pts.length>1)addUniqueRoute(found,option)
+  });
+  if(!found.length)throw new Error("no valid road shape");
+  navAlternatives=found;
+  navSelectedAlternative=0;
+  navAlternatives.forEach(function(rd,i){appendNavAlternativePreview(rd,i)});
+  activeNavLabel=d.label||q;
+  activeNavDestination={lat:Number(d.lat),lon:Number(d.lon)};
+  activeRouteMode=mode;
+  navActive=false;navReady=true;navOffRouteCount=0;navStartedRide=false;
+  selectAlternativeRoute(0);
+  fitAllAlternativeRoutes();
+  $("status").textContent=navAlternatives.length>1?
+   navAlternatives.length+" yol seçeneği hazır. Turuncu çizgi seçili; başka bir rotaya dokunabilirsin.":
+   "İlk rota hazır. Diğer alternatif yollar aranıyor.";
+  // Show the first route immediately. Extra toll-free and highway-free
+  // paths arrive without keeping the user waiting for all API requests.
+  var variants=[
+   {name:"Ücretsiz rota",tag:"Ücretli yollardan kaçın",mods:{avoidTolls:true}},
+   {name:"Otoyolsuz rota",tag:"Otoyoldan kaçın",mods:{avoidHighways:true}},
+   {name:"Sakin rota",tag:"Ücretli yol ve otoyoldan kaçın",mods:{avoidTolls:true,avoidHighways:true}}
+  ];
+  setTimeout(async function(){
+   for(var i=0;i<variants.length;i++){
+    if(seq!==navPlanSeq||navActive||navAlternatives.length>=6)break;
+    var v=variants[i];
+    try{
+     var request={
+      origin:req.origin,destination:req.destination,travelMode:mode,
+      routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",
+      routeModifiers:v.mods,fields:["path","legs","viewport","distanceMeters","durationMillis"]
+     };
+     var output=await Route.computeRoutes(request);
+     if(seq!==navPlanSeq||navActive)break;
+     var choice=output&&output.routes&&output.routes[0];
+     if(!choice||!choice.path||choice.path.length<2)continue;
+     var parsed=routeToData(choice,{name:v.name,tag:v.tag});
+     if(parsed.pts.length<2||!addUniqueRoute(navAlternatives,parsed))continue;
+     var index=navAlternatives.length-1;
+     appendNavAlternativePreview(parsed,index);
+     renderAlternativeChoices();
+     $("status").textContent=navAlternatives.length+" alternatif rota hazır. Seçimini haritada veya kartlardan yap."
+    }catch(error){console.warn("Optional route unavailable",v.name,error)}
+   }
+  },30)
+ }catch(error){
+  if(seq!==navPlanSeq)return;
+  console.warn("Route compute failed",error);
+  navReady=false;
+  if(box){box.classList.remove("active");box.innerHTML=""}
+  $("status").textContent="Rota bulunamadı. Varış yerini önerilerden seçip tekrar dene."
+ }finally{
+  if(seq===navPlanSeq&&go){go.disabled=false;go.innerHTML='<span class="mi">navigation</span>'}
+ }
 }
 function guidanceIcon(m){
  var x=String(m||"").toLowerCase();

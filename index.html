@@ -1933,9 +1933,10 @@ function boot(){
  $("discoverSearch").addEventListener("input",runDiscoverSearch);
  document.querySelectorAll("[data-route-destination]").forEach(function(card){
    card.addEventListener("click",function(){
-     var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
-     $("navDestination").value=card.getAttribute("data-route-destination");
-     clearTimeout(navAutoPlanTimer);planNavigation();
+     launchCardDestination({
+       destination:card.getAttribute("data-route-destination"),
+       title:(card.querySelector(".routeTitle")||{}).textContent||card.getAttribute("data-route-destination")
+     });
    });
  });
  document.querySelectorAll("[data-place-query]").forEach(function(card){

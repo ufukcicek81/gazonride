@@ -306,6 +306,7 @@ html,body{max-width:100%;overflow-x:clip}
 </style>
 <link rel="stylesheet" href="gazon-layout-fit.css?v=20261009-fit3-navbar-cards">
 <link rel="stylesheet" href="gazon-music.css?v=20261009-music1">
+<link rel="stylesheet" href="gazon-route-picker.css?v=20261010-route-choice-v1">
 </head>
 <body>
 <div class="app">
@@ -441,7 +442,7 @@ html,body{max-width:100%;overflow-x:clip}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0,navAutoPlanTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -962,8 +963,13 @@ async function selectNavSuggestion(prediction){
   input.dataset.lon=String(place.location.lng());
   input.dataset.label=label;
   clearNavSuggestions();
+  ++navAutocompleteSeq;
+  clearTimeout(navAutocompleteTimer);
+  clearTimeout(navAutoPlanTimer);
   navAutocompleteToken=null;
-  if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()});
+  input.blur();
+  await planNavigation(); // Directly preview all route options after choosing the destination.
+  
  }catch(e){console.warn("Place selection",e);}
 }
 async function fetchNavSuggestions(value,seq){
@@ -993,9 +999,24 @@ function setupNavAutocomplete(){
  input.addEventListener("input",function(){
   delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;
   var value=input.value.trim(),seq=++navAutocompleteSeq;
+  // Invalidate an old asynchronous route response when the target changes.
+  ++navPlanSeq;
   clearTimeout(navAutocompleteTimer);
+  clearTimeout(navAutoPlanTimer);
+  if(navReady&&!navActive){
+   clearAlternativeRoutes();
+   navReady=false;
+   $("navInstruction").classList.remove("active")
+  }
   if(value.length<2){clearNavSuggestions();return;}
   navAutocompleteTimer=setTimeout(function(){fetchNavSuggestions(value,seq);},180);
+  // Also work for manually typed or pasted destinations. Wait until typing
+  // pauses, so we don't bill Google Routes for every keystroke.
+  if(value.length>=6){
+   navAutoPlanTimer=setTimeout(function(){
+    if(input.value.trim()===value&&gazonCurrentMode==="navigation"&&!navActive)planNavigation()
+   },1550)
+  }
  });
  input.addEventListener("focus",function(){if(input.value.trim().length>=2){var seq=++navAutocompleteSeq;fetchNavSuggestions(input.value.trim(),seq);}});
  document.addEventListener("click",function(e){if(!e.target.closest(".navSearchRow"))clearNavSuggestions();});
@@ -1708,6 +1729,7 @@ function boot(){
    card.addEventListener("click",function(){
      var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
      $("navDestination").value=card.getAttribute("data-route-destination");
+     clearTimeout(navAutoPlanTimer);planNavigation();
    });
  });
  document.querySelectorAll("[data-place-query]").forEach(function(card){
@@ -1729,10 +1751,12 @@ function boot(){
  $("homeAdmin").addEventListener("click",function(){if(window.GaZonAuth&&window.GaZonAuth.openAdmin)window.GaZonAuth.openAdmin();else if(window.GaZonRideSocial&&window.GaZonRideSocial.admin)window.GaZonRideSocial.admin();});
  $("quickNav").addEventListener("click",function(){var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);});
  $("quickIntercom").addEventListener("click",function(){var b=document.querySelector('[data-page="voice"]');nav("voice",b);});
+ var routePicker=$("navChoices");
+ if(routePicker&&routePicker.parentElement!==document.body)document.body.appendChild(routePicker);
  setupNavAutocomplete();setupOriginAutocomplete();
  var rb=$("navRecenterBtn");if(rb)rb.onclick=recenterNavigationOnce;
  $("navGo").addEventListener("click",planNavigation);
- $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
+ $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});
  $("navDrive").addEventListener("click",startPlannedNavigation);
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",calibrateLeanSensor);

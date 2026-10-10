@@ -28,7 +28,7 @@
         <!-- Google Navigation SDK uses this Android-restricted key; injected by GitHub Actions. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="\u0024{NAVIGATION_API_KEY}" />
+            android:value="${NAVIGATION_API_KEY}" />
         <activity android:name=".NativeNavigationActivity"
             android:label="GaZonRide Navigasyon"
             android:screenOrientation="portrait"

@@ -3,10 +3,12 @@ on:
   push:
     branches:
       - feature/gazonride-native-navigation-sdk-20261010
+      - feature/gazonride-auto-route-previews
     paths:
       - 'android/**'
       - '.github/workflows/android-navigation-ci.yml'
       - 'index.html'
+      - 'gazon-route-picker.css'
   workflow_dispatch:
 permissions:
   contents: read
@@ -76,7 +78,7 @@ jobs:
         working-directory: android
         env:
           GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
-        run: gradle --no-daemon assembleDebug -PbuildCode=111 -PbuildName=1.0.111-nav-test
+        run: gradle --no-daemon assembleDebug -PbuildCode=112 -PbuildName=1.0.112-route-preview
       - name: Upload test-only Android APK
         uses: actions/upload-artifact@v4
         with:

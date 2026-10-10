@@ -1361,6 +1361,20 @@ window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,recenter
 
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
+ // On the Android APK the official Navigation SDK replaces our browser
+ // approximation: Google handles road snapping, turn cards, voice and live ETA.
+ // Browser users still use the existing navigator.
+ if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
+  try{
+   var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
+   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef")){
+    if(!riding)startRide(); // Native foreground ride recording continues in navigation screen.
+    navStartedRide=false;
+    $("status").textContent="Google canlı navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";
+    return
+   }
+  }catch(e){console.warn("Native navigation launch",e)}
+ }
  navActive=true;
  navReady=false;
  navGuidanceStart=Date.now();

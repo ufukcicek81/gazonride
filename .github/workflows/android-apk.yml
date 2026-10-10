@@ -39,8 +39,24 @@ jobs:
             keytool -genkeypair -v               -keystore "$HOME/.android/debug.keystore"               -storepass android               -alias androiddebugkey               -keypass android               -dname "CN=GaZonRide,O=GaZonRide,C=TR"               -keyalg RSA               -keysize 2048               -validity 10000
           fi
 
+      - name: Install Google Navigation SDK Android platform
+        shell: bash
+        run: |
+          set -eu
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ] && [ -n "${ANDROID_HOME:-}" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          fi
+          if [ -n "$SDKMANAGER" ]; then
+            "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+          else
+            echo "No sdkmanager on image; Gradle will use the SDK installed by runner."
+          fi
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
 
       - name: Rebuild real raster launcher icons
         shell: bash
@@ -67,7 +83,11 @@ jobs:
 
       - name: Build APK
         working-directory: android
-        run: gradle --no-daemon assembleDebug -PbuildCode=${{ github.run_number }} -PbuildName=1.0.${{ github.run_number }}
+        env:
+          GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
+        run: |
+          test -n "$GAZONRIDE_NAVIGATION_API_KEY" || (echo "Missing Navigation SDK key" && exit 1)
+          gradle --no-daemon assembleDebug -PbuildCode=${{ github.run_number }} -PbuildName=1.0.${{ github.run_number }}
 
       - name: Rename APK
         run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/GaZonRide.apk

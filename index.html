@@ -306,6 +306,7 @@ html,body{max-width:100%;overflow-x:clip}
 </style>
 <link rel="stylesheet" href="gazon-layout-fit.css?v=20261009-fit3-navbar-cards">
 <link rel="stylesheet" href="gazon-music.css?v=20261009-music1">
+<link rel="stylesheet" href="gazon-nav-preview.css?v=20261010-preview1">
 </head>
 <body>
 <div class="app">
@@ -368,7 +369,9 @@ html,body{max-width:100%;overflow-x:clip}
   <div class="navPointLabel"><span class="mi">flag</span>Varış</div>
   <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
-  <div class="navChoices" id="navChoices"></div>
+  <div class="navPreviewLoading" id="navPreviewLoading" aria-live="polite" hidden></div>
+  <div class="navPreviewHeading" id="navPreviewHeading" hidden><span>ROTA SEÇ <small>Haritadaki numaraya veya karta dokun</small></span><span class="mi">swipe</span></div>
+  <div class="navChoices" id="navChoices" role="group" aria-label="Alternatif yol seçenekleri"></div>
   <div class="navInstruction" id="navInstruction">
     <div class="navTurn" id="navTurn">Rota hazır</div>
     <div class="sub" id="navRoad">—</div>
@@ -380,6 +383,11 @@ html,body{max-width:100%;overflow-x:clip}
     <button class="screenBtn" id="navDrive" style="background:var(--accent);color:#fff;border-color:var(--accent);font-size:16px;font-weight:950"><span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat</button><button class="screenBtn dark" id="navGoogleMaps"><span class="mi" style="vertical-align:-4px;margin-right:6px">open_in_new</span>Google Haritalar'da Aç (ayrı uygulama)</button><button class="screenBtn dark" id="navStop">Navigasyonu Bitir</button>
   </div>
 </section>
+<div class="navPreviewDock" id="navPreviewDock" hidden>
+  <div class="navPreviewSelection"><div class="navPreviewSelectionBadge" id="navPreviewNumber">1</div><div class="navPreviewSelectionText"><b id="navPreviewName">Önerilen rota</b><span id="navPreviewDetails">—</span></div></div>
+  <button type="button" id="navPreviewStart" class="navPreviewStart"><span class="mi">two_wheeler</span> SEÇİLEN ROTAYLA SÜR</button>
+  <small>Google navigasyon başladığında yolu yeniden hesaplayabilir.</small>
+</div>
 <div class="guidanceHud" id="guidanceHud">
   <div class="guidanceTop">
     <div class="guidanceMain">
@@ -441,7 +449,7 @@ html,body{max-width:100%;overflow-x:clip}
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,navPreviewTimer=null,navPreviewSeq=0,navPreviewWaitForGps=false,navPreviewWaitForGoogle=false,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}

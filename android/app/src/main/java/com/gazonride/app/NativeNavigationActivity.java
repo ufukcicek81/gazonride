@@ -241,6 +241,8 @@ public final class NativeNavigationActivity extends Activity {
             // TWO_WHEELER is not available in every country. For Turkey,
             // use Google driving routes rather than promising motorcycle-only roads.
             options.travelMode(RoutingOptions.TravelMode.DRIVING);
+            options.avoidTolls(getIntent().getBooleanExtra("avoid_tolls",false));
+            options.avoidHighways(getIntent().getBooleanExtra("avoid_highways",false));
             message("Google güzergâhı hesaplanıyor…");
             ListenableResultFuture<Navigator.RouteStatus> request =
                     navigator.setDestination(waypoint, options);

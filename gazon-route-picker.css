@@ -2,6 +2,14 @@
    This sheet is portalled to <body> so the transformed top navigation
    panel cannot trap position:fixed at the top of the screen. */
 #navChoices{display:none!important}
+#navChoices .gr-route-chooser-loading{
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ min-height:52px;padding:12px 8px;
+ font-size:12px;font-weight:800;line-height:1.4;
+ color:var(--text);text-align:center;
+}
+#navChoices .gr-route-chooser-loading .mi{font-size:23px;color:var(--accent)}
+
 body.mode-navigation:not(.guidance-active) #navChoices.active{
  display:flex!important;
  flex-direction:column;

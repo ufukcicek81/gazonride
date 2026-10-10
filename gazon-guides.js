@@ -12,8 +12,9 @@ var GUIDES={
   ],
   highlights:["Aktaş Şelalesi","Yaklaşık 790 m ekoturizm yürüyüş parkuru","Aktaş Köyü"]
  },
- "Düzce · Yedigöller":{
+ "Yedigöller Milli Parkı · Bolu":{
   search:"Yedigöller Milli Parkı Bolu",
+  verifiedPhotosOnly:true,
   heading:"Bolu ormanlarında göller, serin hava ve uzun virajlar",
   paragraphs:[
    "Yedigöller Millî Parkı, ormanların arasına yayılan göller ve mevsime göre değişen renkleriyle öne çıkar. Bölge özellikle sonbahar manzaraları ve sessiz doğa yürüyüşleri için tercih edilir.",
@@ -21,8 +22,9 @@ var GUIDES={
   ],
   highlights:["Millî park gölleri","Orman seyir noktaları","Sonbahar renkleri"]
  },
- "Şile · Ağva · Kandıra":{
+ "Şile · Ağva":{
   search:"Ağva Şile İstanbul",
+  verifiedPhotosOnly:true,
   heading:"Karadeniz kıyısında koylar ve yeşil yollar",
   paragraphs:[
    "Şile'den Ağva'ya uzanan hat, kıyı yerleşimleri ve orman manzaralarıyla şehirden kısa bir kaçamak yapmak isteyen motosikletçiler için uygundur. Ağva çevresindeki nehir kıyıları ve sahil durakları fotoğraf için güzel bölümler oluşturur.",
@@ -30,8 +32,9 @@ var GUIDES={
   ],
   highlights:["Şile sahili","Ağva nehir kıyıları","Kandıra yönünde kıyı manzaraları"]
  },
- "Kapıdağ Yarımadası":{
+ "Kapıdağ · Erdek başlangıcı":{
   search:"Erdek Balıkesir Kapıdağ",
+  verifiedPhotosOnly:true,
   heading:"Marmara'ya bakan koylar ve Kapıdağ'ın yeşil yamaçları",
   paragraphs:[
    "Kapıdağ Yarımadası çevresinde Erdek, Narlı ve kıyı köyleri arasında denize bakan virajlı yollar bulunur. Kıyıdan yükselen seyir noktaları deniz ve ormanı aynı karede görmeye elverişlidir.",
@@ -40,8 +43,9 @@ var GUIDES={
   highlights:["Erdek kıyısı","Narlı ve çevre koylar","Kapıdağ manzara noktaları"],
   extraPhotos:["Erdek Gulf.jpg","Sunset in Erdek.jpg","Erdek körfezi edincik.jpg"]
  },
- "Uçmakdere · Şarköy":{
+ "Uçmakdere (Şarköy)":{
   search:"Uçmakdere Şarköy Tekirdağ",
+  verifiedPhotosOnly:true,
   heading:"Marmara kıyısında yüksek yamaçlardan denize inen virajlar",
   paragraphs:[
    "Uçmakdere–Şarköy hattında yamaçlar ile deniz arasındaki manzaralı yol, viraj severlerin ilgisini çeker. Özellikle açık havada kıyı boyunca farklı yüksekliklerden geniş Marmara manzaraları izlenebilir.",
@@ -49,8 +53,9 @@ var GUIDES={
   ],
   highlights:["Uçmakdere seyir noktaları","Şarköy sahili","Marmara panoramaları"]
  },
- "Yalova · Çınarcık · Armutlu":{
+ "Armutlu (Yalova)":{
   search:"Armutlu Yalova",
+  verifiedPhotosOnly:true,
   heading:"Çınarcık'tan Armutlu'ya denizle orman arasında",
   paragraphs:[
    "Yalova kıyısından Çınarcık ve Armutlu yönüne ilerleyen güzergâh Marmara'nın küçük koylarını, kıyı yerleşimlerini ve orman dokusunu bir arada sunar.",
@@ -58,8 +63,9 @@ var GUIDES={
   ],
   highlights:["Çınarcık kıyısı","Armutlu","Sahil ve orman manzaraları"]
  },
- "İğneada · Demirköy":{
+ "İğneada (Demirköy)":{
   search:"İğneada Demirköy Kırklareli",
+  verifiedPhotosOnly:true,
   heading:"Trakya ormanlarının içinden Karadeniz'e",
   paragraphs:[
    "Demirköy ve İğneada çevresinde meşe, kayın ve kıyı ormanlarıyla kaplı manzaralı yollar bulunur. İğneada çevresindeki longoz ormanları ve Karadeniz kıyısı doğa sevenler için mola seçenekleri sunar.",
@@ -67,8 +73,9 @@ var GUIDES={
   ],
   highlights:["Demirköy yolu","İğneada sahili","Longoz ormanları çevresi"]
  },
- "Artvin · Şavşat · Ardahan":{
+ "Şavşat (Artvin)":{
   search:"Şavşat Artvin Karagöl",
+  verifiedPhotosOnly:true,
   heading:"Doğu Karadeniz'den yüksek yaylalara uzanan dağ yolları",
   paragraphs:[
    "Şavşat ve çevresindeki yaylalar, ormanlar ve dağ manzaraları bu rotanın temel çekiciliğidir. Artvin–Ardahan hattı uzun sürüşler, serin rakımlar ve etkileyici fotoğraf molaları arayan sürücülere hitap eder.",
@@ -99,7 +106,11 @@ function normalizePhoto(photo){
 }
 function galleryPhotos(place,cover){
  // Avoid showing unrelated Akçakoca harbour photos as the waterfall.
- if(place.verifiedPhotosOnly) return Promise.resolve([]);
+ // Curated cards show only explicitly selected regional photos. Never mix in
+ // unverified Wikimedia keyword search results (which may depict another town).
+ if(place.verifiedPhotosOnly) return Promise.resolve(cover && !place.officialPhotos
+   ? [{src:cover,credit:coverCredit(cover),name:place.search,license:"Wikimedia Commons · Bölge görüntüsü"}]
+   : []);
  var lookup=place.search;
  if(cache[lookup])return Promise.resolve(cache[lookup]);
  var initial=[];

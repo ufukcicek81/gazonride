@@ -5,7 +5,7 @@ def buildName = (project.findProperty("buildName") ?: System.getenv("GITHUB_REF_
 
 android {
     namespace 'com.gazonride.app'
-    compileSdk 35
+    compileSdk 36
 
     signingConfigs {
         stableDebug {
@@ -18,15 +18,29 @@ android {
 
     defaultConfig {
         applicationId 'com.gazonride.app'
-        minSdk 23
-        targetSdk 35
+        minSdk 24
+        targetSdk 36
+        multiDexEnabled true
+        manifestPlaceholders = [NAVIGATION_API_KEY: (System.getenv('GAZONRIDE_NAVIGATION_API_KEY') ?: 'NAVIGATION_API_KEY_NOT_CONFIGURED')]
         versionCode buildCode
         versionName buildName
     }
 
+    // Navigation SDK 7.3 requires Android API 36, Gradle 8.11.1, AGP 8.10.
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    dexOptions { javaMaxHeapSize '4g' }
     buildTypes {
         debug {
             signingConfig signingConfigs.stableDebug
         }
     }
+}
+
+dependencies {
+    implementation 'com.google.android.libraries.navigation:navigation:7.3.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.3'
 }

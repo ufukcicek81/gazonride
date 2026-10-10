@@ -956,6 +956,54 @@ function maneuverText(step){
  if(mod==="uturn")return "U dönüşü yap";
  return "Düz devam et";
 }
+function navPreviewNotice(message){
+ var box=$("navPreviewLoading");if(!box)return;
+ box.hidden=!message;
+ if(message)box.textContent=message;
+}
+function hideNavPreview(){
+ document.body.classList.remove("nav-preview-ready");
+ var dock=$("navPreviewDock"),heading=$("navPreviewHeading");
+ if(dock)dock.hidden=true;
+ if(heading)heading.hidden=true;
+}
+function cancelPendingNavPreview(){
+ ++navPreviewSeq;
+ clearTimeout(navPreviewTimer);navPreviewTimer=null;
+ navPreviewWaitForGps=false;navPreviewWaitForGoogle=false;
+ if(navActive)return;
+ navReady=false;navRoute=null;activeNavDestination=null;
+ clearAlternativeRoutes();
+ var card=$("navInstruction");if(card)card.classList.remove("active");
+ hideNavPreview();navPreviewNotice("");
+}
+function scheduleNavPreview(delay){
+ var input=$("navDestination");if(!input||navActive)return;
+ var q=input.value.trim();clearTimeout(navPreviewTimer);
+ if(q.length<4)return;
+ navPreviewTimer=setTimeout(function(){
+  navPreviewTimer=null;
+  if(!navActive&&input.value.trim()===q)planNavigation()
+ },typeof delay==="number"?delay:1050);
+}
+function updateRouteChoicePreview(){
+ var d=navAlternatives[navSelectedAlternative];
+ if(!d)return;
+ var name=$("navPreviewName"),details=$("navPreviewDetails"),number=$("navPreviewNumber");
+ if(name)name.textContent=d.name||(navSelectedAlternative===0?"Önerilen rota":"Alternatif rota");
+ if(number)number.textContent=String(navSelectedAlternative+1);
+ if(details)details.textContent=d.km.toFixed(1)+" km · "+Math.max(1,Math.round(d.sec/60))+" dk · "+(d.tag||"Yol tarifi");
+ var dock=$("navPreviewDock"),heading=$("navPreviewHeading");
+ if(dock)dock.hidden=false;
+ if(heading)heading.hidden=false;
+ document.body.classList.add("nav-preview-ready");
+ var choices=$("navChoices");
+ if(choices)choices.querySelectorAll("[data-nav-alt]").forEach(function(b){
+  var active=Number(b.dataset.navAlt)===navSelectedAlternative;
+  b.classList.toggle("active",active);
+  b.setAttribute("aria-pressed",String(active))
+ });
+}
 function clearNavSuggestions(){
  var box=$("navSuggest");if(box){box.classList.remove("active");box.innerHTML="";}
 }
@@ -971,6 +1019,8 @@ async function selectNavSuggestion(prediction){
   input.dataset.label=label;
   clearNavSuggestions();
   navAutocompleteToken=null;
+  cancelPendingNavPreview();
+  scheduleNavPreview(50);
   if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()});
  }catch(e){console.warn("Place selection",e);}
 }
@@ -1002,8 +1052,10 @@ function setupNavAutocomplete(){
   delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;
   var value=input.value.trim(),seq=++navAutocompleteSeq;
   clearTimeout(navAutocompleteTimer);
+  cancelPendingNavPreview();
   if(value.length<2){clearNavSuggestions();return;}
   navAutocompleteTimer=setTimeout(function(){fetchNavSuggestions(value,seq);},180);
+  scheduleNavPreview(1100);
  });
  input.addEventListener("focus",function(){if(input.value.trim().length>=2){var seq=++navAutocompleteSeq;fetchNavSuggestions(input.value.trim(),seq);}});
  document.addEventListener("click",function(e){if(!e.target.closest(".navSearchRow"))clearNavSuggestions();});
@@ -1017,18 +1069,18 @@ async function fetchOriginSuggestions(value,seq){
   if(currentPoint)req.origin={lat:currentPoint.lat,lng:currentPoint.lon};
   var res=await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);if(seq!==originAutocompleteSeq)return;
   var box=$("navOriginSuggest");if(!box)return;box.innerHTML="";
-  (res.suggestions||[]).slice(0,6).forEach(function(s){var p=s.placePrediction;if(!p)return;var b=document.createElement("button");b.type="button";b.textContent=p.text&&p.text.toString?p.text.toString():String(p.text||"");b.onclick=async function(){var place=p.toPlace();await place.fetchFields({fields:["displayName","formattedAddress","location"]});if(!place.location)return;var inp=$("navOrigin"),label=place.formattedAddress||place.displayName||b.textContent;inp.value=label;inp.dataset.lat=String(place.location.lat());inp.dataset.lon=String(place.location.lng());inp.dataset.label=label;delete inp.dataset.current;setOriginSummary(label);clearOriginSuggestions();closeOriginEditor();originAutocompleteToken=null;if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()})};box.appendChild(b)});
+  (res.suggestions||[]).slice(0,6).forEach(function(s){var p=s.placePrediction;if(!p)return;var b=document.createElement("button");b.type="button";b.textContent=p.text&&p.text.toString?p.text.toString():String(p.text||"");b.onclick=async function(){var place=p.toPlace();await place.fetchFields({fields:["displayName","formattedAddress","location"]});if(!place.location)return;var inp=$("navOrigin"),label=place.formattedAddress||place.displayName||b.textContent;inp.value=label;inp.dataset.lat=String(place.location.lat());inp.dataset.lon=String(place.location.lng());inp.dataset.label=label;delete inp.dataset.current;setOriginSummary(label);clearOriginSuggestions();closeOriginEditor();originAutocompleteToken=null;cancelPendingNavPreview();scheduleNavPreview(100);if(map)map.panTo({lat:place.location.lat(),lng:place.location.lng()})};box.appendChild(b)});
   box.classList.toggle("active",box.children.length>0);
  }catch(e){console.warn("Origin autocomplete",e);clearOriginSuggestions()}
 }
 function setOriginSummary(text){var e=$("navOriginSummary");if(e)e.textContent=text||"Konumun otomatik kullanılıyor"}
 function closeOriginEditor(){var e=$("navOriginEditor");if(e)e.classList.remove("active")}
 function useCurrentOrigin(){
- var input=$("navOrigin");if(!input)return;input.value="";delete input.dataset.lat;delete input.dataset.lon;input.dataset.current="1";input.dataset.label="Mevcut konum";clearOriginSuggestions();setOriginSummary("Konumun otomatik kullanılıyor");closeOriginEditor();if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon})
+ var input=$("navOrigin");if(!input)return;input.value="";delete input.dataset.lat;delete input.dataset.lon;input.dataset.current="1";input.dataset.label="Mevcut konum";clearOriginSuggestions();setOriginSummary("Konumun otomatik kullanılıyor");closeOriginEditor();if(currentPoint&&map)map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});if($("navDestination")&&$("navDestination").value.trim()){cancelPendingNavPreview();scheduleNavPreview(170)}
 }
 function setupOriginAutocomplete(){
  var input=$("navOrigin");if(!input)return;useCurrentOrigin();
- input.addEventListener("input",function(){delete input.dataset.current;delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;var value=input.value.trim(),seq=++originAutocompleteSeq;clearTimeout(originAutocompleteTimer);if(value.length<2){clearOriginSuggestions();return}originAutocompleteTimer=setTimeout(function(){fetchOriginSuggestions(value,seq)},180)});
+ input.addEventListener("input",function(){delete input.dataset.current;delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;var value=input.value.trim(),seq=++originAutocompleteSeq;clearTimeout(originAutocompleteTimer);cancelPendingNavPreview();if(value.length<2){clearOriginSuggestions();return}originAutocompleteTimer=setTimeout(function(){fetchOriginSuggestions(value,seq)},180)});
  input.addEventListener("focus",function(){if(input.value.trim().length>=2&&input.dataset.current!=="1"){var seq=++originAutocompleteSeq;fetchOriginSuggestions(input.value.trim(),seq)}});
  var cur=$("navUseCurrent");if(cur)cur.onclick=useCurrentOrigin;
  var change=$("navChangeOrigin");if(change)change.onclick=function(){var e=$("navOriginEditor");if(e)e.classList.toggle("active");if(e&&e.classList.contains("active"))setTimeout(function(){input.focus()},80)};
@@ -1097,7 +1149,12 @@ function addUniqueRoute(target,d){
 function fitAllAlternativeRoutes(){
  if(!map||!navAlternatives.length)return;
  var b=new google.maps.LatLngBounds();navAlternatives.forEach(function(d){d.pts.forEach(function(p){b.extend({lat:p.lat,lng:p.lon})})});
- if(!b.isEmpty())map.fitBounds(b,44);
+ if(!b.isEmpty()){
+  var vh=Math.max(420,window.innerHeight||700);
+  var top=vh<700?225:Math.min(325,Math.round(vh*.34));
+  var bottom=vh<700?175:Math.min(230,Math.round(vh*.23));
+  map.fitBounds(b,{top:top,bottom:bottom,left:32,right:32})
+ }
 }
 function selectAlternativeRoute(i){
  var d=navAlternatives[i];if(!d)return;navSelectedAlternative=i;
@@ -1107,11 +1164,12 @@ function selectAlternativeRoute(i){
  
  $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel||"Seçilen rota";renderNavStep();
  var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.style.display="block";driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat'}
+ updateRouteChoicePreview()
 }
 function renderAlternativeChoices(){
  var box=$("navChoices");if(!box)return;
  if(!navAlternatives.length){box.innerHTML="";box.classList.remove("active");return}
- box.innerHTML=navAlternatives.map(function(d,i){var mins=Math.max(1,Math.round(d.sec/60)),name=d.name||(i===0?"Önerilen rota":"Alternatif "+i),tag=d.tag||(i===0?"En uygun":"Farklı yol");return '<button type="button" class="navChoice '+(i===navSelectedAlternative?"active":"")+'" data-nav-alt="'+i+'"><b>'+(i+1)+'. '+name+'</b><span>'+d.km.toFixed(1)+' km · '+mins+' dk</span><em>'+tag+'</em></button>'}).join("");
+ box.innerHTML=navAlternatives.map(function(d,i){var mins=Math.max(1,Math.round(d.sec/60)),name=d.name||(i===0?"Önerilen rota":"Alternatif "+i),tag=d.tag||(i===0?"En uygun":"Farklı yol");return '<button type="button" class="navChoice '+(i===navSelectedAlternative?"active":"")+'" aria-pressed="'+(i===navSelectedAlternative?"true":"false")+'" data-nav-alt="'+i+'"><b>'+(i+1)+'. '+name+'</b><span>'+d.km.toFixed(1)+' km · '+mins+' dk</span><em>'+tag+'</em></button>'}).join("");
  box.classList.add("active");box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}})
 }
 function distanceToActiveRouteKm(p){

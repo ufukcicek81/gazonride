@@ -66,7 +66,7 @@ function paintDetailsPhotos(images){
  function paint(){
   var x=images[current];
   box.innerHTML='<img src="'+esc(x.src)+'" alt="'+esc(x.label)+'" loading="lazy">'+(x.credit?'<a href="'+esc(x.credit)+'" target="_blank" rel="noopener noreferrer" class="gr-travel-credit">Fotoğraf kaynağı ve lisans</a>':'');
-  count.textContent=(current+1)+" / "+images.length+" fotoğraf";
+  count.textContent=(current+1)+" / "+images.length+" Wikimedia arama sonucu · Konum fotoğrafı doğrulanmadı";
   thumbs.querySelectorAll("button").forEach(function(b,i){b.classList.toggle("active",i===current)})
  }
  thumbs.innerHTML=images.map(function(x,i){return '<button type="button" data-travel-photo="'+i+'"><img loading="lazy" src="'+esc(x.src)+'" alt="'+esc(x.label)+'"></button>'}).join("");
@@ -82,9 +82,9 @@ function openDetails(id){
  closeDetails();
  var dialog=document.createElement("div");dialog.id="grTravelDetail";dialog.className="gr-travel-detail";
  dialog.innerHTML='<div class="gr-travel-detail-sheet"><div class="gr-travel-detail-head"><div><small>'+esc(x.city)+' · '+esc(x.category)+'</small><b>'+esc(x.title)+'</b></div><button id="grTravelClose" aria-label="Kapat"><span class="mi">close</span></button></div>'+
-  '<div id="grTravelPhoto" class="gr-travel-photo"><div class="gr-travel-empty">Bölgenin fotoğrafları aranıyor…</div></div><div id="grTravelPhotoCount" class="gr-travel-photo-count"></div><div id="grTravelThumbs" class="gr-travel-thumbs"></div>'+
+  '<div id="grTravelPhoto" class="gr-travel-photo"><div class="gr-travel-empty">Wikimedia arama sonuçları yükleniyor; fotoğrafın bu yere ait olduğu henüz doğrulanmadı…</div></div><div id="grTravelPhotoCount" class="gr-travel-photo-count"></div><div id="grTravelThumbs" class="gr-travel-thumbs"></div>'+
   '<div class="gr-travel-detail-copy"><h3>Neler görebilirsin?</h3><p>'+esc(genericDescription(x))+'</p>'+
-  '<p class="gr-travel-warning">Liste geçmiş yıllarda hazırlanmıştır. Erişim yasakları, ziyaret saatleri ve güvenlik koşulları güncel olmayabilir.</p></div>'+
+  '<p class="gr-travel-warning">Öneri kartlarının görselleri ve konumları tek tek doğrulanmamıştır. Navigasyona başlamadan önce hedef yerin adını, ilçesini ve araçla erişilebilen son noktayı kontrol et. Ziyaret koşulları değişebilir.</p></div>'+
   '<div class="gr-travel-detail-buttons"><button id="grTravelMap"><span class="mi">navigation</span> Navigasyonda Ara</button><button id="grTravelVisited" class="'+(visited()[x.id]?"done":"")+'">'+(visited()[x.id]?"✓ Ziyaret ettim":"○ Gittim Olarak İşaretle")+'</button></div></div>';
  document.body.appendChild(dialog);document.body.style.overflow="hidden";
  $("grTravelClose").onclick=closeDetails;
@@ -96,7 +96,7 @@ function openDetails(id){
   if(tab)tab.click();
   setTimeout(function(){
    var input=$("navDestination");if(!input)return;
-   input.value=x.title+", "+x.city;input.focus();
+   input.value=x.search||x.title+", "+x.city;input.focus();
    input.dispatchEvent(new Event("input",{bubbles:true}))
   },180)
  };

@@ -1128,7 +1128,7 @@ function routeToData(rt,meta){
    end:navCoordinate(st.endLocation)})
  })});
  meta=meta||{};
- return {raw:rt,pts:pts,steps:steps,km:Number(rt.distanceMeters||0)/1000,sec:Math.max(0,Number(rt.durationMillis||0)/1000),name:meta.name||"",tag:meta.tag||""}
+ return {raw:rt,pts:pts,steps:steps,km:Number(rt.distanceMeters||0)/1000,sec:Math.max(0,Number(rt.durationMillis||0)/1000),name:meta.name||"",tag:meta.tag||"",routeToken:typeof rt.routeToken==="string"?rt.routeToken:""}
 }
 function resetNavProgress(){
  navLastRouteTrim=-1;
@@ -1254,7 +1254,7 @@ async function planNavigation(){
   var mode=inTurkey?"DRIVING":"TWO_WHEELER";
   var req={origin:{lat:o.lat,lng:o.lon},destination:{lat:d.lat,lng:d.lon},travelMode:mode,
    routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",
-   computeAlternativeRoutes:true,fields:["path","legs","viewport","distanceMeters","durationMillis","routeLabels"]};
+   computeAlternativeRoutes:true,fields:["path","legs","viewport","distanceMeters","durationMillis","routeLabels","routeToken"]};
   var result;
   try{result=await Route.computeRoutes(req)}
   catch(routeErr){
@@ -1295,7 +1295,7 @@ async function planNavigation(){
    try{
     var vReq={origin:req.origin,destination:req.destination,travelMode:mode,
      routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",routeModifiers:v.mods,
-     fields:["path","legs","viewport","distanceMeters","durationMillis"]};
+     fields:["path","legs","viewport","distanceMeters","durationMillis","routeToken"]};
     var vr=await Route.computeRoutes(vReq);
     if(!valid())return;
     var rt=vr&&vr.routes&&vr.routes[0];
@@ -1484,7 +1484,15 @@ function startPlannedNavigation(){
    var selectedName=selected.name||"";
    var avoidTolls=/Ücretsiz|Sakin/i.test(selectedName);
    var avoidHighways=/Otoyolsuz|Sakin/i.test(selectedName);
-   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways)){
+   var selectedToken=typeof selected.routeToken==="string"?selected.routeToken:"";
+   var launched=false;
+   if(isFinite(lat)&&isFinite(lon)){
+    if(selectedToken&&typeof AndroidBridge.openNativeNavigationWithToken==="function")
+     launched=AndroidBridge.openNativeNavigationWithToken(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways,selectedToken);
+    else if(typeof AndroidBridge.openNativeNavigation==="function")
+     launched=AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways)
+   }
+   if(launched){
     if(!riding)startRide();
     navStartedRide=false;
     $("status").textContent="Google navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";

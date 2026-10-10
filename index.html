@@ -981,7 +981,7 @@ function cancelPendingNavPreview(){
 function scheduleNavPreview(delay){
  var input=$("navDestination");if(!input||navActive)return;
  var q=input.value.trim();clearTimeout(navPreviewTimer);
- if(q.length<4)return;
+ if(q.length<3)return;
  navPreviewTimer=setTimeout(function(){
   navPreviewTimer=null;
   if(!navActive&&input.value.trim()===q)planNavigation()
@@ -1796,7 +1796,7 @@ function nav(page,button){
  else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){
   if(navAlternatives.length&&navReady)fitAllAlternativeRoutes();
   else if(currentPoint)setMapCenter(currentPoint,16);
-  if(!navReady&&$("navDestination")&&$("navDestination").value.trim().length>=4)scheduleNavPreview(250)
+  if(!navReady&&$("navDestination")&&$("navDestination").value.trim().length>=3)scheduleNavPreview(250)
  },180);}
  else if(page==="ride"){setMode("ride");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
  else {setMode("overlay");showScreen(page);}

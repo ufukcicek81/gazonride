@@ -108,9 +108,10 @@ function galleryPhotos(place,cover){
  // Avoid showing unrelated Akçakoca harbour photos as the waterfall.
  // Curated cards show only explicitly selected regional photos. Never mix in
  // unverified Wikimedia keyword search results (which may depict another town).
- if(place.verifiedPhotosOnly) return Promise.resolve(cover && !place.officialPhotos
-   ? [{src:cover,credit:coverCredit(cover),name:place.search,license:"Wikimedia Commons · Bölge görüntüsü"}]
-   : []);
+ if(place.verifiedPhotosOnly) return Promise.resolve(cover
+  ? [{src:cover,credit:place.officialPhotos||coverCredit(cover),name:place.search,
+   license:place.officialPhotos?"Gülcan Acar · Düzce İl Kültür ve Turizm Müdürlüğü":"Wikimedia Commons · Bölge manzarası"}]
+  : []);
  var lookup=place.search;
  if(cache[lookup])return Promise.resolve(cache[lookup]);
  var initial=[];
@@ -154,6 +155,10 @@ function renderGallery(item,title,officialPhotos){
  function paint(){
   var v=list[selected];
   hero.innerHTML='<img loading="lazy" src="'+esc(v.src)+'" alt="'+esc(title)+'">'+(v.credit?'<a href="'+esc(v.credit)+'" target="_blank" rel="noopener noreferrer" class="gr-guide-credit">Fotoğraf kaynağı ve lisansı <span class="mi">open_in_new</span></a>':'');
+  var heroImage=hero.querySelector("img");
+  if(heroImage)heroImage.onerror=function(){
+   hero.innerHTML='<div class="gr-guide-placeholder">Fotoğraf yüklenemedi. <a href="'+esc(v.credit||officialPhotos||"https://commons.wikimedia.org/")+'" target="_blank" rel="noopener noreferrer">Fotoğraf kaynağını aç</a></div>';
+  };
   counter.textContent=(selected+1)+" / "+list.length+" fotoğraf · "+v.license;
   strip.querySelectorAll("button").forEach(function(b,i){b.classList.toggle("active",i===selected)})
  }
@@ -182,7 +187,8 @@ function showGuide(tile){
  document.getElementById("grGuideNav").onclick=function(){
   closeGuide();var navigate=tile.querySelector("[data-route-open]");if(navigate)navigate.click()
  };
- var cover=getPhotoFromCss(tile.querySelector(".gr-route-visual"));
+ var coverImage=tile.querySelector(".gr-route-cover");
+ var cover=coverImage&&!coverImage.hidden?coverImage.src:getPhotoFromCss(tile.querySelector(".gr-route-visual"));
  galleryPhotos(guide,cover).then(function(images){if(document.getElementById("grGuideOverlay")===overlay)renderGallery(images,title,guide.officialPhotos)})
 }
 function decorate(){

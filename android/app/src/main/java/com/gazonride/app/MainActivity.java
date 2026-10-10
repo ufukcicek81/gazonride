@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.widget.Toast;
 import android.view.WindowManager;
 import android.view.View;
@@ -60,66 +61,133 @@ public class MainActivity extends Activity {
     private SensorManager sensorManager;
     private Sensor rotationSensor;
     private Sensor accelerometerSensor;
-    private float leanZeroDeg = Float.NaN;
+    // Relative gravity from the rotation-vector fusion (no Euler-angle gimbal lock).
+    // A calibration baseline is valid only for a fixed phone/motorcycle mount.
+    private float[] leanZeroGravity = null;
+    private float[] leanPreviousGravity = null;
+    private float[] leanCalibrationSum = new float[3];
+    private boolean leanCalibrating = false;
+    private int leanCalibrationSamples = 0;
+    private long leanCalibrationBeginMs = 0L;
+    private long leanCalibrationStableSinceMs = 0L;
+    private long leanLastSampleMs = 0L;
     private float leanFilteredDeg = 0f;
     private float leanMaxLeftDeg = 0f;
     private float leanMaxRightDeg = 0f;
     private long leanLastUiMs = 0L;
     private boolean leanTracking = false;
 
+    private void leanJs(String javascript) {
+        runOnUiThread(() -> {
+            if(webView!=null) webView.evaluateJavascript("if(window.GaZonLean){" + javascript + "}",null);
+        });
+    }
+
+    private void beginLeanCalibration(){
+        leanPreviousGravity=leanZeroGravity;
+        leanZeroGravity=null;
+        leanCalibrating=true;
+        leanCalibrationSamples=0;
+        leanCalibrationSum=new float[3];
+        leanCalibrationBeginMs=SystemClock.elapsedRealtime();
+        leanCalibrationStableSinceMs=0L;
+        leanLastSampleMs=0L;
+        leanFilteredDeg=0f;
+        leanJs("if(GaZonLean.onCalibrating)GaZonLean.onCalibrating()");
+    }
+
+    private void finishLeanCalibration(){
+        float len=(float)Math.sqrt(
+            leanCalibrationSum[0]*leanCalibrationSum[0]+
+            leanCalibrationSum[1]*leanCalibrationSum[1]+
+            leanCalibrationSum[2]*leanCalibrationSum[2]);
+        if(len<0.001f){failLeanCalibration();return;}
+        leanZeroGravity=new float[]{leanCalibrationSum[0]/len,leanCalibrationSum[1]/len,leanCalibrationSum[2]/len};
+        leanCalibrating=false;
+        leanPreviousGravity=null;
+        leanFilteredDeg=0f;
+        leanMaxLeftDeg=0f;leanMaxRightDeg=0f;
+        prefs.edit().putBoolean("lean_calibrated_v2",true)
+            .putFloat("lean_v2_gx",leanZeroGravity[0])
+            .putFloat("lean_v2_gy",leanZeroGravity[1])
+            .putFloat("lean_v2_gz",leanZeroGravity[2]).apply();
+        leanJs("if(GaZonLean.onCalibrated)GaZonLean.onCalibrated()");
+    }
+
+    private void failLeanCalibration(){
+        leanZeroGravity=leanPreviousGravity;
+        leanPreviousGravity=null;
+        leanCalibrating=false;
+        leanJs("if(GaZonLean.onCalibrationFailed)GaZonLean.onCalibrationFailed()");
+    }
+
     private final SensorEventListener leanSensorListener = new SensorEventListener() {
         @Override public void onSensorChanged(SensorEvent event) {
-            if (!leanTracking || event == null) return;
-            float rawDeg;
-            try {
-                if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR || event.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
-                    float[] rotation = new float[9];
-                    float[] orientation = new float[3];
-                    SensorManager.getRotationMatrixFromVector(rotation, event.values);
-                    SensorManager.getOrientation(rotation, orientation);
-                    rawDeg = (float)Math.toDegrees(orientation[2]);
-                } else {
-                    return;
+            if(!leanTracking||event==null)return;
+            int type=event.sensor.getType();
+            if(type!=Sensor.TYPE_ROTATION_VECTOR&&type!=Sensor.TYPE_GAME_ROTATION_VECTOR)return;
+            float[] rotation=new float[9];
+            try{SensorManager.getRotationMatrixFromVector(rotation,event.values);}
+            catch(Exception ignored){return;}
+            // The third ROW points to world-up, expressed in phone coordinates.
+            float gx=rotation[6],gy=rotation[7],gz=rotation[8];
+            float norm=(float)Math.sqrt(gx*gx+gy*gy+gz*gz);
+            if(norm<0.2f||!Float.isFinite(norm))return;
+            gx/=norm;gy/=norm;gz/=norm;
+            long now=SystemClock.elapsedRealtime();
+            if(leanCalibrating){
+                if(now-leanCalibrationBeginMs>9000L){failLeanCalibration();return;}
+                if(leanCalibrationSamples>0){
+                    float inv=1f/leanCalibrationSamples;
+                    float ax=leanCalibrationSum[0]*inv,ay=leanCalibrationSum[1]*inv,az=leanCalibrationSum[2]*inv;
+                    float alen=(float)Math.sqrt(ax*ax+ay*ay+az*az);
+                    float dot=alen>0?Math.min(1f,Math.max(-1f,(ax*gx+ay*gy+az*gz)/alen)):1f;
+                    if(dot<0.9945f){
+                        // Motor/phone moved more than ~6 degrees. Collect a fresh stable window.
+                        leanCalibrationSamples=0;
+                        leanCalibrationSum=new float[3];
+                        leanCalibrationStableSinceMs=now;
+                    }
                 }
-            } catch(Exception e) {
+                if(leanCalibrationSamples==0)leanCalibrationStableSinceMs=now;
+                leanCalibrationSum[0]+=gx;leanCalibrationSum[1]+=gy;leanCalibrationSum[2]+=gz;
+                leanCalibrationSamples++;
+                if(leanCalibrationSamples>=25&&now-leanCalibrationStableSinceMs>=1100L)finishLeanCalibration();
                 return;
             }
-
-            if (Float.isNaN(leanZeroDeg)) leanZeroDeg = rawDeg;
-            float lean = rawDeg - leanZeroDeg;
-            while (lean > 180f) lean -= 360f;
-            while (lean < -180f) lean += 360f;
-            if (lean > 90f) lean = 90f;
-            if (lean < -90f) lean = -90f;
-
-            // Motorcycle vibration can create one-frame spikes. Ignore impossible jumps,
-            // then apply a stronger low-pass filter for a stable lean display.
-            float delta = lean - leanFilteredDeg;
-            if (Math.abs(delta) > 22f) return;
-            float alpha = Math.abs(delta) > 8f ? 0.10f : 0.07f;
-            leanFilteredDeg = leanFilteredDeg + alpha * delta;
-            if (Math.abs(leanFilteredDeg) < 0.7f) leanFilteredDeg = 0f;
-            if (leanFilteredDeg < 0f) leanMaxLeftDeg = Math.max(leanMaxLeftDeg, -leanFilteredDeg);
-            else leanMaxRightDeg = Math.max(leanMaxRightDeg, leanFilteredDeg);
-
-            long now = System.currentTimeMillis();
-            if (now - leanLastUiMs >= 90L) {
-                leanLastUiMs = now;
-                final float a = leanFilteredDeg;
-                final float l = leanMaxLeftDeg;
-                final float r = leanMaxRightDeg;
-                runOnUiThread(() -> {
-                    if (webView != null) {
-                        String js = "if(window.GaZonLean&&GaZonLean.onSensor){GaZonLean.onSensor("+
-                            String.format(java.util.Locale.US,"%.2f",a)+","+
-                            String.format(java.util.Locale.US,"%.2f",l)+","+
-                            String.format(java.util.Locale.US,"%.2f",r)+")}";
-                        webView.evaluateJavascript(js,null);
-                    }
-                });
+            if(leanZeroGravity==null)return; // Never call a random first frame "0 degrees".
+            float[] base=leanZeroGravity;
+            float dot=Math.max(-1f,Math.min(1f,base[0]*gx+base[1]*gy+base[2]*gz));
+            float crossY=base[2]*gx-base[0]*gz;
+            float crossZ=base[0]*gy-base[1]*gx;
+            // The vehicle-forward axis is in the phone's Y/Z plane, depending on mount tilt.
+            float axisY=base[2],axisZ=-base[1];
+            float axisNorm=(float)Math.sqrt(axisY*axisY+axisZ*axisZ);
+            if(axisNorm<0.1f)return;
+            float signed=(crossY*axisY+crossZ*axisZ)/axisNorm;
+            float raw=(float)Math.toDegrees(Math.atan2(signed,dot));
+            if(!Float.isFinite(raw))return;
+            raw=Math.max(-85f,Math.min(85f,raw));
+            // Do NOT reject a change only because it exceeds 22 degrees:
+            // that made the previous sensor stay stuck at an old lean.
+            float elapsed=leanLastSampleMs>0?Math.min(0.15f,Math.max(0.01f,(now-leanLastSampleMs)/1000f)):0.025f;
+            leanLastSampleMs=now;
+            float alpha=1f-(float)Math.exp(-elapsed/0.17f);
+            float delta=raw-leanFilteredDeg;
+            leanFilteredDeg+=Math.max(-12f,Math.min(12f,delta))*alpha;
+            if(Math.abs(raw)<1.6f&&Math.abs(leanFilteredDeg)<1.6f)leanFilteredDeg=0f;
+            if(leanFilteredDeg<-1.5f)leanMaxLeftDeg=Math.max(leanMaxLeftDeg,-leanFilteredDeg);
+            else if(leanFilteredDeg>1.5f)leanMaxRightDeg=Math.max(leanMaxRightDeg,leanFilteredDeg);
+            if(now-leanLastUiMs>=100L){
+                leanLastUiMs=now;
+                final float a=leanFilteredDeg,l=leanMaxLeftDeg,r=leanMaxRightDeg;
+                leanJs("if(GaZonLean.onSensor)GaZonLean.onSensor("+
+                    String.format(java.util.Locale.US,"%.2f",a)+","+
+                    String.format(java.util.Locale.US,"%.2f",l)+","+
+                    String.format(java.util.Locale.US,"%.2f",r)+")");
             }
         }
-        @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+        @Override public void onAccuracyChanged(Sensor sensor,int accuracy){}
     };
 
     private final BroadcastReceiver updateDownloadReceiver = new BroadcastReceiver() {
@@ -156,11 +224,8 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void calibrateLean(){
             runOnUiThread(() -> {
-                leanZeroDeg = Float.NaN;
-                leanFilteredDeg = 0f;
-                leanMaxLeftDeg = 0f;
-                leanMaxRightDeg = 0f;
-                startLeanSensors(true);
+                startLeanSensors(false);
+                beginLeanCalibration();
             });
         }
         @JavascriptInterface public void resetLeanSession(){
@@ -245,6 +310,11 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+        if(prefs.getBoolean("lean_calibrated_v2",false)){
+            float x=prefs.getFloat("lean_v2_gx",0f),y=prefs.getFloat("lean_v2_gy",0f),z=prefs.getFloat("lean_v2_gz",0f);
+            float length=(float)Math.sqrt(x*x+y*y+z*z);
+            if(length>0.8f&&length<1.2f)leanZeroGravity=new float[]{x/length,y/length,z/length};
+        }
         musicController=new MusicController(this);
         sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
         if(sensorManager!=null){
@@ -319,6 +389,9 @@ public class MainActivity extends Activity {
             leanMaxRightDeg=0f;
         }
         leanTracking=true;
+        if(!leanCalibrating)leanJs(leanZeroGravity!=null
+            ? "if(GaZonLean.onCalibrated)GaZonLean.onCalibrated()"
+            : "if(GaZonLean.onNeedsCalibration)GaZonLean.onNeedsCalibration()");
         sensorManager.unregisterListener(leanSensorListener);
         sensorManager.registerListener(leanSensorListener,rotationSensor,SensorManager.SENSOR_DELAY_GAME);
     }

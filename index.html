@@ -1001,6 +1001,7 @@ function setupNavAutocomplete(){
   var value=input.value.trim(),seq=++navAutocompleteSeq;
   // Invalidate an old asynchronous route response when the target changes.
   ++navPlanSeq;
+  var goButton=$("navGo");if(goButton)goButton.disabled=false;
   clearTimeout(navAutocompleteTimer);
   clearTimeout(navAutoPlanTimer);
   if(navReady&&!navActive){
@@ -1267,6 +1268,7 @@ async function planNavigation(){
   activeNavDestination={lat:Number(d.lat),lon:Number(d.lon)};
   activeRouteMode=mode;
   navActive=false;navReady=true;navOffRouteCount=0;navStartedRide=false;
+  if(document.activeElement===input)input.blur();
   selectAlternativeRoute(0);
   fitAllAlternativeRoutes();
   $("status").textContent=navAlternatives.length>1?
@@ -1471,6 +1473,7 @@ function startPlannedNavigation(){
   try{
    var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
    if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",/Ücretsiz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""),/Otoyolsuz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""))){
+    ++navPlanSeq; // Stop optional route API requests while native Google guidance is running.
     if(!riding)startRide(); // Native foreground ride recording continues in navigation screen.
     navStartedRide=false;
     $("status").textContent="Google canlı navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";

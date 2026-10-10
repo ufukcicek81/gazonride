@@ -7,6 +7,9 @@ on:
       - 'gazon-destinations.js'
       - 'social.js'
       - 'gazon-guides.js'
+      - 'index.html'
+      - 'gazon-music.css'
+      - 'gazon-guides.css'
       - '.github/workflows/import-gazon-destinations.yml'
   workflow_dispatch:
 permissions:
@@ -51,3 +54,27 @@ jobs:
               assert f'"{title.group(1)}":{{' in guides, f'Route missing guide: {title.group(1)}'
           print('PASS: All 8 curated route cards have matching detail pages')
           PY
+      - name: JavaScript syntax and ride/photo regression checks
+        run: |
+          node --check social.js
+          node --check gazon-guides.js
+          node --check gazon-destinations.js
+          python3 - <<'PY'
+          import pathlib, re
+          html = pathlib.Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r'<script(?:\\s+[^>]*)?>([\\s\\S]*?)</script>', html, flags=re.I)
+          assert len(scripts) == 2, f"Expected 2 inline scripts, found {len(scripts)}"
+          for i, code in enumerate(scripts):
+              pathlib.Path(f"/tmp/gazonride-inline-{i}.js").write_text(code, encoding="utf-8")
+          assert "function resetRideDisplay()" in html
+          assert "resetRideDisplay();" in html
+          assert 'body.mode-ride .actions{' in html
+          for name in ("duzce-aktas-kurugol", "ucmakdere-sarkoy"):
+              routes = pathlib.Path("social.js").read_text(encoding="utf-8")
+              line = next(line for line in routes.splitlines() if f'routeKey:"{name}"' in line)
+              assert 'photo:"https://' in line, f"Missing photo for {name}"
+              assert 'photoCredit:"https://' in line, f"Missing photo credit for {name}"
+          print("PASS: Ride reset, safe button placement and photo sources present")
+          PY
+          node --check /tmp/gazonride-inline-0.js
+          node --check /tmp/gazonride-inline-1.js

@@ -608,7 +608,7 @@ function applyPosition(pos){
 lastGpsTs=ts;
    lastPoint=p;
    var sp=c.speed!=null&&c.speed>=0?c.speed*3.6:0;$("speed").textContent=Math.round(sp);maxSpeed=Math.max(maxSpeed,sp);$("max").textContent=Math.round(maxSpeed);
-   if(c.altitude!=null){$("altitude").textContent=Math.round(c.altitude);if(prevAlt!=null&&c.altitude>prevAlt)totalClimb+=c.altitude-prevAlt;prevAlt=c.altitude;$("elev").textContent=Math.round(totalClimb);}
+   if(c.altitude!=null&&isFinite(Number(c.altitude))){var alt=Number(c.altitude),delta=prevAlt==null?0:alt-prevAlt;$("altitude").textContent=Math.round(alt);if(track.length>=2&&hav({lat:track[track.length-2][0],lon:track[track.length-2][1]},p)>.008&&delta>=3&&delta<18)totalClimb+=delta;prevAlt=alt;$("elev").textContent=Math.round(totalClimb);}
    var hours=(Date.now()-startTime)/3600000;$("avg").textContent=hours?Math.round(totalKm/hours):0;var ci=$("rideConsumptionInput"),cons=ci?Number(String(ci.value||"0").replace(",",".")):Number((getRiderProfile().motor||{}).consumption||0);var lf=$("liveFuelUsed");if(lf)lf.textContent=((totalKm*cons/100)||0).toFixed(2)+" L";
  }
 }
@@ -768,11 +768,25 @@ function calibrateLeanSensor(){
 function nativeRidePoints(){
  try{
   if(window.AndroidBridge&&typeof AndroidBridge.getBufferedPoints==="function"){
-   var a=JSON.parse(AndroidBridge.getBufferedPoints()||"[]");
-   return (Array.isArray(a)?a:[]).filter(function(p){return p&&isFinite(Number(p.lat))&&isFinite(Number(p.lon))}).map(function(p){return [Number(p.lat),Number(p.lon),p.altitude==null?null:Number(p.altitude),Number(p.time||Date.now())]})
+   var raw=JSON.parse(AndroidBridge.getBufferedPoints()||"[]"),out=[],last=null;
+   (Array.isArray(raw)?raw:[]).forEach(function(p){
+    if(!p||!isFinite(Number(p.lat))||!isFinite(Number(p.lon)))return;
+    var acc=Number(p.accuracy),time=Number(p.time||0);
+    if(!isFinite(acc)||acc<=0||acc>65||!isFinite(time)||time<=0)return;
+    var point={lat:Number(p.lat),lon:Number(p.lon)},dist=last?hav(last.p,point)*1000:0;
+    if(last){
+     var dt=(time-last.ts)/1000;
+     if(dt<=0||dt<180&&dist>Math.max(35,dt*62+Math.max(acc,last.acc)*1.2))return;
+     if(dt<8&&dist<Math.max(4,Math.min(9,acc*.27)))return;
+     if(p.speed!=null&&Number(p.speed)>=0&&Number(p.speed)<1.2&&dist<Math.max(10,Math.min(18,acc*.45)))return;
+    }
+    out.push([point.lat,point.lon,p.altitude==null?null:Number(p.altitude),time]);
+    last={p:point,ts:time,acc:acc};
+   });
+   return out;
   }
- }catch(e){}
- return []
+ }catch(e){console.warn("GaZonRide native GPS",e);}
+ return [];
 }
 function trackDistanceKm(points){
  var sum=0,last=null;
@@ -1056,6 +1070,7 @@ function routeToData(rt,meta){
  return {raw:rt,pts:pts,steps:steps,km:Number(rt.distanceMeters||0)/1000,sec:Math.max(0,Number(rt.durationMillis||0)/1000),name:meta.name||"",tag:meta.tag||""}
 }
 function resetNavProgress(){
+ navLastRouteTrim=-1;
  if(window.GaZonNavProgress&&GaZonNavProgress.initialize){
   GaZonNavProgress.initialize(navPathPoints,navSteps,navTotalKm,navTotalSec)
  }
@@ -1350,6 +1365,8 @@ function startPlannedNavigation(){
  navReady=false;
  navGuidanceStart=Date.now();
  navLastPanAt=0;navGpsErrorAt=0;resetNavProgress();
+ navAlternativePolylines.forEach(function(p){if(p!==navRoute)try{p.setMap(null)}catch(e){}});
+ navAlternativeMarkers.forEach(function(m){try{m.setMap(null)}catch(e){}});
  lastGuidanceStep=-1;navOffRouteCount=0;navSteps.forEach(function(s){s._spokenStage=0});
  if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
  requestWakeLock();
@@ -1377,6 +1394,23 @@ function renderNavStep(){
  $("navNext").textContent=s.distance>=1000?(s.distance/1000).toFixed(1)+" km":Math.max(10,Math.round(s.distance/10)*10)+" m";
  updateGuidanceHud(currentPoint);
 }
+function trimPassedNavigationRoute(progress){
+ if(!navActive||!navRoute||!progress||!progress.valid||navPathPoints.length<2)return;
+ var target=Math.max(0,progress.progressMeters-12);
+ if(navLastRouteTrim>=0&&Math.abs(target-navLastRouteTrim)<12)return;
+ navLastRouteTrim=target;
+ var travelled=0,points=navPathPoints;
+ for(var i=1;i<points.length;i++){
+  var a=points[i-1],b=points[i],segment=hav(a,b)*1000;
+  if(travelled+segment>=target||i===points.length-1){
+   var t=segment>0?Math.max(0,Math.min(1,(target-travelled)/segment)):0;
+   var head={lat:a.lat+(b.lat-a.lat)*t,lon:a.lon+(b.lon-a.lon)*t};
+   setPolyline(navRoute,[head].concat(points.slice(i)));
+   return;
+  }
+  travelled+=segment;
+ }
+}
 function updateNavigation(p,ts,accuracy,speed){
  if(!navActive)return;
  var state=null,engine=window.GaZonNavProgress;
@@ -1392,6 +1426,7 @@ function updateNavigation(p,ts,accuracy,speed){
    }
   }
  }
+ if(state&&state.valid)trimPassedNavigationRoute(state);
  var offKm=state&&isFinite(state.accuracyMeters)?state.accuracyMeters/1000:distanceToActiveRouteKm(p);
  if(offKm>0.10)navOffRouteCount++;else if(offKm<0.065)navOffRouteCount=0;
  if(navOffRouteCount>=3&&!navRecalculating)recalculateNavigation();

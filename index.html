@@ -590,7 +590,7 @@ function followRideCamera(p,c,ts){
  }catch(e){console.warn("GaZonRide follow camera",e);}
 }
 function applyPosition(pos){
- var c=pos.coords,p={lat:Number(c.latitude),lon:Number(c.longitude)},ts=Number(pos.timestamp||c.timestamp||Date.now());if(!isFinite(p.lat)||!isFinite(p.lon)||!isFinite(ts))return;if((riding||navActive)&&!acceptLiveGpsFix(p,c,ts)){if(Number(c.accuracy)>65)$("gps").textContent="GPS doğruluğu bekleniyor";return;}currentPoint=p;if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
+ var c=pos.coords,p={lat:Number(c.latitude),lon:Number(c.longitude)},ts=Number(pos.timestamp||c.timestamp||Date.now());if(!isFinite(p.lat)||!isFinite(p.lon)||!isFinite(ts))return;if((riding||navActive)&&!acceptLiveGpsFix(p,c,ts)){if(Number(c.accuracy)>65)$("gps").textContent="GPS doğruluğu bekleniyor";return;}currentPoint=p;if(navPreviewWaitForGps&&!navActive){navPreviewWaitForGps=false;scheduleNavPreview(130)}if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
   if(c.speed!=null&&Number(c.speed)>=0){var speedHUD=$("guidanceSpeed");if(speedHUD)speedHUD.textContent=Math.round(Number(c.speed)*3.6)}
   updateNavigation(p,ts,c.accuracy,c.speed)
  }
@@ -1471,6 +1471,25 @@ window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,recenter
 
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
+ clearTimeout(navPreviewTimer);navPreviewTimer=null;
+ ++navPreviewSeq;hideNavPreview();
+ // On the Android APK, use the Google Navigation SDK for turn cards, voice and
+ // live ETA. Browser-only usage keeps the existing navigation fallback.
+ if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
+  try{
+   var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
+   var selected=navAlternatives[navSelectedAlternative]||{};
+   var selectedName=selected.name||"";
+   var avoidTolls=/Ücretsiz|Sakin/i.test(selectedName);
+   var avoidHighways=/Otoyolsuz|Sakin/i.test(selectedName);
+   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways)){
+    if(!riding)startRide();
+    navStartedRide=false;
+    $("status").textContent="Google navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";
+    return
+   }
+  }catch(e){console.warn("Native navigation launch",e)}
+ }
  navActive=true;
  navReady=false;
  navGuidanceStart=Date.now();
@@ -1543,6 +1562,8 @@ function updateNavigation(p,ts,accuracy,speed){
  updateGuidanceHud(p)
 }
 function stopNavigation(){
+ ++navPreviewSeq;clearTimeout(navPreviewTimer);navPreviewTimer=null;
+ hideNavPreview();navPreviewNotice("");
  if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();
  try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}
  if(navGuidanceTimer){clearInterval(navGuidanceTimer);navGuidanceTimer=null}
@@ -1769,7 +1790,11 @@ function nav(page,button){
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
  closeScreen();
  if(page==="home"||page==="discover"){setMode("discover");setDiscoverFilter("discover");}
- else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
+ else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){
+  if(navAlternatives.length&&navReady)fitAllAlternativeRoutes();
+  else if(currentPoint)setMapCenter(currentPoint,16);
+  if(!navReady&&$("navDestination")&&$("navDestination").value.trim().length>=4)scheduleNavPreview(250)
+ },180);}
  else if(page==="ride"){setMode("ride");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
  else {setMode("overlay");showScreen(page);}
 }
@@ -1778,7 +1803,9 @@ function boot(){
  var mapReady=false;
  initMap().then(function(ok){
    mapReady=ok;
-   if(ok){startGPS();if(currentPoint)setTimeout(function(){setMapCenter(currentPoint,16);},200);}
+   if(ok){startGPS();if(currentPoint)setTimeout(function(){setMapCenter(currentPoint,16);},200);
+    if(navPreviewWaitForGoogle&&!navActive){navPreviewWaitForGoogle=false;scheduleNavPreview(180)}
+   }
  }).catch(function(e){console.warn("Google Maps init",e);});
  var restoredRide=restoreActiveRideFromNative();
  if(!restoredRide&&window.AndroidBridge&&window.AndroidBridge.clearBufferedPoints){
@@ -1804,12 +1831,13 @@ function boot(){
    card.addEventListener("click",function(){
      var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
      $("navDestination").value=card.getAttribute("data-route-destination");
+     cancelPendingNavPreview();scheduleNavPreview(240);
    });
  });
  document.querySelectorAll("[data-place-query]").forEach(function(card){
    card.addEventListener("click",function(){
      var b=document.querySelector('[data-page="navigation"]');nav("navigation",b);
-     $("navDestination").value=card.getAttribute("data-place-query");$("navDestination").focus();
+     $("navDestination").value=card.getAttribute("data-place-query");$("navDestination").focus();cancelPendingNavPreview();scheduleNavPreview(650);
    });
  });
  $("motorBtn").addEventListener("click",showMotorChooser);
@@ -1828,6 +1856,7 @@ function boot(){
  setupNavAutocomplete();setupOriginAutocomplete();
  var rb=$("navRecenterBtn");if(rb)rb.onclick=recenterNavigationOnce;
  $("navGo").addEventListener("click",planNavigation);
+ $("navPreviewStart").addEventListener("click",startPlannedNavigation);
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){clearNavSuggestions();planNavigation();}});
  $("navDrive").addEventListener("click",startPlannedNavigation);
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);

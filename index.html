@@ -1498,7 +1498,92 @@ function recenterNavigationOnce(){
  map.setZoom(17);
  try{map.setTilt(navActive?25:0);map.setHeading(navActive&&headingReady?lastHeading:0)}catch(e){}
 }
-window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,recenter:recenterNavigationOnce};
+
+var cardLaunchSeq=0;
+// "Rotaya Sür" must launch guidance, not just copy an address to an input.
+// Native Google Navigation can start by coordinates even before WebView GPS settles.
+async function launchCardDestination(item){
+ var request=++cardLaunchSeq;
+ var title=String(item&&(item.destination||item.search||item.title)||"").trim();
+ if(!title)return false;
+ var label=String(item&&(item.title||item.destination||item.search)||title).trim();
+ var lat=Number(item&&item.lat),lon=Number(item&&item.lon);
+ var knownCoordinates=item&&item.lat!=null&&item.lon!=null&&
+  Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180;
+ var tab=document.querySelector('.navBtn[data-page="navigation"]');
+ if(tab)nav("navigation",tab);else setMode("navigation");
+ clearTimeout(navAutoPlanTimer);clearTimeout(navAutocompleteTimer);
+ ++navPlanSeq; // Old asynchronous route previews must not override the selected card.
+ clearNavSuggestions();clearAlternativeRoutes();
+ navReady=false;navActive=false;
+ var input=$("navDestination");input.value=title;
+ delete input.dataset.lat;delete input.dataset.lon;delete input.dataset.label;
+ if(knownCoordinates){input.dataset.lat=String(lat);input.dataset.lon=String(lon);input.dataset.label=label}
+ var box=$("navChoices");
+ function progress(message){
+  if(request!==cardLaunchSeq)return;
+  $("status").textContent=message;
+  if(box){box.classList.add("active");
+   box.innerHTML='<div class="gr-route-chooser-loading"><span class="mi">navigation</span> '+navRouteLabel(message)+'</div>'}
+ }
+ function fail(message){
+  if(request!==cardLaunchSeq)return false;
+  $("status").textContent=message;
+  if(box){box.classList.add("active");
+   box.innerHTML='<div class="gr-route-chooser-loading"><span class="mi">error_outline</span> '+navRouteLabel(message)+
+    '<button type="button" id="retryCardNav" style="margin-left:10px;padding:9px;border-radius:10px;background:#ff5a1f;color:white;border:0">Tekrar dene</button></div>';
+   var retry=box.querySelector("#retryCardNav");if(retry)retry.onclick=function(){launchCardDestination(item)}
+  }
+  return false
+ }
+ progress("Hedef hazırlanıyor: "+label);
+ try{
+  if(!knownCoordinates){
+   progress("Hedef haritada bulunuyor: "+title);
+   var readyUntil=Date.now()+14000;
+   while(!(googleReady&&geocoder)&&Date.now()<readyUntil){
+    if(request!==cardLaunchSeq)return false;
+    await new Promise(function(ok){setTimeout(ok,200)})
+   }
+   if(!(googleReady&&geocoder))return fail("Google Haritalar yüklenemedi. İnterneti kontrol edip tekrar dene.");
+   var found=await geocodeGoogle(title);
+   if(request!==cardLaunchSeq)return false;
+   lat=found.lat;lon=found.lon;knownCoordinates=true;
+   // Display the resolved address, not a broad/default map target.
+   label=found.label||title;
+   input.dataset.lat=String(lat);input.dataset.lon=String(lon);input.dataset.label=label;
+  }
+  if(!Number.isFinite(lat)||!Number.isFinite(lon))return fail("Hedefin koordinatı bulunamadı.");
+  activeNavLabel=label;activeNavDestination={lat:lat,lon:lon};activeRouteMode="DRIVING";
+  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"){
+   progress("Google navigasyon başlatılıyor: "+label);
+   try{
+    if(AndroidBridge.openNativeNavigation(lat,lon,label,false,false)){
+     if(request!==cardLaunchSeq)return false;
+     if(box){box.classList.remove("active");box.innerHTML=""}
+     if(!riding)startRide();
+     navStartedRide=false;
+     $("status").textContent="Google navigasyon açıldı. Sürüş kaydı başlatılıyor.";
+     return true
+    }
+   }catch(nativeError){console.warn("Card native navigation",nativeError)}
+  }
+  // Browser fallback: await both map and GPS, then start the calculated route.
+  progress("GPS ve yol seçenekleri hazırlanıyor...");
+  if(!await waitCommunityNavReady())return fail("GPS konumu veya Google Haritalar hazır değil. Konum iznini kontrol et.");
+  if(request!==cardLaunchSeq)return false;
+  await planNavigation();
+  if(request!==cardLaunchSeq)return false;
+  if(!navReady||!navRoute)return fail("Bu hedef için araç yolu bulunamadı. Başka bir varış noktası seç.");
+  startPlannedNavigation();
+  return true
+ }catch(e){
+  console.warn("Card navigation start failed",e);
+  return fail("Hedef çözümlenemedi. Yer adını kontrol ederek tekrar dene.")
+ }
+}
+
+window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,launchCardDestination:launchCardDestination,recenter:recenterNavigationOnce};
 
 function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}

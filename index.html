@@ -973,6 +973,7 @@ function cancelPendingNavPreview(){
  navPreviewWaitForGps=false;navPreviewWaitForGoogle=false;
  if(navActive)return;
  navReady=false;navRoute=null;activeNavDestination=null;
+ var searchButton=$("navGo");if(searchButton){searchButton.disabled=false;searchButton.innerHTML='<span class="mi">navigation</span>'}
  clearAlternativeRoutes();
  var card=$("navInstruction");if(card)card.classList.remove("active");
  hideNavPreview();navPreviewNotice("");
@@ -1473,6 +1474,7 @@ function startPlannedNavigation(){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
  clearTimeout(navPreviewTimer);navPreviewTimer=null;
  ++navPreviewSeq;hideNavPreview();
+ var searchButton=$("navGo");if(searchButton){searchButton.disabled=false;searchButton.innerHTML='<span class="mi">navigation</span>'}
  // On the Android APK, use the Google Navigation SDK for turn cards, voice and
  // live ETA. Browser-only usage keeps the existing navigation fallback.
  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
@@ -1563,6 +1565,7 @@ function updateNavigation(p,ts,accuracy,speed){
 }
 function stopNavigation(){
  ++navPreviewSeq;clearTimeout(navPreviewTimer);navPreviewTimer=null;
+ var searchButton=$("navGo");if(searchButton){searchButton.disabled=false;searchButton.innerHTML='<span class="mi">navigation</span>'}
  hideNavPreview();navPreviewNotice("");
  if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();
  try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}

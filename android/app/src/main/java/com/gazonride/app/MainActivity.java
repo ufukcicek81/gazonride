@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
                 }
             });
         }
-        @JavascriptInterface public boolean openNativeNavigation(double latitude,double longitude,String destination){
+        @JavascriptInterface public boolean openNativeNavigation(double latitude,double longitude,String destination,boolean avoidTolls,boolean avoidHighways){
             if(!Double.isFinite(latitude)||!Double.isFinite(longitude)
                     ||Math.abs(latitude)>90||Math.abs(longitude)>180)return false;
             final String safeTitle=destination==null?"Hedef":
@@ -200,6 +200,8 @@ public class MainActivity extends Activity {
                     intent.putExtra("destination_lat",latitude);
                     intent.putExtra("destination_lng",longitude);
                     intent.putExtra("destination_title",safeTitle);
+                    intent.putExtra("avoid_tolls",avoidTolls);
+                    intent.putExtra("avoid_highways",avoidHighways);
                     startActivity(intent);
                 } catch(Exception e){
                     Toast.makeText(MainActivity.this,

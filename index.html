@@ -1109,23 +1109,69 @@ function addUniqueRoute(target,d){
 }
 function fitAllAlternativeRoutes(){
  if(!map||!navAlternatives.length)return;
- var b=new google.maps.LatLngBounds();navAlternatives.forEach(function(d){d.pts.forEach(function(p){b.extend({lat:p.lat,lng:p.lon})})});
- if(!b.isEmpty())map.fitBounds(b,44);
+ var b=new google.maps.LatLngBounds();
+ navAlternatives.forEach(function(d){d.pts.forEach(function(p){b.extend({lat:p.lat,lng:p.lon})})});
+ if(!b.isEmpty()){
+  // Leave visible map space above the bottom route cards and below the search.
+  var h=map.getDiv?map.getDiv().clientHeight:window.innerHeight;
+  var pad={top:Math.round(Math.min(205,h*.29)),bottom:Math.round(Math.min(210,h*.29)),left:30,right:30};
+  map.fitBounds(b,pad)
+ }
 }
 function selectAlternativeRoute(i){
  var d=navAlternatives[i];if(!d)return;navSelectedAlternative=i;
- navAlternativePolylines.forEach(function(p,j){p.setOptions({strokeColor:j===i?"#ff5a1f":"#718096",strokeWeight:j===i?9:7,strokeOpacity:j===i?.98:.88,zIndex:j===i?30:12})});
- navAlternativeMarkers.forEach(function(m,j){try{m.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:j===i?16:14,fillColor:j===i?"#ff5a1f":"#66717f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3});m.setLabel({text:String(j+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"})}catch(e){}});
+ navAlternativePolylines.forEach(function(p,j){p.setOptions({strokeColor:j===i?"#ff5a1f":"#667b96",strokeWeight:j===i?9:6,strokeOpacity:j===i?1:.90,zIndex:j===i?40:15})});
+ navAlternativeMarkers.forEach(function(m,j){try{m.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:j===i?16:13,fillColor:j===i?"#ff5a1f":"#59728e",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3});m.setLabel({text:String(j+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"})}catch(e){}});
  navRoute=navAlternativePolylines[i]||navRoute;navPathPoints=d.pts.slice();navSteps=d.steps;navStepIndex=0;navTotalKm=d.km;navTotalSec=d.sec;navReady=true;resetNavProgress();
- 
  $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel||"Seçilen rota";renderNavStep();
  var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.style.display="block";driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat'}
+ renderAlternativeChoices();
+}
+function navRouteLabel(text){
+ return String(text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")
 }
 function renderAlternativeChoices(){
  var box=$("navChoices");if(!box)return;
  if(!navAlternatives.length){box.innerHTML="";box.classList.remove("active");return}
- box.innerHTML=navAlternatives.map(function(d,i){var mins=Math.max(1,Math.round(d.sec/60)),name=d.name||(i===0?"Önerilen rota":"Alternatif "+i),tag=d.tag||(i===0?"En uygun":"Farklı yol");return '<button type="button" class="navChoice '+(i===navSelectedAlternative?"active":"")+'" data-nav-alt="'+i+'"><b>'+(i+1)+'. '+name+'</b><span>'+d.km.toFixed(1)+' km · '+mins+' dk</span><em>'+tag+'</em></button>'}).join("");
- box.classList.add("active");box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}})
+ var previous=box.querySelector(".gr-route-chooser-options");
+ var scroll=previous?previous.scrollLeft:0;
+ var buttons=navAlternatives.map(function(d,i){
+  var mins=Math.max(1,Math.round(d.sec/60)),name=d.name||(i===0?"Önerilen rota":"Alternatif "+i),tag=d.tag||(i===0?"En uygun":"Farklı yol");
+  return '<button type="button" aria-pressed="'+(i===navSelectedAlternative)+'" class="navChoice '+(i===navSelectedAlternative?"active":"")+'" data-nav-alt="'+i+'"><b>'+(i+1)+'. '+navRouteLabel(name)+'</b><span>'+d.km.toFixed(1)+' km · '+mins+' dk</span><em>'+navRouteLabel(tag)+'</em></button>'
+ }).join("");
+ box.innerHTML='<div class="gr-route-chooser-title"><span>Rotanı seç</span><small>'+navAlternatives.length+' güzergâh · Haritadaki çizgiye de dokunabilirsin</small></div>'+
+ '<div class="gr-route-chooser-options" role="group" aria-label="Alternatif rotalar">'+buttons+'</div>'+
+ '<div class="gr-route-chooser-bottom">'+
+ '<button type="button" id="navRouteStart"><span class="mi">two_wheeler</span> Seçili rotayla navigasyona başla</button>'+
+ '<button type="button" id="navRouteMaps" aria-label="Google Haritalar uygulamasında aç" title="Google Haritalar’da aç"><span class="mi">open_in_new</span></button></div>';
+ box.classList.add("active");
+ var options=box.querySelector(".gr-route-chooser-options");
+ if(options)options.scrollLeft=scroll;
+ box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}});
+ var start=box.querySelector("#navRouteStart");if(start)start.onclick=startPlannedNavigation;
+ var maps=box.querySelector("#navRouteMaps");if(maps)maps.onclick=openGoogleMapsNavigation
+}
+function appendNavAlternativePreview(rd,index){
+ if(!rd||!Array.isArray(rd.pts)||!rd.pts.length)return;
+ var p=new google.maps.Polyline({
+  map:map,path:rd.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),
+  strokeColor:index===navSelectedAlternative?"#ff5a1f":"#667b96",
+  strokeWeight:index===navSelectedAlternative?9:6,
+  strokeOpacity:index===navSelectedAlternative?1:.90,zIndex:index===navSelectedAlternative?40:15,clickable:true
+ });
+ p.addListener("click",function(){selectAlternativeRoute(index)});
+ navAlternativePolylines[index]=p;
+ var mid=rd.pts[Math.max(0,Math.floor(rd.pts.length*.52))];
+ var m=new google.maps.Marker({
+  map:map,position:{lat:mid.lat,lng:mid.lon},zIndex:60+index,
+  label:{text:String(index+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"},
+  icon:{path:google.maps.SymbolPath.CIRCLE,scale:index===navSelectedAlternative?16:13,
+   fillColor:index===navSelectedAlternative?"#ff5a1f":"#59728e",
+   fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3},
+  title:(index+1)+". "+(rd.name||"Alternatif rota")
+ });
+ m.addListener("click",function(){selectAlternativeRoute(index)});
+ navAlternativeMarkers[index]=m
 }
 function distanceToActiveRouteKm(p){
  if(!p||!navPathPoints.length)return 0;

@@ -25,6 +25,7 @@ import com.google.android.libraries.navigation.ListenableResultFuture;
 import com.google.android.libraries.navigation.NavigationApi;
 import com.google.android.libraries.navigation.NavigationView;
 import com.google.android.libraries.navigation.Navigator;
+import com.google.android.libraries.navigation.CustomRoutesOptions;
 import com.google.android.libraries.navigation.RoutingOptions;
 import com.google.android.libraries.navigation.TimeAndDistance;
 import com.google.android.libraries.navigation.Waypoint;
@@ -244,38 +245,71 @@ public final class NativeNavigationActivity extends Activity {
             options.avoidTolls(getIntent().getBooleanExtra("avoid_tolls",false));
             options.avoidHighways(getIntent().getBooleanExtra("avoid_highways",false));
             message("Google güzergâhı hesaplanıyor…");
-            ListenableResultFuture<Navigator.RouteStatus> request =
-                    navigator.setDestination(waypoint, options);
+            String token = getIntent().getStringExtra("route_token");
+            boolean hasToken = token != null && !token.isEmpty();
+            ListenableResultFuture<Navigator.RouteStatus> request;
+            if (hasToken) {
+                try {
+                    CustomRoutesOptions selectedRoute = CustomRoutesOptions.builder()
+                            .setRouteToken(token)
+                            .setTravelMode(CustomRoutesOptions.TravelMode.DRIVING)
+                            .build();
+                    request = navigator.setDestinations(
+                            java.util.Collections.singletonList(waypoint), selectedRoute);
+                } catch (Exception tokenError) {
+                    hasToken = false;
+                    request = navigator.setDestination(waypoint, options);
+                }
+            } else {
+                request = navigator.setDestination(waypoint, options);
+            }
+            final boolean retryWithoutToken = hasToken;
             request.setOnResultListener(code -> runOnUiThread(() -> {
                 if (closed || navigator == null) return;
-                if (code != Navigator.RouteStatus.OK) {
-                    message("Google rota oluşturamadı: " + code);
-                    return;
-                }
-                try {
-                    // SDK 7.3 uses integer audio flags (the newer
-                    // AudioGuidanceSettings API was added only in SDK 7.8).
-                    navigator.setAudioGuidance(
-                            Navigator.AudioGuidance.VOICE_ALERTS_AND_GUIDANCE
-                            | Navigator.AudioGuidance.BLUETOOTH_AUDIO
-                            | Navigator.AudioGuidance.VIBRATION);
-                    progressListener = () -> updateProgress();
-                    navigator.addRemainingTimeOrDistanceChangedListener(15, 25, progressListener);
-                    arrivalListener = event -> runOnUiThread(() -> {
-                        message("Hedefe ulaştın. Güvenli bir yerde navigasyonu bitirebilirsin.");
-                        progressText.setText("Varış noktasına ulaştın");
-                    });
-                    navigator.addArrivalListener(arrivalListener);
-                    navigator.startGuidance();
-                    routeStarted = true;
-                    updateProgress();
-                    message("Google canlı yönlendirme ve sesli komutlar aktif.");
-                } catch (Exception error) {
-                    message("Yol tarifi başlatılamadı: " + error.getClass().getSimpleName());
+                if (code != Navigator.RouteStatus.OK && retryWithoutToken) {
+                    message("Seçilen yol yeniden hesaplanıyor…");
+                    try {
+                        navigator.setDestination(waypoint, options)
+                                .setOnResultListener(again ->
+                                        runOnUiThread(() -> beginNativeGuidance(again)));
+                    } catch (Exception error) {
+                        message("Google yeni rota hesaplayamadı.");
+                    }
+                } else {
+                    beginNativeGuidance(code);
                 }
             }));
         } catch (Exception error) {
             message("Hedef işlenemedi: " + error.getClass().getSimpleName());
+        }
+    }
+
+    private void beginNativeGuidance(Navigator.RouteStatus code) {
+        if (closed || navigator == null) return;
+        if (code != Navigator.RouteStatus.OK) {
+            message("Google rota oluşturamadı: " + code);
+            return;
+        }
+        try {
+            // Navigation SDK 7.3 audio flags. Enable turn-by-turn
+            // instructions on Bluetooth headsets and haptic cues.
+            navigator.setAudioGuidance(
+                    Navigator.AudioGuidance.VOICE_ALERTS_AND_GUIDANCE
+                    | Navigator.AudioGuidance.BLUETOOTH_AUDIO
+                    | Navigator.AudioGuidance.VIBRATION);
+            progressListener = () -> updateProgress();
+            navigator.addRemainingTimeOrDistanceChangedListener(15, 25, progressListener);
+            arrivalListener = event -> runOnUiThread(() -> {
+                message("Hedefe ulaştın. Güvenli bir yerde navigasyonu bitirebilirsin.");
+                progressText.setText("Varış noktasına ulaştın");
+            });
+            navigator.addArrivalListener(arrivalListener);
+            navigator.startGuidance();
+            routeStarted = true;
+            updateProgress();
+            message("Google canlı yönlendirme ve sesli komutlar aktif.");
+        } catch (Exception error) {
+            message("Yol tarifi başlatılamadı: " + error.getClass().getSimpleName());
         }
     }
 

@@ -62,7 +62,7 @@ jobs:
           python3 - <<'PY'
           import pathlib, re
           html = pathlib.Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r'<script(?:\\s+[^>]*)?>([\\s\\S]*?)</script>', html, flags=re.I)
+          scripts = re.findall(r'<script(?:\s+[^>]*)?>([\s\S]*?)</script>', html, flags=re.I)
           assert len(scripts) == 2, f"Expected 2 inline scripts, found {len(scripts)}"
           for i, code in enumerate(scripts):
               pathlib.Path(f"/tmp/gazonride-inline-{i}.js").write_text(code, encoding="utf-8")

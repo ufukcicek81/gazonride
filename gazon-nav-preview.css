@@ -1,0 +1,91 @@
+/* GaZonRide — route choices and pre-drive preview.
+   This stylesheet intentionally never changes 3D replay or the SDK's native view. */
+body.mode-navigation:not(.guidance-active) .navChoices { display:none!important; }
+body.mode-navigation:not(.guidance-active) .navChoices.active {
+ display:flex!important;gap:9px;overflow-x:auto;overflow-y:hidden;
+ overscroll-behavior-x:contain;scroll-snap-type:x proximity;
+ padding:3px 2px 11px;margin-top:4px;scrollbar-width:none;
+ min-width:0;max-width:100%;touch-action:pan-x;
+}
+body.mode-navigation .navChoices::-webkit-scrollbar{display:none}
+body.mode-navigation .navChoices .navChoice{
+ display:flex;flex:0 0 clamp(132px,40vw,184px);flex-direction:column;justify-content:flex-start;
+ gap:4px;min-width:0;max-width:192px;min-height:88px;padding:10px 11px;
+ color:#f7f9fc;background:#18212ceD;border:1px solid #516071;
+ border-radius:15px;text-align:left;scroll-snap-align:start;
+ box-shadow:0 6px 14px #0003;touch-action:pan-x;
+}
+body.mode-navigation .navChoices .navChoice.active{
+ background:#2e251f;border:2px solid #ff632c;box-shadow:0 0 0 1px #ff632c33,0 8px 23px #0004
+}
+body.mode-navigation .navChoices .navChoice b{
+ display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.4;
+}
+body.mode-navigation .navChoices .navChoice span{
+ display:block;color:#e6edf6;font-size:12px;font-weight:850;margin-top:0;line-height:1.35;
+ font-variant-numeric:tabular-nums
+}
+body.mode-navigation .navChoices .navChoice em{
+ display:block;color:#c8d2e1;font-size:10px;line-height:1.25;font-style:normal;font-weight:700;margin-top:1px
+}
+body.mode-navigation .navChoices .navChoice.active em{color:#ffad8a}
+body.mode-navigation .navPreviewHeading{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ color:#f8fafc;font-size:11px;font-weight:950;letter-spacing:.3px;padding:8px 2px 3px;margin-top:4px
+}
+body.mode-navigation .navPreviewHeading[hidden]{display:none!important}
+body.mode-navigation .navPreviewHeading small{
+ display:block;color:#b8c9d7;font-size:10px;font-weight:650;letter-spacing:0;margin-top:2px
+}
+body.mode-navigation .navPreviewHeading>.mi{font-size:19px;color:#ff7950}
+body.mode-navigation .navPreviewLoading{
+ color:#f9fafb;background:rgba(18,25,33,.94);border:1px solid #3b4556;
+ border-radius:12px;padding:9px 12px;font-size:12px;line-height:1.4;
+ margin-top:7px;box-shadow:0 8px 23px #0003
+}
+body.mode-navigation .navPreviewLoading[hidden]{display:none!important}
+body.mode-navigation.nav-preview-ready:not(.guidance-active) .navInstruction{display:none!important}
+.navPreviewDock{display:none!important}
+body.mode-navigation.nav-preview-ready:not(.guidance-active) .navPreviewDock:not([hidden]){
+ display:flex!important;flex-direction:column;gap:8px;position:fixed;
+ left:50%;transform:translateX(-50%);bottom:calc(107px + env(safe-area-inset-bottom,0px));
+ z-index:920;box-sizing:border-box;width:min(510px,calc(100vw - 24px));
+ padding:12px 13px 10px;background:rgba(16,22,31,.97);
+ color:#fff;border:1px solid #536070;border-radius:19px;
+ box-shadow:0 12px 36px #0008;backdrop-filter:blur(17px)
+}
+.navPreviewSelection{display:flex;align-items:center;gap:10px;min-width:0}
+.navPreviewSelectionBadge{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;
+ border-radius:50%;background:#ff6029;color:#fff;font-size:14px;font-weight:950}
+.navPreviewSelectionText{display:flex;flex-direction:column;gap:2px;min-width:0}
+.navPreviewSelectionText>b{font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navPreviewSelectionText>span{font-size:12px;color:#d7e3ee;font-variant-numeric:tabular-nums}
+.navPreviewStart{width:100%;min-height:48px;display:flex;justify-content:center;align-items:center;
+ gap:9px;border:0;border-radius:13px;background:#ff5a1f;color:#fff;
+ font-weight:950;font-size:13px;letter-spacing:.2px;cursor:pointer}
+.navPreviewStart>.mi{font-size:22px}
+.navPreviewStart:disabled{opacity:.5;cursor:wait}
+.navPreviewDock>small{display:block;color:#b5c0d0;font-size:10px;line-height:1.3;text-align:center}
+body.mode-navigation.nav-preview-ready:not(.guidance-active) #grMusic{
+ bottom:calc(268px + env(safe-area-inset-bottom,0px));right:12px
+}
+@media(max-height:680px){
+ body.mode-navigation .navChoices .navChoice{min-height:65px;padding:7px 9px}
+ body.mode-navigation .navPreviewHeading{padding-top:4px}
+ body.mode-navigation.nav-preview-ready:not(.guidance-active) .navPreviewDock:not([hidden]){padding:8px 11px 7px;gap:5px}
+ .navPreviewStart{min-height:43px}
+ body.mode-navigation.nav-preview-ready:not(.guidance-active) #grMusic{bottom:calc(249px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:360px){
+ body.mode-navigation .navChoices .navChoice{flex-basis:138px;max-width:160px}
+ body.mode-navigation .navPreviewHeading small{font-size:9px}
+ body.mode-navigation.nav-preview-ready:not(.guidance-active) .navPreviewDock:not([hidden]){width:calc(100vw - 18px);bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+}
+html.theme-light body.mode-navigation .navChoices .navChoice{background:#f7f8fb;color:#171b22;border-color:#aab7c6}
+html.theme-light body.mode-navigation .navChoices .navChoice.active{background:#fff1ea;border-color:#ff5a1f}
+html.theme-light body.mode-navigation .navChoices .navChoice span{color:#252d39}
+html.theme-light body.mode-navigation .navChoices .navChoice em{color:#506074}
+html.theme-light body.mode-navigation .navChoices .navChoice.active em{color:#b74b1e}
+html.theme-light body.mode-navigation .navPreviewHeading{color:#141a23}
+html.theme-light body.mode-navigation .navPreviewHeading small{color:#415061}
+html.theme-light body.mode-navigation .navPreviewLoading{background:#fff;color:#252a32;border-color:#c4cbd7}

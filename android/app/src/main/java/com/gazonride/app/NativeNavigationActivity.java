@@ -21,7 +21,6 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.libraries.navigation.AudioGuidanceSettings;
 import com.google.android.libraries.navigation.ListenableResultFuture;
 import com.google.android.libraries.navigation.NavigationApi;
 import com.google.android.libraries.navigation.NavigationView;
@@ -252,10 +251,12 @@ public final class NativeNavigationActivity extends Activity {
                     return;
                 }
                 try {
-                    AudioGuidanceSettings settings = AudioGuidanceSettings.builder()
-                            .setGuidanceMode(AudioGuidanceSettings.GuidanceMode.VOICE_ALERTS_AND_GUIDANCE)
-                            .build();
-                    navigator.setAudioGuidanceSettings(settings);
+                    // SDK 7.3 uses integer audio flags (the newer
+                    // AudioGuidanceSettings API was added only in SDK 7.8).
+                    navigator.setAudioGuidance(
+                            Navigator.AudioGuidance.VOICE_ALERTS_AND_GUIDANCE
+                            | Navigator.AudioGuidance.BLUETOOTH_AUDIO
+                            | Navigator.AudioGuidance.VIBRATION);
                     progressListener = () -> updateProgress();
                     navigator.addRemainingTimeOrDistanceChangedListener(15, 25, progressListener);
                     arrivalListener = event -> runOnUiThread(() -> {

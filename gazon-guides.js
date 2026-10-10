@@ -1,14 +1,16 @@
 (function(){
 "use strict";
 var GUIDES={
- "Aktaş Şelalesi · Kurugöl Kanyonu":{
-  search:"Akçakoca Düzce şelalesi",
+ "Aktaş Şelalesi":{
+  search:"Aktaş Şelalesi Akçakoca Düzce",
+  verifiedPhotosOnly:true,
+  officialPhotos:"https://duzce.ktb.gov.tr/TR-236606/aktas-selalesi.html",
   heading:"Akçakoca kırsalında şelaleler ve orman yolları",
   paragraphs:[
-   "Düzce'nin Karadeniz kıyısındaki Akçakoca çevresi, kısa sürüşe sığabilecek kırsal manzaralar ve orman dokusuyla öne çıkar. Aktaş Şelalesi çevresi doğa molası, Kurugöl çevresi ise yürüyüş ve fotoğraf için alternatif oluşturur.",
-   "Bu rota için virajlardan çok manzaranın tadını çıkarmayı hedefleyin. Yağıştan sonra orman yolu ve yürüyüş patikalarında zemin kaygan olabilir."
+   "Aktaş Şelalesi, Düzce'nin Akçakoca ilçesinde Aktaş Köyü yakınındadır. Resmi parkur koordinatı 41.017862, 31.041284. Navigasyonun gösterdiği son noktanın araçla ulaşılabilir yol veya otopark olduğundan emin olun.",
+   "Orman Genel Müdürlüğü şelaleye ulaşan yürüyüş parkurunu yaklaşık 790 metre olarak tanımlar. Motosikleti uygun otoparka bırakıp devamını yürüyerek tamamlayın. Yağışta zemin kaygan olabilir."
   ],
-  highlights:["Aktaş Şelalesi","Kurugöl çevresinde doğa molası","Akçakoca sahilinde dönüş"]
+  highlights:["Aktaş Şelalesi","Yaklaşık 790 m ekoturizm yürüyüş parkuru","Aktaş Köyü"]
  },
  "Düzce · Yedigöller":{
   search:"Yedigöller Milli Parkı Bolu",
@@ -96,6 +98,8 @@ function normalizePhoto(photo){
  return /^https:\/\//.test(u)?photo:null
 }
 function galleryPhotos(place,cover){
+ // Avoid showing unrelated Akçakoca harbour photos as the waterfall.
+ if(place.verifiedPhotosOnly) return Promise.resolve([]);
  var lookup=place.search;
  if(cache[lookup])return Promise.resolve(cache[lookup]);
  var initial=[];
@@ -127,12 +131,13 @@ function galleryPhotos(place,cover){
    cache[lookup]=result;return result
   })
 }
-function renderGallery(item,title){
+function renderGallery(item,title,officialPhotos){
  var hero=document.getElementById("grGuideHero"),strip=document.getElementById("grGuideThumbs"),counter=document.getElementById("grGuideCount");
  if(!hero||!strip||!counter)return;
  var list=item;if(!list.length){
-  hero.innerHTML='<div class="gr-guide-placeholder">Şu anda fotoğraf yüklenemedi.</div>';
-  counter.textContent="Fotoğraf bulunamadı";return
+  hero.innerHTML='<div class="gr-guide-placeholder">Bu noktanın doğrulanmamış bölge fotoğrafı gösterilmiyor.'+(officialPhotos?' <a href="'+esc(officialPhotos)+'" target="_blank" rel="noopener noreferrer">Şelalenin resmî fotoğraflarını aç</a>.':'')+'</div>';
+  strip.innerHTML="";
+  counter.textContent="Doğrulanmış fotoğraf yok";return
  }
  var selected=0;
  function paint(){
@@ -167,7 +172,7 @@ function showGuide(tile){
   closeGuide();var navigate=tile.querySelector("[data-route-open]");if(navigate)navigate.click()
  };
  var cover=getPhotoFromCss(tile.querySelector(".gr-route-visual"));
- galleryPhotos(guide,cover).then(function(images){if(document.getElementById("grGuideOverlay")===overlay)renderGallery(images,title)})
+ galleryPhotos(guide,cover).then(function(images){if(document.getElementById("grGuideOverlay")===overlay)renderGallery(images,title,guide.officialPhotos)})
 }
 function decorate(){
  var root=document.getElementById("grRouteHubList");if(!root)return;

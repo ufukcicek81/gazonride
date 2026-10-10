@@ -189,6 +189,25 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        @JavascriptInterface public boolean openNativeNavigation(double latitude,double longitude,String destination){
+            if(!Double.isFinite(latitude)||!Double.isFinite(longitude)
+                    ||Math.abs(latitude)>90||Math.abs(longitude)>180)return false;
+            final String safeTitle=destination==null?"Hedef":
+                    destination.length()>140?destination.substring(0,140):destination;
+            runOnUiThread(() -> {
+                try {
+                    Intent intent=new Intent(MainActivity.this,NativeNavigationActivity.class);
+                    intent.putExtra("destination_lat",latitude);
+                    intent.putExtra("destination_lng",longitude);
+                    intent.putExtra("destination_title",safeTitle);
+                    startActivity(intent);
+                } catch(Exception e){
+                    Toast.makeText(MainActivity.this,
+                            "Google navigasyon ekranı açılamadı.",Toast.LENGTH_LONG).show();
+                }
+            });
+            return true;
+        }
         @JavascriptInterface public void openExternal(String url){
             runOnUiThread(() -> {
                 try {

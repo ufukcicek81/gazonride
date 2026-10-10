@@ -1115,7 +1115,7 @@ function navCoordinate(x){
  if(!x)return null;
  if(window.GaZonNavProgress&&GaZonNavProgress.normalize)return GaZonNavProgress.normalize(x);
  var lat=typeof x.lat==="function"?x.lat():Number(x.lat);
- var lon=typeof x.lng==="function"?x.lng():x.lon;
+ var lon=typeof x.lng==="function"?x.lng():(x.lng!=null?x.lng:(typeof x.lon==="function"?x.lon():x.lon));
  lon=Number(lon);
  return isFinite(lat)&&isFinite(lon)?{lat:Number(lat),lon:lon}:null
 }

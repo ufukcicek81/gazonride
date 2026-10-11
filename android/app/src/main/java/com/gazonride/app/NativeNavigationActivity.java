@@ -146,7 +146,9 @@ public final class NativeNavigationActivity extends Activity {
         }
     }
     private String routeError(Navigator.RouteStatus code) {
-        switch (code) {
+        // Google SDK 7.3 does not expose every status of recent versions.
+        // Switch on the name so diagnostics compile across SDK upgrades.
+        switch (String.valueOf(code)) {
             case LOCATION_DISABLED:
                 return "Telefonun konum servisi kapalı. GPS'i açıp tekrar dene.";
             case LOCATION_UNKNOWN:

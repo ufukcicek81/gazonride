@@ -12,6 +12,7 @@ on:
       - 'gazon-guides.css'
       - 'gazon-tour.js'
       - 'gazon-tour.css'
+      - 'gazon-navigation-premium.css'
       - 'gazon-tour.test.js'
       - 'gazon-native-route.js'
       - 'gazon-native-route.test.js'
@@ -87,6 +88,13 @@ jobs:
           assert 'body.mode-ride .actions{' in html
           assert 'id="grModeTour"' in html
           assert 'id="grTourPanel"' in html
+          assert 'id="navActionFeedback"' in html
+          assert 'id="navRetryGps"' in html and 'id="navChooseOrigin"' in html
+          assert 'function handleMissingNavigationGps(' in html
+          assert 'return handleMissingNavigationGps(input,q,originInput)' in html
+          assert 'AndroidBridge.openNativeNavigation(d.lat,d.lon' in html
+          assert 'showNavActionFeedback("Rota bulunamadı.' in html
+          assert 'gazon-navigation-premium.css?v=20261011-action-feedback-p2' in html
           assert 'gazon-native-route.js?v=' in html
           assert 'gazon-tour.js?v=' in html
           assert 'gazon-tour.css?v=' in html

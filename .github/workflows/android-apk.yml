@@ -11,6 +11,12 @@ on:
       - 'android/**'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Yeni APK sürümünü kullanıcılara yayınla (manuel onay)"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -98,7 +104,11 @@ jobs:
           name: GazonRide-Android
           path: android/app/build/outputs/apk/debug/GaZonRide.apk
 
+      # Keep compiling native changes to catch regressions, but do not force
+      # riders to install a new APK after each development commit.
+      # Publish only after an explicitly triggered release-ready build.
       - name: Publish APK release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == true }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}

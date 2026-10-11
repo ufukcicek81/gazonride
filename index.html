@@ -344,7 +344,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-music.css?v=20261011-ride-mini1">
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261010-route-choice-v1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261011-p1">
-<link rel="stylesheet" href="gazon-tour.css?v=20261011-tour-v1">
+<link rel="stylesheet" href="gazon-tour.css?v=20261011-google-native-blue-v2">
 </head>
 <body>
 <div class="app">
@@ -503,7 +503,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </nav>
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="gazon-nav-progress.js?v=20261009-route-progress-v1"></script>
-<script src="gazon-tour.js?v=20261011-loop-preview-v1"></script>
+<script src="gazon-tour.js?v=20261011-google-native-blue-v2"></script>
 <script>
 (function(){
 "use strict";
@@ -1255,14 +1255,16 @@ function renderAlternativeChoices(){
  box.innerHTML='<div class="gr-route-chooser-title"><span>Rotanı seç</span><small>'+navAlternatives.length+' güzergâh · Haritadaki çizgiye de dokunabilirsin</small></div>'+
  '<div class="gr-route-chooser-options" role="group" aria-label="Alternatif rotalar">'+buttons+'</div>'+
  '<div class="gr-route-chooser-bottom">'+
- '<button type="button" id="navRouteStart"><span class="mi">two_wheeler</span> Seçili rotayla navigasyona başla</button>'+
- '<button type="button" id="navRouteMaps" aria-label="Google Haritalar uygulamasında aç" title="Google Haritalar’da aç"><span class="mi">open_in_new</span></button></div>';
+ '<button type="button" id="navRouteStart"><span class="mi">navigation</span> GaZonRide içinde navigasyona başla</button></div>'+
+ '<div class="gr-nav-routing-note">'+(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"?
+  'Google navigasyonu içeride açılır; güzergâh ve süre yeniden hesaplanabilir.':
+  'Tarayıcıda web yönlendirmesi kullanılır. Google’ın hazır navigasyon ekranı Android uygulamasındadır.')+'</div>';
  box.classList.add("active");
  var options=box.querySelector(".gr-route-chooser-options");
  if(options)options.scrollLeft=scroll;
  box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}});
  var start=box.querySelector("#navRouteStart");if(start)start.onclick=function(){startPlannedNavigation(false)};
- var maps=box.querySelector("#navRouteMaps");if(maps)maps.onclick=openGoogleMapsNavigation
+ // External Google Maps launch is not the default route.
 }
 function appendNavAlternativePreview(rd,index){
  if(!rd||!Array.isArray(rd.pts)||!rd.pts.length)return;

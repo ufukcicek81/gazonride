@@ -255,22 +255,25 @@ public final class NativeNavigationActivity extends Activity {
         String title = getIntent().getStringExtra("destination_title");
         if (title == null || title.isEmpty()) title = "Hedef";
         try {
-            String tourJson = getIntent().getStringExtra("tour_waypoints");
-            List<Waypoint> tourStops = new ArrayList<>();
-            if (tourJson != null) {
-                JSONArray stops = new JSONArray(tourJson);
-                if (stops.length()!=3) throw new IllegalArgumentException("Invalid tour stop count");
+            String routeJson = getIntent().getStringExtra("route_waypoints");
+            if (routeJson == null) routeJson = getIntent().getStringExtra("tour_waypoints");
+            List<Waypoint> routeStops = new ArrayList<>();
+            if (routeJson != null) {
+                JSONArray stops = new JSONArray(routeJson);
+                if (stops.length()<1 || stops.length()>8)
+                    throw new IllegalArgumentException("Invalid waypoint count");
                 for (int i=0;i<stops.length();i++) {
                     JSONObject p = stops.getJSONObject(i);
                     double stopLat=p.getDouble("lat"),stopLon=p.getDouble("lon");
                     if (!Double.isFinite(stopLat)||!Double.isFinite(stopLon)
                             ||Math.abs(stopLat)>90||Math.abs(stopLon)>180)
-                        throw new IllegalArgumentException("Invalid tour coordinate");
-                    String name=i==2?"Turun bitişi":("Tur durağı "+(i+1));
-                    tourStops.add(Waypoint.builder().setLatLng(stopLat,stopLon).setTitle(name).build());
+                        throw new IllegalArgumentException("Invalid waypoint coordinate");
+                    String name=i==stops.length()-1?title:("Güzergâh noktası "+(i+1));
+                    routeStops.add(Waypoint.builder().setLatLng(stopLat,stopLon)
+                            .setTitle(name).build());
                 }
             }
-            tourStopsRemaining=tourStops.size();
+            tourStopsRemaining=routeStops.size();
             Waypoint waypoint = Waypoint.builder()
                     .setLatLng(lat, lng).setTitle(title).build();
             RoutingOptions options = new RoutingOptions();
@@ -283,8 +286,8 @@ public final class NativeNavigationActivity extends Activity {
             // Keep every tour stop in the native Google Navigation SDK.
             // This avoids silently navigating straight to the loop's end.
             ListenableResultFuture<Navigator.RouteStatus> request =
-                    tourStops.isEmpty() ? navigator.setDestination(waypoint, options)
-                                        : navigator.setDestinations(tourStops, options);
+                    routeStops.isEmpty() ? navigator.setDestination(waypoint, options)
+                                         : navigator.setDestinations(routeStops, options);
             request.setOnResultListener(code -> runOnUiThread(() -> {
                 if (closed || navigator == null) return;
                 if (code != Navigator.RouteStatus.OK) {

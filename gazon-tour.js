@@ -82,7 +82,10 @@ function extractSteps(rt){
  return steps;
 }
 function setMessage(s){let m=id("grTourMessage");if(m)m.textContent=s;if(config&&config.setStatus)config.setStatus(s)}
-function clearLines(){lines.forEach(function(p){try{p.setMap(null)}catch(e){}});lines=[]}
+function clearLines(){lines.forEach(function(p){
+ try{p.setMap(null)}catch(e){}
+ if(p._gazonOutline)try{p._gazonOutline.setMap(null)}catch(e){}
+});lines=[]}
 function reset(){sequence++;options=[];selected=0;busy=false;clearLines();let el=id("grTourChoices");if(el){el.classList.remove("active");el.innerHTML=""}
  let btn=id("grTourPlan");if(btn){btn.disabled=false;btn.innerHTML='<span class="mi">alt_route</span> Üç tur önerisi oluştur'}
 }
@@ -101,9 +104,14 @@ function setMode(next){
 }
 function outline(d,i){
  const map=config.getMap();
- const line=new google.maps.Polyline({map,path:d.points.map(p=>({lat:p.lat,lng:p.lon})),
-  strokeColor:i===selected?"#ff5a1f":"#87a8c8",strokeWeight:i===selected?8:5,
-  strokeOpacity:i===selected?1:.8,zIndex:i===selected?30:14,clickable:true});
+ const path=d.points.map(p=>({lat:p.lat,lng:p.lon}));
+ const active=i===selected,zi=active?30:14;
+ const edge=new google.maps.Polyline({map,path,strokeColor:"#ffffff",
+  strokeWeight:active?10:8,strokeOpacity:active?.95:.65,zIndex:zi-1,clickable:false});
+ const line=new google.maps.Polyline({map,path,
+  strokeColor:active?"#1A73E8":"#91A7BF",strokeWeight:active?6:5,
+  strokeOpacity:active?1:.83,zIndex:zi,clickable:true});
+ line._gazonOutline=edge;
  line.addListener("click",function(){choose(i)});
  lines.push(line);
 }
@@ -115,8 +123,13 @@ function fit(){
 }
 function choose(i){
  if(!options[i])return;selected=i;
- lines.forEach(function(line,j){line.setOptions({strokeColor:j===i?"#ff5a1f":"#87a8c8",
-  strokeWeight:j===i?8:5,strokeOpacity:j===i?1:.75,zIndex:j===i?30:14})});
+ lines.forEach(function(line,j){
+  const active=j===i,zi=active?30:14;
+  line.setOptions({strokeColor:active?"#1A73E8":"#91A7BF",
+   strokeWeight:active?6:5,strokeOpacity:active?1:.83,zIndex:zi});
+  if(line._gazonOutline)line._gazonOutline.setOptions({
+   strokeWeight:active?10:8,strokeOpacity:active?.95:.65,zIndex:zi-1});
+ });
  renderOptions();
 }
 function externalUrl(o){

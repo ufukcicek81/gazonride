@@ -12,7 +12,7 @@ const DIRECTIONS={auto:0,north:0,east:90,south:180,west:270};
 let config=null,mode="destination",sequence=0,options=[],selected=0,lines=[],busy=false,home=null;
 const id=function(x){return document.getElementById(x)};
 function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function normalize(p){if(!p)return null;const lat=Number(p.lat),lon=Number(p.lon!=null?p.lon:p.lng);
+function normalize(p){if(!p)return null;const lat=Number(typeof p.lat==="function"?p.lat():p.lat),lon=Number(p.lon!=null?p.lon:(typeof p.lng==="function"?p.lng():p.lng));
  return Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180?{lat,lon}:null}
 function offset(origin,bearing,km){
  const p=normalize(origin);if(!p||!Number.isFinite(bearing)||!Number.isFinite(km)||km<=0)return null;

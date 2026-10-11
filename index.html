@@ -418,7 +418,17 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
       <label for="grTourLength">Hedef mesafe<select id="grTourLength"><option value="50">50 km</option><option value="100" selected>100 km</option><option value="150">150 km</option></select></label>
       <label for="grTourDirection">Tur yönü<select id="grTourDirection"><option value="auto">Farklı yönler</option><option value="north">Kuzey</option><option value="east">Doğu</option><option value="south">Güney</option><option value="west">Batı</option></select></label>
     </div>
-    <button id="grTourPlan" type="button"><span class="mi">alt_route</span> Üç tur önerisi oluştur</button>
+    <div class="gr-tour-preference">
+ <label for="grTourStyle">Sürüş tarzı</label>
+ <select id="grTourStyle" aria-label="Sürüş tarzı">
+  <option value="fast">Hızlı</option>
+  <option value="balanced" selected>Dengeli</option>
+  <option value="curvy">Virajlı</option>
+  <option value="verycurvy">Çok virajlı</option>
+ </select>
+ <small>Viraj yoğunluğu rota geometrisinden tahmin edilir; yol güvenliği ve asfalt kalitesi doğrulanmaz.</small>
+</div>
+<button id="grTourPlan" type="button"><span class="mi">alt_route</span> Üç tur önerisi oluştur</button>
     <div class="gr-tour-message" id="grTourMessage" aria-live="polite">Gerçek yollar üzerinden kilometre ve süre hesaplanır.</div>
   </div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
@@ -1620,12 +1630,12 @@ async function launchCardDestination(item){
 
 window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,launchCardDestination:launchCardDestination,recenter:recenterNavigationOnce};
 
-function startPlannedNavigation(){
+function startPlannedNavigation(forceWeb){
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
  // On the Android APK the official Navigation SDK replaces our browser
  // approximation: Google handles road snapping, turn cards, voice and live ETA.
  // Browser users still use the existing navigator.
- if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
+ if(!forceWeb&&window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
   try{
    var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
    if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",/Ücretsiz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""),/Otoyolsuz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""))){
@@ -2233,6 +2243,33 @@ function boot(){
  if(routePicker&&routePicker.parentElement!==document.body)document.body.appendChild(routePicker);
  setupNavAutocomplete();setupOriginAutocomplete();
  if(window.GaZonTour)GaZonTour.init({
+  launchInside:function(tour){
+   if(!tour||!tour.points||tour.points.length<3)return false;
+   var stops=tour.middle.concat([tour.origin]).map(function(p){return {lat:p.lat,lon:p.lon}});
+   if(window.AndroidBridge&&typeof AndroidBridge.openNativeTour==="function"){
+    try {
+     if(AndroidBridge.openNativeTour(JSON.stringify(stops))){
+      if(!riding)startRide();
+      $("status").textContent="Tur GaZonRide Google navigasyonunda başlatılıyor.";
+      return true
+     }
+    }catch(e){console.warn("Native multi-stop tour",e)}
+   }
+   // Browser/iOS fallback: use all computed route steps and geometry.
+   if(!googleReady||!map){$("status").textContent="Harita hazır değil";return false}
+   ++navPlanSeq;clearAlternativeRoutes();
+   if(navRoute)try{navRoute.setMap(null)}catch(e){}
+   navRoute=new google.maps.Polyline({map:map,path:tour.points.map(function(p){return {lat:p.lat,lng:p.lon}}),
+    strokeColor:"#ff5a1f",strokeWeight:9,strokeOpacity:1,zIndex:45});
+   navPathPoints=tour.points.slice();
+   navSteps=tour.steps.slice();navStepIndex=0;navTotalKm=tour.km;navTotalSec=tour.sec;
+   activeNavLabel="Halkalı motosiklet turu";activeRouteMode="DRIVING";
+   activeNavDestination={lat:tour.origin.lat,lon:tour.origin.lon};
+   navActive=false;navReady=true;resetNavProgress();
+   window.GaZonTourRemaining=stops.slice();
+   startPlannedNavigation(true);
+   return navActive
+  },
   googleReady:function(){return googleReady},
   getMap:function(){return map},
   getOrigin:async function(){

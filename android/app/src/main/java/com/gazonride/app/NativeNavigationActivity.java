@@ -108,9 +108,9 @@ public final class NativeNavigationActivity extends Activity {
             boolean error = text != null && (text.contains("başlatılamadı") ||
                     text.contains("oluşturamadı") || text.contains("yetkisiz") ||
                     text.contains("Geçersiz") || text.contains("izin") ||
-                    text.contains("internet") || text.contains("bağlantı") ||
-                    text.contains("bulunamadı") || text.contains("hata") ||
-                    text.contains("kabul etmelisin"));
+                    text.contains("internet") || text.contains("bulunamadı") ||
+                    text.contains("kapalı") || text.contains("hata") ||
+                    text.contains("kabul edilmedi") || text.contains("kabul etmelisin"));
             // Google renders its own directions. The diagnostic card is only
             // shown while waiting or after a failure, never over active guidance.
             if (diagnosticPanel != null)

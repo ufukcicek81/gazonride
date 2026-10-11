@@ -102,6 +102,16 @@
    hasProgress=true;valid=true;previousTime=stamp;
    return state()
   }
+  // A stationary rider still has GPS reception. Refresh signal age without
+  // projecting jitter onto the road or increasing ride progress/distance.
+  function heartbeat(position,when,accuracy){
+   var p=pnt(position),stamp=finite(when),acc=finite(accuracy);
+   if(!p||stamp==null||stamp<1e12||stamp>Date.now()+5000)return false;
+   if(acc==null||acc<=0||acc>65)return false;
+   if(lastGPS&&stamp<lastGPS)return false;
+   lastGPS=stamp;
+   return true;
+  }
   function state(){
    var completion=measured>0?Math.min(1,Math.max(0,progress/measured)):0;
    var metersLeft=Math.max(0,routeMeters*(1-completion));
@@ -118,7 +128,7 @@
    }
   }
   function age(){return lastGPS?Math.max(0,Date.now()-lastGPS):Infinity}
-  return {initialize:initialize,update:update,state:state,age:age,normalize:pnt,closest:closest}
+  return {initialize:initialize,update:update,heartbeat:heartbeat,state:state,age:age,normalize:pnt,closest:closest}
  }
  root.GaZonNavProgress=Engine();
  if(typeof module!=="undefined"&&module.exports)module.exports={Engine:Engine}

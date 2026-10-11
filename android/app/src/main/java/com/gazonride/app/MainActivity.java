@@ -216,35 +216,49 @@ public class MainActivity extends Activity {
             });
             return true;
         }
-        // Three route stops (two waypoints + home) remain inside the
-        // Navigation SDK instead of redirecting to Google Maps.
-        @JavascriptInterface public boolean openNativeTour(String json){
-            if(json==null || json.length()>2500)return false;
+        // Preserve the chosen route as ordered Google Navigation SDK stops.
+        // Waypoints come from actual Google road geometry, not freehand lines.
+        // The SDK remains responsible for legal roads, rerouting, ETA and voice.
+        @JavascriptInterface public boolean openNativeRoute(
+                String json,String title,boolean avoidTolls,boolean avoidHighways){
+            if(json==null || json.length()>3500)return false;
             try {
                 JSONArray points=new JSONArray(json);
-                if(points.length()!=3)return false;
+                if(points.length()<1 || points.length()>8)return false;
                 for(int i=0;i<points.length();i++){
                     JSONObject point=points.getJSONObject(i);
-                    double lat=point.getDouble("lat");
-                    double lon=point.getDouble("lon");
+                    double lat=point.getDouble("lat"), lon=point.getDouble("lon");
                     if(!Double.isFinite(lat)||!Double.isFinite(lon)
-                        ||Math.abs(lat)>90||Math.abs(lon)>180)return false;
+                            ||Math.abs(lat)>90 || Math.abs(lon)>180)return false;
                 }
+                JSONObject last=points.getJSONObject(points.length()-1);
+                double lat=last.getDouble("lat"),lon=last.getDouble("lon");
                 final String validated=points.toString();
+                final String safeTitle=title==null?"Hedef":title.length()>140?
+                        title.substring(0,140):title;
                 runOnUiThread(() -> {
                     try {
                         Intent intent=new Intent(MainActivity.this,NativeNavigationActivity.class);
-                        intent.putExtra("tour_waypoints",validated);
-                        intent.putExtra("destination_lat",points.optJSONObject(2).optDouble("lat"));
-                        intent.putExtra("destination_lng",points.optJSONObject(2).optDouble("lon"));
-                        intent.putExtra("destination_title","Tur başlangıcına dönüş");
+                        intent.putExtra("route_waypoints",validated);
+                        intent.putExtra("destination_lat",lat);
+                        intent.putExtra("destination_lng",lon);
+                        intent.putExtra("destination_title",safeTitle);
+                        intent.putExtra("avoid_tolls",avoidTolls);
+                        intent.putExtra("avoid_highways",avoidHighways);
                         startActivity(intent);
                     } catch(Exception e) {
                         Toast.makeText(MainActivity.this,
-                           "Tur navigasyonu açılamadı.",Toast.LENGTH_LONG).show();
+                                "GaZonRide navigasyon ekranı açılamadı.",Toast.LENGTH_LONG).show();
                     }
                 });
                 return true;
+            } catch(Exception e){return false;}
+        }
+        @JavascriptInterface public boolean openNativeTour(String json){
+            try {
+                JSONArray points=new JSONArray(json);
+                if(points.length()!=3)return false;
+                return openNativeRoute(json,"Tur başlangıcına dönüş",false,false);
             } catch(Exception e){return false;}
         }
         @JavascriptInterface public void openExternal(String url){

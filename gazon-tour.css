@@ -96,3 +96,13 @@ body.mode-navigation.gr-tour-mode .navRecenterBtn{
  .gr-tour-fields{gap:6px}
  .gr-tour-fields select{font-size:12px}
 }
+
+
+.gr-tour-preference{margin-top:11px;display:flex;flex-direction:column;gap:6px}
+.gr-tour-preference label{font-size:10px;font-weight:850;color:#cbd6e3}
+.gr-tour-preference select{
+  min-height:43px;min-width:0;width:100%;border-radius:12px;
+  background:#242b35;color:#fff;border:1px solid #505c6e;
+  padding:0 12px;font-size:13px;font-weight:850
+}
+.gr-tour-preference small{font-size:9px;color:#9fabb9;line-height:1.4}

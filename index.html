@@ -1403,28 +1403,29 @@ async function handleMissingNavigationGps(input,q,originInput){
  if(go){go.disabled=true;go.innerHTML='<span class="mi">hourglass_top</span>'}
  startGPS();
  try{
-  // Android's official Google navigator can find location independently of
-  // the embedded WebView GPS. It should still open when the web GPS is absent.
-  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"){
-   if(!googleReady||!geocoder)throw new Error("Google harita henüz hazırlanmadı");
-   var d=input.dataset.lat&&input.dataset.lon?
-    {lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q}:
-    await geocodeGoogle(q);
-   if(seq!==navPlanSeq||input.value.trim()!==q)return;
-   if(!isFinite(d.lat)||!isFinite(d.lon))throw new Error("Hedef koordinatı bulunamadı");
-   input.dataset.lat=String(d.lat);input.dataset.lon=String(d.lon);input.dataset.label=d.label||q;
-   // If web GPS arrived while geocoding, retain normal route alternatives.
-   if(currentPoint){showNavActionFeedback("",false);return planNavigation()}
-   activeNavLabel=d.label||q;activeNavDestination={lat:d.lat,lon:d.lon};
-   if(AndroidBridge.openNativeNavigation(d.lat,d.lon,activeNavLabel,false,false)){
-    pendingNavRouteRequest=null;
-    showNavActionFeedback("Google navigasyonu GaZonRide içinde açılıyor. Konum izni istenirse onayla.",false);
-    if(!riding)startRide();
-    navStartedRide=false;
-    return
-   }
+  // Resolve the selected destination even before GPS arrives. This prevents
+  // an empty Turkey-wide map with a valid address typed in the search box.
+  if(!googleReady||!geocoder)throw new Error("Google harita henüz hazırlanmadı");
+  var d=input.dataset.lat&&input.dataset.lon?
+   {lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q}:
+   await geocodeGoogle(q);
+  if(seq!==navPlanSeq||input.value.trim()!==q)return;
+  if(!isFinite(d.lat)||!isFinite(d.lon))throw new Error("Hedef koordinatı bulunamadı");
+  input.dataset.lat=String(d.lat);input.dataset.lon=String(d.lon);input.dataset.label=d.label||q;
+  if(currentPoint){showNavActionFeedback("",false);return planNavigation()}
+  activeNavLabel=d.label||q;activeNavDestination={lat:d.lat,lon:d.lon};
+  if(map){map.panTo({lat:d.lat,lng:d.lon});map.setZoom(11)}
+  // Android's official Google navigator can acquire location independently of
+  // WebView; browser users can manually select an origin instead.
+  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&
+    AndroidBridge.openNativeNavigation(d.lat,d.lon,activeNavLabel,false,false)){
+   pendingNavRouteRequest=null;
+   showNavActionFeedback("Google navigasyonu GaZonRide içinde açılıyor. Konum izni istenirse onayla.",false);
+   if(!riding)startRide();
+   navStartedRide=false;
+   return
   }
-  showNavActionFeedback("Konum alınamadı. GPS iznini kontrol et veya Başlangıç seç ile bir yer belirle.",true);
+  showNavActionFeedback("Hedef haritada bulundu; başlangıç için GPS bekleniyor. GPS'yi dene veya Başlangıç seç.",true);
  }catch(error){
   console.warn("Native navigation without WebView GPS",error);
   showNavActionFeedback("GPS bulunamadı. Hedef veya Google bağlantısı hazır değil; tekrar dene ya da Başlangıç seç.",true);

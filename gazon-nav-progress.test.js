@@ -1,0 +1,15 @@
+"use strict";
+const assert=require("node:assert/strict");
+const {Engine}=require("./gazon-nav-progress.js");
+const gps=new Engine(),now=Date.now();
+const a={lat:40.875,lon:30.95},b={lat:40.8755,lon:30.951},c={lat:40.876,lon:30.952};
+gps.initialize([a,b,c],[{distance:100,end:b},{distance:100,end:c}],.4,60);
+assert.ok(gps.update(a,now-5000,8).valid,"initial GPS is accepted");
+const before=gps.state().progressMeters;
+assert.ok(gps.heartbeat(a,now,8),"fresh stationary GPS accepted");
+assert.equal(gps.state().progressMeters,before,"heartbeat must not advance navigation");
+assert.ok(gps.age()<3000,"GPS is not reported lost while stopped");
+assert.equal(gps.heartbeat(a,now+10000,8),false,"future GPS rejected");
+assert.equal(gps.heartbeat(a,now+100,130),false,"inaccurate GPS rejected");
+assert.ok(gps.age()<3000,"invalid fix does not damage fresh GPS state");
+console.log("PASS: stationary GPS heartbeat updates signal freshness without movement");

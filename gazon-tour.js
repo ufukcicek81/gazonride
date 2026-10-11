@@ -41,6 +41,7 @@ function isTourMode(){return mode==="tour"}
 function setMode(next){
  next=next==="tour"?"tour":"destination";if(mode===next)return;
  reset();mode=next;document.body.classList.toggle("gr-tour-mode",mode==="tour");
+ const panel=id("grTourPanel");if(panel)panel.hidden=mode!=="tour";
  for(let [key,button] of [["destination",id("grModeDestination")],["tour",id("grModeTour")]]){
   if(button){const active=key===mode;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active))}
  }

@@ -1,8 +1,9 @@
 /* GaZonRide Tour Planner v0.1
  * Route preview uses actual Google Routes responses, never straight-line
  * "roads". Target distance is an estimate; actual routed length is shown.
- * Tours open in Google Maps with explicit intermediate waypoints until native
- * multi-stop guidance is implemented and verified on real devices.
+ * Tours start in GaZonRide. Android Native Navigation SDK receives all three
+ * stops; iOS/browser guidance uses the precomputed full route. Actual devices
+ * still require field verification for accurate spoken instructions.
  */
 (function(global){
 "use strict";
@@ -23,14 +24,62 @@ function offset(origin,bearing,km){
 }
 function candidates(origin,km,direction){
  const out=[],bearing=DIRECTIONS[direction]===undefined?0:DIRECTIONS[direction];
- for(let i=0;i<3;i++){
-  const head=direction==="auto"?[15,135,255][i]:bearing+[-37,0,37][i];
-  const radius=km/[4.45,4.15,4.7][i];
+ for(let i=0;i<5;i++){
+  const head=direction==="auto"?[15,135,255,75,210][i]:bearing+[-55,-25,0,25,55][i];
+  const radius=km/[4.45,4.15,4.7,4.35,4.55][i];
   out.push({name:["Keşif halkası","Alternatif manzara","Farklı güzergâh"][i],
    middle:[offset(origin,head-47,radius),offset(origin,head+47,radius)],
-   avoidHighways:i===2});
+   avoidHighways:i===2||i===4});
  }
  return out;
+}
+function distanceKm(a,b){
+ const rad=Math.PI/180, x=(b.lat-a.lat)*rad, y=(b.lon-a.lon)*rad;
+ const sin=Math.sin(x/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(y/2)**2;
+ return 2*EARTH_KM*Math.asin(Math.min(1,Math.sqrt(sin)));
+}
+function bearing(a,b){
+ const rad=Math.PI/180,lat1=a.lat*rad,lat2=b.lat*rad,dlon=(b.lon-a.lon)*rad;
+ return Math.atan2(Math.sin(dlon)*Math.cos(lat2),
+  Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon))*180/Math.PI;
+}
+function curvature(points,km){
+ // Sample at roughly 90m spacing to avoid inflated scores on detailed
+ // road geometry or short zig-zags caused by tiny polyline segments.
+ if(!Array.isArray(points)||points.length<3||!Number.isFinite(km)||km<=0)return 0;
+ const sample=[points[0]];let last=points[0],travel=0;
+ for(let i=1;i<points.length;i++){
+  const p=points[i];if(!p)continue;
+  travel+=distanceKm(last,p);last=p;
+  if(travel>=.09){sample.push(p);travel=0}
+ }
+ if(sample.length<3)return 0;
+ let sum=0;
+ for(let i=2;i<sample.length;i++){
+  const b1=bearing(sample[i-2],sample[i-1]),b2=bearing(sample[i-1],sample[i]);
+  const delta=Math.abs(((b2-b1+540)%360)-180);
+  if(delta>=18&&delta<=155)sum+=Math.min(90,delta)/45;
+ }
+ return Math.round(sum/Math.max(1,km)*10*10)/10; // turn units per 10 km
+}
+function score(o,style,target){
+ const deviation=Math.abs(o.km-target)/Math.max(target,1);
+ const hours=o.sec/3600;
+ if(style==="fast")return -hours-deviation*.6;
+ if(style==="curvy")return o.curveScore*.12-deviation*1.8-hours*.04;
+ if(style==="verycurvy")return o.curveScore*.2-deviation*1.2-hours*.015;
+ return -deviation*3-hours*.28+o.curveScore*.018;
+}
+function extractSteps(rt){
+ const steps=[];
+ (rt.legs||[]).forEach(leg=>(leg.steps||[]).forEach(st=>{
+  const instr=st.navigationInstruction||{};
+  steps.push({distance:Number(st.distanceMeters||0),
+   instruction:{maneuver:st.maneuver||instr.maneuver||"",
+    instructions:st.instructions||instr.instructions||""},
+   end:normalize(st.endLocation)});
+ }));
+ return steps;
 }
 function setMessage(s){let m=id("grTourMessage");if(m)m.textContent=s;if(config&&config.setStatus)config.setStatus(s)}
 function clearLines(){lines.forEach(function(p){try{p.setMap(null)}catch(e){}});lines=[]}
@@ -78,11 +127,12 @@ function externalUrl(o){
  "&waypoints="+encodeURIComponent(o.middle.map(coords).join("|"))+"&travelmode=driving";
 }
 function openSelected(){
- const o=options[selected];if(!o)return;
- const url=externalUrl(o);
- // Google Maps recomputes the route; display actual distance there before riding.
- const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";
- document.body.appendChild(a);a.click();a.remove();
+ const o=options[selected];if(!o||!config||typeof config.launchInside!=="function")return;
+ const started=config.launchInside(o);
+ if(started) {
+  setMessage("Tur GaZonRide içinde başlatılıyor. Yol boyunca dönüşleri takip et.");
+  const box=id("grTourChoices");if(box)box.classList.remove("active");
+ } else setMessage("Tur navigasyonu başlatılamadı. Lütfen uygulama izinlerini kontrol et.");
 }
 function renderOptions(){
  const box=id("grTourChoices");if(!box)return;
@@ -91,10 +141,10 @@ function renderOptions(){
  box.innerHTML='<div class="gr-tour-heading"><b>Turunu seç</b><small>'+options.length+' gerçek yol rotası</small></div>'+
  '<div class="gr-tour-routes">'+options.map(function(x,i){
   return '<button type="button" data-tour="'+i+'" aria-pressed="'+(i===selected)+'" class="gr-tour-route'+(i===selected?' active':'')+'">'+
-  '<b>'+(i+1)+'. '+esc(x.name)+'</b><strong>'+x.km.toFixed(1)+' km</strong><small>'+Math.round(x.sec/60)+' dk · Hedeften '+Math.round(Math.abs(x.km-target))+' km '+(x.km>=target?'uzun':'kısa')+'</small></button>'
+  '<b>'+(i+1)+'. '+esc(x.name)+'</b><strong>'+x.km.toFixed(1)+' km</strong><small>'+Math.round(x.sec/60)+' dk · tahmini viraj puanı '+x.curveScore+' /10 km</small></button>'
  }).join("")+'</div>'+
- '<div class="gr-tour-action"><button id="grTourOpen" type="button"><span class="mi">route</span> Google Haritalar’da turu aç</button></div>'+
- '<p class="gr-tour-disclaimer">Tur önerileri Google’ın gerçek araç yollarıyla hesaplanır. Açılan Google Haritalar güzergâhı yeniden hesaplayabilir; sürmeden önce ara durakları kontrol et. GaZonRide içinde çok duraklı canlı yönlendirme sonraki aşamadadır.</p>';
+ '<div class="gr-tour-action"><button id="grTourOpen" type="button"><span class="mi">navigation</span> GaZonRide’da turu başlat</button></div>'+
+ '<p class="gr-tour-disclaimer">Viraj puanı Google yol çizgilerinden tahmindir; asfalt kalitesi, kapalı yollar ve motosiklete uygunluk doğrulanmaz. Canlı navigasyon gerektiğinde rotayı yeniden hesaplayabilir.</p>';
  box.classList.add("active");
  box.querySelectorAll("[data-tour]").forEach(b=>b.onclick=function(){choose(Number(b.dataset.tour))});
  const open=id("grTourOpen");if(open)open.onclick=openSelected;
@@ -103,7 +153,7 @@ async function plan(){
  if(busy||!config)return;
  reset();busy=true;const run=++sequence;
  const btn=id("grTourPlan"),target=Number(id("grTourLength").value);
- const dir=id("grTourDirection").value;
+ const dir=id("grTourDirection").value,style=id("grTourStyle").value;
  if(btn){btn.disabled=true;btn.innerHTML='<span class="mi">hourglass_top</span> Hesaplanıyor'}
  try{
   if(!KILOMETERS.includes(target))throw Error("Desteklenmeyen kilometre hedefi");
@@ -114,7 +164,7 @@ async function plan(){
   const {Route}=await google.maps.importLibrary("routes");
   if(run!==sequence||mode!=="tour")return;
   const dirs=candidates(origin,target,dir),found=[];
-  for(let i=0;i<dirs.length;i++){
+  for(let i=0;i<(style==="curvy"||style==="verycurvy"?dirs.length:3);i++){
    if(run!==sequence||mode!=="tour")return;
    setMessage("Tur rotaları hesaplanıyor · "+(i+1)+"/"+dirs.length);
    const cand=dirs[i];
@@ -135,7 +185,9 @@ async function plan(){
     if(pts.length<3||!Number.isFinite(km)||km<target*.35||km>target*2.8)continue;
     if(found.some(x=>Math.abs(x.km-km)<2&&x.points[Math.floor(x.points.length/2)]&&
         pts[Math.floor(pts.length/2)]&&Math.abs(x.points[Math.floor(x.points.length/2)].lat-pts[Math.floor(pts.length/2)].lat)<.003))continue;
-    found.push({name:cand.name,km,sec,origin,middle:cand.middle,points:pts});
+    const curveScore=curvature(pts,km);
+    found.push({name:cand.name,km,sec,origin,middle:cand.middle,points:pts,
+      steps:extractSteps(rt),curveScore});
     options=found.slice();
     outline(options[options.length-1],options.length-1);
     renderOptions();
@@ -143,8 +195,10 @@ async function plan(){
   }
   if(run!==sequence||mode!=="tour")return;
   if(!found.length)throw Error("Bu bölgede uygun halkalı rota bulunamadı. Başka yön veya mesafe dene.");
-  choose(0);fit();
-  setMessage(found.length+" tur hesaplandı. Seçtiğin turu haritada ve kartlardan inceleyebilirsin.");
+  // Keep the path and rendered line arrays in the same sorted order.
+  found.sort((a,b)=>score(b,style,target)-score(a,style,target));
+  options=found;clearLines();options.forEach(outline);choose(0);fit();
+  setMessage(found.length+" tur hesaplandı. "+(style==="verycurvy"?"Çok virajlı":style==="curvy"?"Virajlı":style==="fast"?"Hızlı":"Dengeli")+" tercihe göre sıralandı.");
  }catch(err){
   if(run===sequence){console.warn("Tour planning unavailable",err);setMessage(err&&err.message||"Tur hesaplanamadı. Tekrar dene.")}
  }finally{
@@ -162,5 +216,5 @@ function init(settings){
 }
 const api={init,setMode,isTourMode,plan,clear:reset,offset,candidates,externalUrl};
 global.GaZonTour=api;
-if(typeof module==="object"&&module.exports)module.exports={offset,candidates,externalUrl};
+if(typeof module==="object"&&module.exports)module.exports={offset,candidates,externalUrl,curvature,score,extractSteps};
 })(typeof window!=="undefined"?window:globalThis);

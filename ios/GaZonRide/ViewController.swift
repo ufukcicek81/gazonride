@@ -10,6 +10,32 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
     private var rideActive = false
     private var bufferedLocations: [[String: Any]] = []
     private var pendingOAuth: String?
+    private var intercomAudioActive = false
+
+    // Use the iOS voice-call audio route for Bluetooth helmets (HFP),
+    // rather than relying on WKWebView's default playback-only session.
+    private func prepareIntercomAudio() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .voiceChat,
+                                    options: [.allowBluetooth, .defaultToSpeaker, .duckOthers])
+            try session.setActive(true)
+            intercomAudioActive = true
+        } catch {
+            NSLog("GaZonRide intercom audio session failed: \\(error)")
+        }
+    }
+
+    private func stopIntercomAudio() {
+        guard intercomAudioActive else { return }
+        intercomAudioActive = false
+        do {
+            try AVAudioSession.sharedInstance().setActive(false,
+                                    options: [.notifyOthersOnDeactivation])
+        } catch {
+            NSLog("GaZonRide intercom audio stop failed: \\(error)")
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,6 +47,7 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
     }
 
     deinit {
+        stopIntercomAudio()
         NotificationCenter.default.removeObserver(self)
         webView?.configuration.userContentController.removeScriptMessageHandler(forName: "gazonNative")
     }
@@ -37,6 +64,8 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
           window.AndroidBridge.stopRide = function(){ window.webkit.messageHandlers.gazonNative.postMessage({action:'stopRide'}); };
           window.AndroidBridge.clearBufferedPoints = function(){ window.webkit.messageHandlers.gazonNative.postMessage({action:'clearBuffer'}); };
           window.AndroidBridge.getBufferedPoints = function(){ return '[]'; };
+          window.AndroidBridge.prepareIntercom = function(){ window.webkit.messageHandlers.gazonNative.postMessage({action:'prepareIntercom'}); };
+          window.AndroidBridge.stopIntercom = function(){ window.webkit.messageHandlers.gazonNative.postMessage({action:'stopIntercom'}); };
           window.AndroidBridge.getSystemTheme = function(){ return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; };
           window.AndroidBridge.openOAuth = function(url){ window.webkit.messageHandlers.gazonNative.postMessage({action:'openOAuth',url:String(url||'')}); };
         })();
@@ -118,7 +147,9 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
         type: WKMediaCaptureType,
         decisionHandler: @escaping (WKPermissionDecision) -> Void
     ) {
-        decisionHandler(.grant)
+        // Never grant microphone or camera access to third-party frames.
+        let trusted = (origin.protocol == "https" && origin.host == "ufukcicek81.github.io")
+        decisionHandler(trusted ? .grant : .prompt)
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -133,6 +164,10 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
             stopNativeRide()
         case "clearBuffer":
             bufferedLocations.removeAll()
+        case "prepareIntercom":
+            prepareIntercomAudio()
+        case "stopIntercom":
+            stopIntercomAudio()
         case "openOAuth":
             if let raw = body["url"] as? String, let url = URL(string: raw) {
                 UIApplication.shared.open(url)

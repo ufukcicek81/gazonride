@@ -16,3 +16,5 @@ jobs:
           node-version: 20
       - run: npm install
       - run: node --check server.js
+      - run: node --check test-signaling.js
+      - run: node test-signaling.js

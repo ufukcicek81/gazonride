@@ -606,7 +606,12 @@ async function initMap(){
   return true;
  }catch(e){$("status").textContent="Google Haritalar yüklenemedi. API anahtarı veya internet bağlantısını kontrol edin.";return false;}
 }
-function setPolyline(poly,pts){if(!poly)return;poly.setPath((pts||[]).map(function(p){return Array.isArray(p)?{lat:p[0],lng:p[1]}:{lat:p.lat,lng:p.lon!=null?p.lon:p.lng};}));}
+function setPolyline(poly,pts){
+ if(!poly)return;
+ var path=(pts||[]).map(function(p){return Array.isArray(p)?{lat:p[0],lng:p[1]}:{lat:p.lat,lng:p.lon!=null?p.lon:p.lng};});
+ poly.setPath(path);
+ if(poly._gazonOutline)poly._gazonOutline.setPath(path);
+}
 function fitPolyline(poly){if(!map||!poly)return;var path=poly.getPath(),b=new google.maps.LatLngBounds();path.forEach(function(p){b.extend(p);});if(!b.isEmpty())map.fitBounds(b,40);}
 function setMapCenter(p,zoom){if(!map||!p)return;map.setCenter({lat:p.lat,lng:p.lon});if(zoom)map.setZoom(zoom);}
 window.GaZonMapContext={getCurrentPoint:function(){return currentPoint?{lat:currentPoint.lat,lon:currentPoint.lon}:null},centerCurrent:function(zoom){if(currentPoint)setMapCenter(currentPoint,zoom||16);else startGPS()}};
@@ -1146,8 +1151,35 @@ function googleManeuverText(m){
  if(x.indexOf("STRAIGHT")>=0)return "Düz devam et";
  return "Rotayı takip et";
 }
+// Native Android guidance uses Google NavigationView. The web/iOS fallback
+// uses a thin, cased blue route rather than the former heavy orange polyline.
+var GAZON_NAV_BLUE="#1A73E8",GAZON_NAV_ALT="#91A7BF";
+function createNavigationPolyline(points,selected,zIndex,clickable){
+ var path=(points||[]).map(function(p){return {lat:p.lat,lng:p.lon!=null?p.lon:p.lng}});
+ var z=zIndex||30;
+ var edge=new google.maps.Polyline({map:map,path:path,strokeColor:"#ffffff",
+  strokeWeight:selected?10:8,strokeOpacity:selected?.95:.75,zIndex:z-1,clickable:false});
+ var line=new google.maps.Polyline({map:map,path:path,
+  strokeColor:selected?GAZON_NAV_BLUE:GAZON_NAV_ALT,
+  strokeWeight:selected?6:5,strokeOpacity:selected?1:.87,zIndex:z,clickable:!!clickable});
+ line._gazonOutline=edge;
+ return line;
+}
+function styleNavigationPolyline(line,selected,zIndex){
+ if(!line)return;
+ var z=zIndex||30;
+ line.setOptions({strokeColor:selected?GAZON_NAV_BLUE:GAZON_NAV_ALT,
+  strokeWeight:selected?6:5,strokeOpacity:selected?1:.87,zIndex:z});
+ if(line._gazonOutline)line._gazonOutline.setOptions({
+  strokeColor:"#ffffff",strokeWeight:selected?10:8,strokeOpacity:selected?.95:.65,zIndex:z-1});
+}
+function removeNavigationPolyline(line){
+ if(!line)return;
+ try{line.setMap(null)}catch(e){}
+ if(line._gazonOutline)try{line._gazonOutline.setMap(null)}catch(e){}
+}
 function clearAlternativeRoutes(){
- navAlternativePolylines.forEach(function(p){try{p.setMap(null)}catch(e){}});navAlternativePolylines=[];
+ navAlternativePolylines.forEach(removeNavigationPolyline);navAlternativePolylines=[];
  navAlternativeMarkers.forEach(function(m){try{m.setMap(null)}catch(e){}});navAlternativeMarkers=[];
  navAlternatives=[];navSelectedAlternative=0;
  var box=$("navChoices");if(box){box.innerHTML="";box.classList.remove("active")}
@@ -1201,8 +1233,8 @@ function fitAllAlternativeRoutes(){
 }
 function selectAlternativeRoute(i){
  var d=navAlternatives[i];if(!d)return;navSelectedAlternative=i;
- navAlternativePolylines.forEach(function(p,j){p.setOptions({strokeColor:j===i?"#ff5a1f":"#667b96",strokeWeight:j===i?9:6,strokeOpacity:j===i?1:.90,zIndex:j===i?40:15})});
- navAlternativeMarkers.forEach(function(m,j){try{m.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:j===i?16:13,fillColor:j===i?"#ff5a1f":"#59728e",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3});m.setLabel({text:String(j+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"})}catch(e){}});
+ navAlternativePolylines.forEach(function(p,j){styleNavigationPolyline(p,j===i,j===i?40:15)});
+ navAlternativeMarkers.forEach(function(m,j){try{m.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:j===i?16:13,fillColor:j===i?GAZON_NAV_BLUE:"#7D94AC",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3});m.setLabel({text:String(j+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"})}catch(e){}});
  navRoute=navAlternativePolylines[i]||navRoute;navPathPoints=d.pts.slice();navSteps=d.steps;navStepIndex=0;navTotalKm=d.km;navTotalSec=d.sec;navReady=true;resetNavProgress();
  $("navInstruction").classList.add("active");$("navKm").textContent=navTotalKm.toFixed(1);$("navEta").textContent=Math.max(1,Math.round(navTotalSec/60))+" dk";$("navRoad").textContent=activeNavLabel||"Seçilen rota";renderNavStep();
  var driveBtn=$("navDrive");if(driveBtn){driveBtn.disabled=false;driveBtn.style.display="block";driveBtn.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Bu Rotayı Başlat'}
@@ -1234,12 +1266,8 @@ function renderAlternativeChoices(){
 }
 function appendNavAlternativePreview(rd,index){
  if(!rd||!Array.isArray(rd.pts)||!rd.pts.length)return;
- var p=new google.maps.Polyline({
-  map:map,path:rd.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),
-  strokeColor:index===navSelectedAlternative?"#ff5a1f":"#667b96",
-  strokeWeight:index===navSelectedAlternative?9:6,
-  strokeOpacity:index===navSelectedAlternative?1:.90,zIndex:index===navSelectedAlternative?40:15,clickable:true
- });
+ var p=createNavigationPolyline(rd.pts,index===navSelectedAlternative,
+  index===navSelectedAlternative?40:15,true);
  p.addListener("click",function(){selectAlternativeRoute(index)});
  navAlternativePolylines[index]=p;
  var mid=rd.pts[Math.max(0,Math.floor(rd.pts.length*.52))];
@@ -1247,7 +1275,7 @@ function appendNavAlternativePreview(rd,index){
   map:map,position:{lat:mid.lat,lng:mid.lon},zIndex:60+index,
   label:{text:String(index+1),color:"#ffffff",fontWeight:"900",fontSize:"12px"},
   icon:{path:google.maps.SymbolPath.CIRCLE,scale:index===navSelectedAlternative?16:13,
-   fillColor:index===navSelectedAlternative?"#ff5a1f":"#59728e",
+   fillColor:index===navSelectedAlternative?GAZON_NAV_BLUE:"#7D94AC",
    fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3},
   title:(index+1)+". "+(rd.name||"Alternatif rota")
  });
@@ -1278,7 +1306,7 @@ async function recalculateNavigation(){
    req.intermediates=window.GaZonTourRemaining.slice(0,-1).map(function(x){return {location:{lat:x.lat,lng:x.lon}}});
   var result=await Route.computeRoutes(req),rt=result&&result.routes&&result.routes[0];if(!rt)throw new Error("noroute");
   clearAlternativeRoutes();var d=routeToData(rt);navAlternatives=[d];
-  navRoute=new google.maps.Polyline({map:map,path:d.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:"#3457ff",strokeWeight:8,strokeOpacity:.98,zIndex:20});navAlternativePolylines=[navRoute];
+  navRoute=createNavigationPolyline(d.pts,true,45,false);navAlternativePolylines=[navRoute];
   navPathPoints=d.pts.slice();navSteps=d.steps;navStepIndex=0;navTotalKm=d.km;navTotalSec=d.sec;navReady=false;resetNavProgress();renderNavStep();updateGuidanceHud(currentPoint);
   $("status").textContent="Yeni rota oluşturuldu.";speakGuidance("Yeni rota oluşturuldu.");
  }catch(e){console.warn("reroute",e);$("status").textContent="Yeni rota oluşturulamadı. Mevcut rota korunuyor."}
@@ -1355,7 +1383,7 @@ async function planNavigation(){
   selectAlternativeRoute(0);
   fitAllAlternativeRoutes();
   $("status").textContent=navAlternatives.length>1?
-   navAlternatives.length+" yol seçeneği hazır. Turuncu çizgi seçili; başka bir rotaya dokunabilirsin.":
+   navAlternatives.length+" yol seçeneği hazır. Mavi çizgi seçili; başka bir rotaya dokunabilirsin.":
    "İlk rota hazır. Diğer alternatif yollar aranıyor.";
   // Show the first route immediately. Extra toll-free and highway-free
   // paths arrive without keeping the user waiting for all API requests.
@@ -1515,8 +1543,8 @@ async function openCommunityRouteNavigation(item,autoStart){
   try{result=await Route.computeRoutes(req)}catch(e){if(mode==="TWO_WHEELER"){req.travelMode="DRIVING";mode="DRIVING";result=await Route.computeRoutes(req)}else throw e}
   var rt=result&&result.routes&&result.routes[0];if(!rt||!rt.path||!rt.path.length)throw new Error("noroute");
   var pts=rt.path.map(navCoordinate).filter(Boolean);
-  if(navRoute)navRoute.setMap(null);
-  navRoute=new google.maps.Polyline({map:map,path:pts.map(function(p){return {lat:p.lat,lng:p.lon}}),strokeColor:"#ff5a1f",strokeWeight:8,strokeOpacity:.98});
+  if(navRoute)removeNavigationPolyline(navRoute);
+  navRoute=createNavigationPolyline(pts,true,45,false);
   if(rt.viewport)map.fitBounds(rt.viewport,42);else fitPolyline(navRoute);
   navSteps=routeToData(rt).steps.slice();
   navStepIndex=0;navTotalKm=Number(rt.distanceMeters||0)/1000;navTotalSec=Math.max(0,Number(rt.durationMillis||0)/1000);navActive=false;navReady=true;activeNavLabel=(item&&item.title)||"Topluluk Rotası";activeRouteMode=mode;activeNavDestination={lat:endPt.lat,lon:endPt.lng};navPathPoints=pts.slice();navOffRouteCount=0;resetNavProgress();
@@ -1656,7 +1684,7 @@ function startPlannedNavigation(forceWeb){
  navReady=false;
  navGuidanceStart=Date.now();
  navLastPanAt=0;navGpsErrorAt=0;resetNavProgress();
- navAlternativePolylines.forEach(function(p){if(p!==navRoute)try{p.setMap(null)}catch(e){}});
+ navAlternativePolylines.forEach(function(p){if(p!==navRoute)removeNavigationPolyline(p)});
  navAlternativeMarkers.forEach(function(m){try{m.setMap(null)}catch(e){}});
  lastGuidanceStep=-1;navOffRouteCount=0;navSteps.forEach(function(s){s._spokenStage=0});
  if(!riding){navStartedRide=true;startRide();}else navStartedRide=false;
@@ -1739,7 +1767,7 @@ function stopNavigation(){
  navActive=false;navReady=false;navSteps=[];navStepIndex=0;activeNavDestination=null;navPathPoints=[];navOffRouteCount=0;navRecalculating=false;
  resetNavProgress();
  exitGuidanceMode();
- clearAlternativeRoutes();if(navRoute){try{navRoute.setMap(null)}catch(e){}navRoute=null;}
+ clearAlternativeRoutes();if(navRoute){removeNavigationPolyline(navRoute);navRoute=null;}
  $("navInstruction").classList.remove("active");
  var db=$("navDrive");if(db){db.disabled=false;db.style.display="block";db.innerHTML='<span class="mi" style="vertical-align:-5px;margin-right:6px">two_wheeler</span>SÜR · Navigasyonu Başlat';}
  if(navStartedRide&&riding){
@@ -2272,9 +2300,8 @@ function boot(){
    // Browser/iOS fallback: use all computed route steps and geometry.
    if(!googleReady||!map){$("status").textContent="Harita hazır değil";return false}
    ++navPlanSeq;clearAlternativeRoutes();
-   if(navRoute)try{navRoute.setMap(null)}catch(e){}
-   navRoute=new google.maps.Polyline({map:map,path:tour.points.map(function(p){return {lat:p.lat,lng:p.lon}}),
-    strokeColor:"#ff5a1f",strokeWeight:9,strokeOpacity:1,zIndex:45});
+   if(navRoute)removeNavigationPolyline(navRoute);
+   navRoute=createNavigationPolyline(tour.points,true,45,false);
    navPathPoints=tour.points.slice();
    navSteps=tour.steps.slice();navStepIndex=0;navTotalKm=tour.km;navTotalSec=tour.sec;
    activeNavLabel="Halkalı motosiklet turu";activeRouteMode="DRIVING";

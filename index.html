@@ -1900,7 +1900,17 @@ function connectVoiceSocket(){
 async function ensureMic(){
  if(voice.stream&&voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}))return voice.stream;
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("Mikrofon tarayıcıda desteklenmiyor");
+ var oldStream=voice.stream;
  voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+ if(oldStream){
+  var newTrack=voice.stream.getAudioTracks()[0];
+  Object.keys(voice.peers).forEach(function(id){
+   var pc=voice.peers[id];
+   if(pc&&pc.getSenders)pc.getSenders().filter(function(sender){return sender.track&&sender.track.kind==="audio"}).forEach(function(sender){
+    sender.replaceTrack(newTrack).catch(function(err){console.warn("Audio track replacement",err)});
+   });
+  });
+ }
  return voice.stream;
 }
 async function startVoice(code,host){
@@ -1911,8 +1921,10 @@ async function startVoice(code,host){
   // The native app configures a Bluetooth voice-call audio route.
   if(window.AndroidBridge&&typeof AndroidBridge.prepareIntercom==="function")
    try{AndroidBridge.prepareIntercom()}catch(e){console.warn("iOS audio route",e)}
-  var stream=await ensureMic();
+  // Close the previous room BEFORE acquiring new microphone tracks.
+  // Otherwise stopVoice() stops the just-created iOS MediaStream.
   stopVoice(false);
+  var stream=await ensureMic();
   voice.room=code;voice.host=host;voice.id=voiceId();voice.session++;
   voice.stream=stream;voice.mic=false;
   stream.getAudioTracks().forEach(function(t){t.enabled=false});

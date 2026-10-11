@@ -15,8 +15,9 @@ assert.notDeepEqual(stops[0],end,"first intermediate is not the destination");
 stops.forEach(p=>assert.ok(Number.isFinite(p.lat)&&Number.isFinite(p.lon)));
 assert.deepEqual(r.routeStops([home,end],end),[end],"two-point path has no fake via");
 assert.deepEqual(r.routeStops([],null),[],"invalid target not launched");
-const short=[home,{lat:home.lat+.001,lon:home.lon+.001},end={lat:home.lat+.0015,lon:home.lon+.002}];
-assert.equal(r.routeStops(short,end).length,1,"short drive uses destination only");
+const shortEnd={lat:home.lat+.0015,lon:home.lon+.002};
+const short=[home,{lat:home.lat+.001,lon:home.lon+.001},shortEnd];
+assert.equal(r.routeStops(short,shortEnd).length,1,"short drive uses destination only");
 const loop=[];
 for(let i=0;i<=100;i++){
  const t=i*Math.PI*2/100;

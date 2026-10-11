@@ -10,7 +10,7 @@ function distance(a,b){
 }
 for(const direction of ["auto","north","east","south","west"]){
  const routes=Tour.candidates(home,100,direction);
- assert.equal(routes.length,3,"3 tour shape candidates");
+ assert.equal(routes.length,5,"5 tour shape candidates");
  routes.forEach(r=>{
   assert.equal(r.middle.length,2,"2 intermediate waypoints");
   r.middle.forEach(p=>{
@@ -28,10 +28,17 @@ for(const direction of ["auto","north","east","south","west"]){
 }
 for(const km of [50,100,150]){
  const points=Tour.candidates(home,km,"auto");
- const avg=points.flatMap(c=>c.middle.map(p=>distance(home,p))).reduce((a,b)=>a+b,0)/6;
+ const avg=points.flatMap(c=>c.middle.map(p=>distance(home,p))).reduce((a,b)=>a+b,0)/10;
  assert.ok(avg>km/5&&avg<km/3.5,"waypoint radius follows target");
 }
 assert.equal(Tour.offset(null,90,20),null);
 assert.equal(Tour.offset(home,90,-1),null);
-assert.ok(distance(home,Tour.offset(home,65,12))-12<.01);
-console.log("PASS: tour bearings, route distances, 3 alternatives, round-trip Google Maps links");
+assert.ok(Math.abs(distance(home,Tour.offset(home,65,12))-12)<.01);
+const straight=[{lat:40.875,lon:30.95},{lat:40.875,lon:30.953},{lat:40.875,lon:30.956},{lat:40.875,lon:30.959}];
+const bending=[{lat:40.875,lon:30.95},{lat:40.878,lon:30.95},{lat:40.878,lon:30.954},{lat:40.874,lon:30.954},{lat:40.874,lon:30.959}];
+assert.ok(Tour.curvature(bending,2)>Tour.curvature(straight,2),"turning road scores above straight road");
+const a={km:102,sec:5200,curveScore:9},b={km:100,sec:4800,curveScore:1};
+assert.ok(Tour.score(b,"fast",100)>Tour.score(a,"fast",100),"fast prefers lower time");
+assert.ok(Tour.score(a,"verycurvy",100)>Tour.score(b,"verycurvy",100),"very curvy prefers bends");
+assert.equal(Tour.extractSteps({legs:[{steps:[{distanceMeters:250,maneuver:"TURN_LEFT",endLocation:{lat:40,lon:31}}]}]}).length,1);
+console.log("PASS: 5 route candidates, distance goals, estimated twistiness ranking, multi-stop route steps");

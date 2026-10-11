@@ -1,0 +1,163 @@
+/* GaZonRide · premium full-map navigation · first UI pass
+   Only CSS: no changes to route computation, Google SDK, or recorded rides. */
+body.mode-navigation:not(.guidance-active) .appHeader{display:none!important}
+body.mode-navigation:not(.guidance-active) .app{
+  max-width:none!important;min-height:100dvh;padding:0!important
+}
+body.mode-navigation:not(.guidance-active) .map{
+  position:relative;width:100%;height:calc(100dvh - 88px - env(safe-area-inset-bottom,0px))!important;
+  min-height:0!important;max-height:none!important;
+  margin:0!important;border:0!important;border-radius:0!important
+}
+body.mode-navigation:not(.guidance-active) .navigationPanel{
+  z-index:905;
+  top:calc(env(safe-area-inset-top,0px) + 16px)!important;
+  width:min(525px,calc(100% - 28px))!important;
+  padding:0!important
+}
+body.mode-navigation:not(.guidance-active) .navOriginCompact{
+  height:47px;box-sizing:border-box;margin:0 0 9px;
+  padding:7px 10px;border-radius:17px;
+  background:rgba(11,15,23,.95)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  box-shadow:0 10px 26px #0005;color:#fff!important;
+  backdrop-filter:blur(16px)
+}
+body.mode-navigation:not(.guidance-active) .navOriginCompact>div{
+  grid-template-columns:auto minmax(0,1fr);column-gap:10px
+}
+body.mode-navigation:not(.guidance-active) .navOriginCompact .mi{font-size:21px}
+body.mode-navigation:not(.guidance-active) .navOriginCompact b{
+  font-size:12px;font-weight:900;color:#f9fafb!important;line-height:1.15
+}
+body.mode-navigation:not(.guidance-active) .navOriginCompact small{
+  font-size:10px;color:#b0bdc8!important;font-weight:500;
+}
+body.mode-navigation:not(.guidance-active) .navOriginCompact button{
+  min-height:33px;font-size:11px;padding:7px 12px;border-radius:12px;
+  background:rgba(255,255,255,.10);color:#fff
+}
+body.mode-navigation:not(.guidance-active) .navPointLabel{display:none!important}
+body.mode-navigation:not(.guidance-active) .navOriginEditor.active{
+  padding:7px 0;margin:0 0 3px
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow{
+  min-height:58px;box-sizing:border-box;
+  display:flex;align-items:center;gap:5px;
+  padding:6px 7px 6px 14px!important;
+  background:rgba(12,16,24,.96)!important;
+  border:1px solid rgba(255,255,255,.21)!important;
+  border-radius:19px!important;
+  box-shadow:0 12px 32px #0005!important;
+  backdrop-filter:blur(20px)
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow:focus-within{
+  border-color:rgba(255,90,31,.9)!important;
+  box-shadow:0 0 0 2px rgba(255,90,31,.18),0 14px 32px #0007!important
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow .input{
+  min-width:0;flex:1;margin:0!important;padding:9px 5px!important;
+  font-size:15px!important;line-height:1.35;color:#f8fafc!important;
+  background:transparent!important;border:0!important;outline:0!important;
+  box-shadow:none!important
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow .input::placeholder{
+  color:#a4abb7!important;opacity:1
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow button{
+  width:46px!important;min-width:46px!important;height:44px;
+  padding:0!important;border-radius:14px!important;
+  display:grid;place-items:center;background:#ff5a1f;color:#fff
+}
+body.mode-navigation:not(.guidance-active) .navSearchRow button .mi{font-size:25px}
+body.mode-navigation:not(.guidance-active) .navSuggest{
+  top:60px;left:0;right:0;border-radius:14px;
+  border:1px solid #485366!important;background:#101722!important;
+  box-shadow:0 14px 35px #0009;max-height:32dvh
+}
+body.mode-navigation:not(.guidance-active) .navSuggest button{
+  background:#101722!important;color:#fff!important;
+  width:100%!important;min-height:45px;height:auto;
+  text-align:left;display:block;padding:12px 14px!important;
+  font-size:12px;border-radius:0!important
+}
+body.mode-navigation:not(.guidance-active) .navRecenterBtn{
+  z-index:899;bottom:calc(100px + env(safe-area-inset-bottom,0px));
+  width:48px;height:48px;background:rgba(16,20,29,.97)!important;
+  border:1px solid #ffffff36;color:#fff!important;box-shadow:0 8px 24px #0007
+}
+body.mode-navigation:not(.guidance-active) #navChoices.active{
+  border-radius:23px!important;
+  background:rgba(12,16,23,.98)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  color:#fff!important;
+  box-shadow:0 14px 40px #0009!important;
+  padding:13px!important;
+  bottom:calc(99px + env(safe-area-inset-bottom,0px))!important;
+  max-height:min(36dvh,315px);overflow-y:auto
+}
+body.mode-navigation:not(.guidance-active) #navChoices .gr-route-chooser-title{
+  font-size:14px;color:#fff;padding:0 3px 11px
+}
+body.mode-navigation:not(.guidance-active) #navChoices .gr-route-chooser-title small{
+  color:#a8b4c1;font-weight:600;font-size:10px
+}
+body.mode-navigation:not(.guidance-active) #navChoices .navChoice{
+  background:#191f29!important;color:#edf2f8!important;
+  border-color:#414a5a!important;min-height:81px!important
+}
+body.mode-navigation:not(.guidance-active) #navChoices .navChoice.active{
+  border-color:#ff5a1f!important;background:#281b19!important
+}
+body.mode-navigation:not(.guidance-active) #navChoices .navChoice b,
+body.mode-navigation:not(.guidance-active) #navChoices .navChoice span{color:#f7f9fc!important}
+body.mode-navigation:not(.guidance-active) #navChoices .navChoice em{color:#a8b4c1!important}
+body.mode-navigation:not(.guidance-active) #navChoices #navRouteStart{
+  min-height:53px;font-size:13px;border-radius:15px
+}
+body.mode-navigation:not(.guidance-active) #navChoices #navRouteMaps{
+  min-height:53px;min-width:49px;border-radius:15px;
+  color:#f8fafc!important;background:#1e2733!important;border-color:#4b5666!important
+}
+body.mode-navigation:not(.guidance-active) #navChoices .gr-route-chooser-loading{
+  color:#f8fafc!important;min-height:46px
+}
+body.mode-navigation:not(.guidance-active) .bottom{
+  background:rgba(8,10,14,.97)!important;
+  border-top:1px solid #272d36
+}
+/* During guidance: minimum HUD, clear road and ETA, no oversized duplicated panels. */
+body.guidance-active .guidanceTop{
+  left:max(11px,env(safe-area-inset-left,0px));
+  right:max(11px,env(safe-area-inset-right,0px));
+  top:calc(env(safe-area-inset-top,0px) + 10px)
+}
+body.guidance-active .guidanceMain{
+  padding:13px 15px;border-radius:17px 17px 12px 12px;
+  background:#0b6963;box-shadow:0 10px 28px #0006
+}
+body.guidance-active .guidanceRoadWrap b{
+  font-size:clamp(19px,5.5vw,24px);line-height:1.14
+}
+body.guidance-active .guidanceTurnIcon{font-size:43px}
+body.guidance-active .guidanceNext{
+  padding:8px 14px;font-size:12px;border-radius:0 0 12px 12px
+}
+body.guidance-active .guidanceBottom{
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+  background:rgba(13,18,26,.96);border-top:1px solid #53606e88;color:#fff
+}
+body.guidance-active .guidanceBottom button{
+  width:52px;height:52px;background:#202734;color:#fff;border-color:#394553
+}
+body.guidance-active .guidanceSummary b{color:#fff;font-size:23px}
+body.guidance-active .guidanceSummary small{color:#a8b7c6}
+@media(max-width:375px){
+ body.mode-navigation:not(.guidance-active) .navigationPanel{width:calc(100% - 20px)!important}
+ body.mode-navigation:not(.guidance-active) .navOriginCompact{height:45px}
+ body.mode-navigation:not(.guidance-active) .navSearchRow .input{font-size:13px!important}
+ body.mode-navigation:not(.guidance-active) #navChoices.active{padding:10px!important;left:7px;right:7px}
+}
+@media(max-height:680px){
+ body.mode-navigation:not(.guidance-active) #navChoices.active{max-height:32dvh}
+}

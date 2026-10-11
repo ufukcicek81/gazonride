@@ -1273,6 +1273,9 @@ async function recalculateNavigation(){
  $("status").textContent="Rotadan çıktın. Yeni rota hesaplanıyor…";speakGuidance("Rotadan çıktın. Yeni rota hesaplanıyor.");
  try{
   var routesLib=await google.maps.importLibrary("routes"),Route=routesLib.Route,req={origin:{lat:currentPoint.lat,lng:currentPoint.lon},destination:{lat:activeNavDestination.lat,lng:activeNavDestination.lon},travelMode:activeRouteMode||"DRIVING",routingPreference:"TRAFFIC_AWARE",polylineQuality:"HIGH_QUALITY",fields:["path","legs","viewport","distanceMeters","durationMillis"]};
+  // Preserve unvisited tour waypoints when recalculating in the web/iOS navigator.
+  if(Array.isArray(window.GaZonTourRemaining)&&window.GaZonTourRemaining.length>1)
+   req.intermediates=window.GaZonTourRemaining.slice(0,-1).map(function(x){return {location:{lat:x.lat,lng:x.lon}}});
   var result=await Route.computeRoutes(req),rt=result&&result.routes&&result.routes[0];if(!rt)throw new Error("noroute");
   clearAlternativeRoutes();var d=routeToData(rt);navAlternatives=[d];
   navRoute=new google.maps.Polyline({map:map,path:d.pts.map(function(q){return {lat:q.lat,lng:q.lon}}),strokeColor:"#3457ff",strokeWeight:8,strokeOpacity:.98,zIndex:20});navAlternativePolylines=[navRoute];
@@ -1699,6 +1702,14 @@ function trimPassedNavigationRoute(progress){
 }
 function updateNavigation(p,ts,accuracy,speed){
  if(!navActive)return;
+ // The remaining stops must not be discarded on route deviation.
+ if(Array.isArray(window.GaZonTourRemaining)&&window.GaZonTourRemaining.length>1){
+  var next=window.GaZonTourRemaining[0];
+  if(next&&hav(p,next)<.12){
+   window.GaZonTourRemaining.shift();
+   $("status").textContent="Tur ara durağı geçildi, sıradaki durağa devam et.";
+  }
+ }
  var state=null,engine=window.GaZonNavProgress;
  if(engine&&engine.state().measuredMeters>0){
   state=engine.update(p,ts,accuracy);
@@ -1719,6 +1730,7 @@ function updateNavigation(p,ts,accuracy,speed){
  updateGuidanceHud(p)
 }
 function stopNavigation(){
+ window.GaZonTourRemaining=null;
  if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();
  try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}
  if(navGuidanceTimer){clearInterval(navGuidanceTimer);navGuidanceTimer=null}

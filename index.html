@@ -654,7 +654,21 @@ function followRideCamera(p,c,ts){
  }catch(e){console.warn("GaZonRide follow camera",e);}
 }
 function applyPosition(pos){
- var c=pos.coords,p={lat:Number(c.latitude),lon:Number(c.longitude)},ts=Number(pos.timestamp||c.timestamp||Date.now());if(!isFinite(p.lat)||!isFinite(p.lon)||!isFinite(ts))return;if((riding||navActive)&&!acceptLiveGpsFix(p,c,ts)){if(Number(c.accuracy)>65)$("gps").textContent="GPS doğruluğu bekleniyor";return;}currentPoint=p;if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
+ var c=pos.coords,p={lat:Number(c.latitude),lon:Number(c.longitude)},ts=Number(pos.timestamp||c.timestamp||Date.now());if(!isFinite(p.lat)||!isFinite(p.lon)||!isFinite(ts))return;if((riding||navActive)&&!acceptLiveGpsFix(p,c,ts)){
+  // At a traffic light or while parked the ride filter rejects tiny
+  // movements, but that must not be mistaken for loss of GPS reception.
+  var speed=Number(c.speed),accuracy=Number(c.accuracy);
+  if(navActive&&isFinite(speed)&&speed>=0&&speed<1.2&&
+     isFinite(accuracy)&&accuracy>0&&accuracy<=65&&currentPoint&&
+     hav(currentPoint,p)*1000<Math.max(30,accuracy*2)&&
+     window.GaZonNavProgress&&GaZonNavProgress.heartbeat&&
+     GaZonNavProgress.heartbeat(p,ts,accuracy)){
+   var hudSpeed=$("guidanceSpeed");if(hudSpeed)hudSpeed.textContent="0";
+   updateGuidanceHud(currentPoint);
+   $("gps").textContent="GPS bağlı · bekleme";
+  }else if(accuracy>65)$("gps").textContent="GPS doğruluğu bekleniyor";
+  return;
+ }currentPoint=p;if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
   if(c.speed!=null&&Number(c.speed)>=0){var speedHUD=$("guidanceSpeed");if(speedHUD)speedHUD.textContent=Math.round(Number(c.speed)*3.6)}
   updateNavigation(p,ts,c.accuracy,c.speed)
  }

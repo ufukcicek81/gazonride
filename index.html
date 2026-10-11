@@ -344,6 +344,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-music.css?v=20261011-ride-mini1">
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261010-route-choice-v1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261011-p1">
+<link rel="stylesheet" href="gazon-tour.css?v=20261011-tour-v1">
 </head>
 <body>
 <div class="app">
@@ -399,14 +400,30 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </section>
 <section class="navigationPanel" id="navigationPanel">
   <div class="ey">GAZONRIDE NAVİGASYON</div>
+  <div class="gr-plan-modes" role="tablist" aria-label="Rota planlama türü">
+    <button id="grModeDestination" type="button" class="active" role="tab" aria-selected="true"><span class="mi">near_me</span> Hedef</button>
+    <button id="grModeTour" type="button" role="tab" aria-selected="false"><span class="mi">alt_route</span> Tur</button>
+  </div>
   <div class="navOriginCompact" id="navOriginCompact"><div><span class="mi">trip_origin</span><b>Başlangıç</b><small id="navOriginSummary">Konumun otomatik kullanılıyor</small></div><button type="button" id="navChangeOrigin">Değiştir</button></div>
   <div class="navOriginEditor" id="navOriginEditor">
     <div class="navSearchRow"><input class="input" id="navOrigin" autocomplete="off" placeholder="Başlangıç noktası ara"><button type="button" id="navUseCurrent" title="Konumumu kullan"><span class="mi">my_location</span></button><div class="navSuggest" id="navOriginSuggest"></div></div>
   </div>
-  <div class="navPointLabel"><span class="mi">flag</span>Varış</div>
-  <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
+  <div id="grDestinationFields">
+    <div class="navPointLabel"><span class="mi">flag</span>Varış</div>
+    <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
+  </div>
+  <div id="grTourPanel" class="gr-tour-panel" aria-label="Motor turu planlama" hidden>
+    <div class="gr-tour-head"><b>Başladığın yere dönen tur</b><small>Mesafeyi ve yönü belirle</small></div>
+    <div class="gr-tour-fields">
+      <label for="grTourLength">Hedef mesafe<select id="grTourLength"><option value="50">50 km</option><option value="100" selected>100 km</option><option value="150">150 km</option></select></label>
+      <label for="grTourDirection">Tur yönü<select id="grTourDirection"><option value="auto">Farklı yönler</option><option value="north">Kuzey</option><option value="east">Doğu</option><option value="south">Güney</option><option value="west">Batı</option></select></label>
+    </div>
+    <button id="grTourPlan" type="button"><span class="mi">alt_route</span> Üç tur önerisi oluştur</button>
+    <div class="gr-tour-message" id="grTourMessage" aria-live="polite">Gerçek yollar üzerinden kilometre ve süre hesaplanır.</div>
+  </div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
   <div class="navChoices" id="navChoices"></div>
+  <div class="gr-tour-choices" id="grTourChoices" aria-label="Halkalı tur seçenekleri"></div>
   <div class="navInstruction" id="navInstruction">
     <div class="navTurn" id="navTurn">Rota hazır</div>
     <div class="sub" id="navRoad">—</div>
@@ -476,6 +493,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </nav>
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="gazon-nav-progress.js?v=20261009-route-progress-v1"></script>
+<script src="gazon-tour.js?v=20261011-loop-preview-v1"></script>
 <script>
 (function(){
 "use strict";
@@ -1526,6 +1544,7 @@ async function launchCardDestination(item){
  var lat=Number(item&&item.lat),lon=Number(item&&item.lon);
  var knownCoordinates=item&&item.lat!=null&&item.lon!=null&&
   Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180;
+ if(window.GaZonTour)GaZonTour.setMode("destination");
  var tab=document.querySelector('.navBtn[data-page="navigation"]');
  if(tab)nav("navigation",tab);else setMode("navigation");
  clearTimeout(navAutoPlanTimer);clearTimeout(navAutocompleteTimer);
@@ -2212,6 +2231,24 @@ function boot(){
  var routePicker=$("navChoices");
  if(routePicker&&routePicker.parentElement!==document.body)document.body.appendChild(routePicker);
  setupNavAutocomplete();setupOriginAutocomplete();
+ if(window.GaZonTour)GaZonTour.init({
+  googleReady:function(){return googleReady},
+  getMap:function(){return map},
+  getOrigin:async function(){
+   var inp=$("navOrigin"),q=inp?inp.value.trim():"";
+   if(inp&&inp.dataset.current!=="1"&&q){
+    if(inp.dataset.lat&&inp.dataset.lon)return {lat:Number(inp.dataset.lat),lon:Number(inp.dataset.lon)};
+    return geocodeGoogle(q);
+   }
+   if(!currentPoint){startGPS();throw new Error("GPS konumu bekleniyor. Konum iznini kontrol et.")}
+   return {lat:currentPoint.lat,lon:currentPoint.lon};
+  },
+  clearDestinationRoutes:function(){
+   ++navPlanSeq;clearAlternativeRoutes();navReady=false;
+   var instruction=$("navInstruction");if(instruction)instruction.classList.remove("active");
+  },
+  setStatus:function(message){var status=$("status");if(status)status.textContent=message}
+ });
  var rb=$("navRecenterBtn");if(rb)rb.onclick=recenterNavigationOnce;
  $("navGo").addEventListener("click",planNavigation);
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});

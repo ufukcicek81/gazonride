@@ -91,6 +91,11 @@ jobs:
           assert 'id="navActionFeedback"' in html
           assert 'id="navRetryGps"' in html and 'id="navChooseOrigin"' in html
           assert 'function handleMissingNavigationGps(' in html
+          assert 'function startNavigationGpsWatch(' in html
+          assert 'function stopNavigationGpsWatch(' in html
+          assert 'gazon-location-permission-changed' in html
+          assert 'pendingNavRouteRequest={target:q,time:Date.now()}' in html
+          assert 'if(desired&&desired===actual)setTimeout(function()' in html
           assert 'return handleMissingNavigationGps(input,q,originInput)' in html
           assert 'AndroidBridge.openNativeNavigation(d.lat,d.lon' in html
           assert 'showNavActionFeedback("Rota bulunamadı.' in html

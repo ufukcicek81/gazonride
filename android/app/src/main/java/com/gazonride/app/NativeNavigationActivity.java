@@ -159,8 +159,6 @@ public final class NativeNavigationActivity extends Activity {
                 return "Rotadaki bir ara nokta kabul edilmedi. Farklı güzergâh dene.";
             case NO_ROUTE_FOUND:
                 return "Google bu güzergâh için yol bulamadı. Farklı rota seç.";
-            case DUPLICATE_WAYPOINTS_ERROR:
-                return "Rotada üst üste binen duraklar var. Tur noktalarını yenile.";
             case ROUTING_TIMEOUT:
                 return "Rota hesaplaması zaman aşımına uğradı. Tekrar dene.";
             default:

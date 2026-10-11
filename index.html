@@ -1229,7 +1229,7 @@ function renderAlternativeChoices(){
  var options=box.querySelector(".gr-route-chooser-options");
  if(options)options.scrollLeft=scroll;
  box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}});
- var start=box.querySelector("#navRouteStart");if(start)start.onclick=startPlannedNavigation;
+ var start=box.querySelector("#navRouteStart");if(start)start.onclick=function(){startPlannedNavigation(false)};
  var maps=box.querySelector("#navRouteMaps");if(maps)maps.onclick=openGoogleMapsNavigation
 }
 function appendNavAlternativePreview(rd,index){
@@ -1634,6 +1634,8 @@ async function launchCardDestination(item){
 window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,launchCardDestination:launchCardDestination,recenter:recenterNavigationOnce};
 
 function startPlannedNavigation(forceWeb){
+ // Click handlers receive an Event argument; do not misread it as "force web".
+ forceWeb=forceWeb===true;
  if(!navReady||!navRoute){$("status").textContent="Önce bir rota oluştur.";return;}
  // On the Android APK the official Navigation SDK replaces our browser
  // approximation: Google handles road snapping, turn cards, voice and live ETA.
@@ -2302,7 +2304,7 @@ function boot(){
  var rb=$("navRecenterBtn");if(rb)rb.onclick=recenterNavigationOnce;
  $("navGo").addEventListener("click",planNavigation);
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});
- $("navDrive").addEventListener("click",startPlannedNavigation);
+ $("navDrive").addEventListener("click",function(){startPlannedNavigation(false)});
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",calibrateLeanSensor);
  startLeanSensor();

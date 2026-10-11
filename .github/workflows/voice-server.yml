@@ -1,7 +1,7 @@
 name: Build Voice Server
 on:
   push:
-    paths: ['voice/**']
+    paths: ['voice/**', '.github/workflows/voice-server.yml']
   workflow_dispatch:
 jobs:
   check:

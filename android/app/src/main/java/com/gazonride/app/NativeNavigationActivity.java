@@ -46,6 +46,7 @@ public final class NativeNavigationActivity extends Activity {
     private TextView progressText;
     private TextView trackText;
     private Button musicToggle;
+    private Button musicFab;
     private View musicPanel;
     private MusicController musicController;
     private boolean closed;
@@ -98,6 +99,13 @@ public final class NativeNavigationActivity extends Activity {
         if (closed) return;
         runOnUiThread(() -> {
             if (statusText != null) statusText.setText(text);
+            // Only surface genuine errors to the rider; ordinary guidance
+            // progress is already visible in the official Google map.
+            if (text != null && (text.contains("başlatılamadı") ||
+                    text.contains("oluşturamadı") || text.contains("yetkisiz") ||
+                    text.contains("Geçersiz") || text.contains("verilmeden"))) {
+                Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+            }
         });
     }
 
@@ -113,40 +121,23 @@ public final class NativeNavigationActivity extends Activity {
         navigationView = new NavigationView(this);
         root.addView(navigationView, new FrameLayout.LayoutParams(-1, -1));
 
-        // A compact close control stays on top of Google's own map, without
-        // replacing or drawing a fake turn instruction card.
-        LinearLayout top = new LinearLayout(this);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(dp(10), dp(4), dp(10), dp(4));
-        top.setBackground(shape(0xEE141C29, 16));
-        FrameLayout.LayoutParams topParams =
-                new FrameLayout.LayoutParams(-2, dp(52), Gravity.TOP | Gravity.END);
-        topParams.setMargins(dp(14), dp(16), dp(12), 0);
-        TextView brand = label("GaZonRide", 12, true);
-        brand.setPadding(dp(4), 0, dp(10), 0);
-        top.addView(brand);
-        Button back = control("✕ Bitir");
+        // Keep Google's turn-by-turn banner unobstructed. Exit remains
+        // available as a small one-tap control above the native ETA card.
+        Button back = control("✕");
+        back.setTextSize(18);
         back.setContentDescription("Navigasyonu bitir ve GaZonRide'a dön");
+        back.setBackground(shape(0xEC151D2B, 26));
         back.setOnClickListener(v -> exitNavigation());
-        top.addView(back, new LinearLayout.LayoutParams(dp(80), dp(40)));
-        root.addView(top, topParams);
+        FrameLayout.LayoutParams backParams =
+                new FrameLayout.LayoutParams(dp(49), dp(49), Gravity.BOTTOM | Gravity.END);
+        backParams.setMargins(0, 0, dp(12), dp(205));
+        root.addView(back, backParams);
 
-        LinearLayout footer = new LinearLayout(this);
-        footer.setPadding(dp(10), dp(8), dp(10), dp(8));
-        footer.setOrientation(LinearLayout.VERTICAL);
-        footer.setBackground(shape(0xF0202936, 14));
-        progressText = label("Google navigasyon hazırlanıyor", 14, true);
-        statusText = label("GPS ve Google rota hizmeti bekleniyor", 11, false);
-        statusText.setTextColor(0xFFC7D3E1);
-        footer.addView(progressText);
-        footer.addView(statusText);
-        FrameLayout.LayoutParams footerParams =
-                new FrameLayout.LayoutParams(-1, dp(68), Gravity.BOTTOM);
-        // Leave the Google Navigation SDK bottom ETA/route panel fully visible.
-        // Raise both floating cards together while preserving their vertical gap.
-        footerParams.setMargins(dp(12), 0, dp(12), dp(174));
-        root.addView(footer, footerParams);
+        // The Navigation SDK already shows remaining distance, travel time,
+        // destination time, and spoken maneuvers. Never duplicate these in a
+        // custom overlay (which used to block the road and native controls).
+        progressText = label("", 14, true);
+        statusText = label("", 11, false);
 
         // Spotify/YouTube Music remains available without leaving navigation.
         LinearLayout music = new LinearLayout(this);
@@ -174,12 +165,35 @@ public final class NativeNavigationActivity extends Activity {
         LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(dp(45), dp(40));
         nextParams.leftMargin = dp(6);
         music.addView(next, nextParams);
+        // Compact music control: hidden panel until the rider asks for it.
+        // It no longer obscures Google's bottom ETA or any maneuver banner.
+        Button closeMusic = control("✕");
+        closeMusic.setContentDescription("Müzik denetimini küçült");
+        closeMusic.setOnClickListener(v -> {
+            music.setVisibility(View.GONE);
+            musicFab.setVisibility(View.VISIBLE);
+        });
+        music.addView(closeMusic, new LinearLayout.LayoutParams(dp(42), dp(40)));
         FrameLayout.LayoutParams musicParams =
-                new FrameLayout.LayoutParams(-1, dp(54), Gravity.BOTTOM);
-        musicParams.setMargins(dp(12), 0, dp(12), dp(112));
+                new FrameLayout.LayoutParams(dp(292), dp(54), Gravity.CENTER_VERTICAL | Gravity.END);
+        musicParams.setMargins(0, 0, dp(12), 0);
         root.addView(music, musicParams);
+        music.setVisibility(View.GONE);
         musicPanel = music;
         musicToggle = play;
+        musicFab = control("♫");
+        musicFab.setTextSize(23);
+        musicFab.setContentDescription("Müzik kontrolünü aç");
+        musicFab.setBackground(shape(0xEC151D2B, 26));
+        musicFab.setOnClickListener(v -> {
+            musicFab.setVisibility(View.GONE);
+            music.setVisibility(View.VISIBLE);
+            refreshMusic();
+        });
+        FrameLayout.LayoutParams musicFabParams =
+                new FrameLayout.LayoutParams(dp(50), dp(50), Gravity.CENTER_VERTICAL | Gravity.END);
+        musicFabParams.setMargins(0, 0, dp(12), 0);
+        root.addView(musicFab, musicFabParams);
 
         setContentView(root);
         navigationView.onCreate(saved);

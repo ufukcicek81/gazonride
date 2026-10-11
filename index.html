@@ -1691,61 +1691,281 @@ function stopNavigation(){
 }
 
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay")){setMode("discover");setDiscoverFilter("discover")}window.scrollTo({top:0,behavior:"smooth"});}
-var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},remoteCount:0};
+var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},host:false,session:0,retryTimer:null,retryCount:0,audioBlocked:false};
 var VOICE_WS="wss://gazonride-voice.onrender.com";
-function voiceId(){return "rider-"+Math.random().toString(36).slice(2,9);}
-function sendSignal(msg){if(voice.ws&&voice.ws.readyState===1)voice.ws.send(JSON.stringify(msg));}
-function pcFor(id,offer){
-  if(voice.peers[id]) return voice.peers[id];
-  var pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
-  voice.peers[id]=pc;
-  if(voice.stream)voice.stream.getTracks().forEach(function(t){pc.addTrack(t,voice.stream);});
-  pc.onicecandidate=function(e){if(e.candidate)sendSignal({type:"signal",to:id,data:{kind:"ice",candidate:e.candidate}});};
-  pc.ontrack=function(e){if(e.streams&&e.streams[0])playRemote(e.streams[0],id);};
-  pc.onconnectionstatechange=function(){if(["failed","closed","disconnected"].indexOf(pc.connectionState)>=0){delete voice.peers[id];updateVoiceCount();}};
-  if(offer)pc.createOffer().then(function(o){return pc.setLocalDescription(o);}).then(function(){sendSignal({type:"signal",to:id,data:{kind:"offer",sdp:pc.localDescription}});}).catch(function(){});
-  return pc;
+function voiceId(){return "rider-"+Math.random().toString(36).slice(2,10);}
+function voiceState(message){
+ var el=$("voiceState");if(el)el.textContent=message;
+ var sub=$("voiceDockSub");if(sub)sub.textContent=message;
+}
+function sendSignal(msg){
+ if(voice.ws&&voice.ws.readyState===WebSocket.OPEN){
+  try{voice.ws.send(JSON.stringify(msg))}catch(e){console.warn("Voice signaling send failed",e)}
+ }
+}
+function voiceIceServers(){
+ var base=[{urls:"stun:stun.l.google.com:19302"}];
+ // Optional short-lived TURN credentials can be supplied via a trusted
+ // runtime config. There are no permanent TURN secrets in the web repo.
+ if(Array.isArray(window.GAZONRIDE_ICE_SERVERS))
+  window.GAZONRIDE_ICE_SERVERS.forEach(function(x){if(x&&x.urls)base.push(x)});
+ return base;
+}
+function cleanupVoicePeer(id){
+ var pc=voice.peers[id];
+ if(pc){delete voice.peers[id];try{pc.close()}catch(e){}}
+ var audio=document.getElementById("remote-"+id);
+ if(audio){try{audio.pause();audio.srcObject=null;audio.remove()}catch(e){}}
+ updateVoiceCount();
+}
+function cleanupAllVoicePeers(){
+ Object.keys(voice.peers).forEach(cleanupVoicePeer);
+}
+function updateVoiceCount(){
+ var pcs=Object.keys(voice.peers).map(function(k){return voice.peers[k]});
+ var connected=pcs.filter(function(pc){return pc.connectionState==="connected"}).length;
+ var n=voice.room?connected+1:0,el=$("voiceCount");
+ if(el)el.textContent=n;
+ if(voice.room&&voice.ws&&voice.ws.readyState===WebSocket.OPEN){
+  var sub=$("voiceDockSub");
+  if(sub&&!voice.mic)sub.textContent=n+" sürücü ses bağlantısında"+(pcs.length>connected?" · "+(pcs.length-connected)+" bağlanıyor":"");
+ }
+}
+function pcFor(id,initiator){
+ if(!id||id===voice.id)return null;
+ if(voice.peers[id]&&voice.peers[id].signalingState!=="closed")return voice.peers[id];
+ if(voice.peers[id])cleanupVoicePeer(id);
+ var pc=new RTCPeerConnection({iceServers:voiceIceServers()});
+ pc._iceQueue=[];pc._initiator=!!initiator;
+ voice.peers[id]=pc;
+ if(voice.stream)voice.stream.getAudioTracks().forEach(function(track){pc.addTrack(track,voice.stream)});
+ pc.onicecandidate=function(e){
+  if(e.candidate)sendSignal({type:"signal",to:id,data:{kind:"ice",candidate:e.candidate}})
+ };
+ pc.ontrack=function(e){
+  if(e.streams&&e.streams[0])playRemote(e.streams[0],id);
+ };
+ pc.onconnectionstatechange=function(){
+  if(pc.connectionState==="failed"){
+   voiceState("Ses bağlantısı koptu. Yeniden bağlanılıyor…");
+   if(pc._initiator&&pc.restartIce){
+    try{pc.restartIce();makeVoiceOffer(pc,id)}catch(e){console.warn("Voice ICE restart",e)}
+   }
+  }else if(pc.connectionState==="connected"){
+   voiceState(voice.mic?"Konuşuyorsun":"Bağlandı · dinlemedesin");
+  }else if(pc.connectionState==="closed"){
+   if(voice.peers[id]===pc)cleanupVoicePeer(id);
+  }
+  updateVoiceCount();
+ };
+ if(initiator)makeVoiceOffer(pc,id);
+ updateVoiceCount();
+ return pc;
+}
+async function makeVoiceOffer(pc,id){
+ try{
+  var desc=await pc.createOffer();
+  await pc.setLocalDescription(desc);
+  if(voice.peers[id]===pc)sendSignal({type:"signal",to:id,data:{kind:"offer",sdp:pc.localDescription}});
+ }catch(e){console.warn("Voice offer failed",e);voiceState("Ses teklifi oluşturulamadı")}
+}
+async function flushVoiceIce(pc){
+ var list=pc._iceQueue.splice(0);
+ for(var i=0;i<list.length;i++)try{await pc.addIceCandidate(list[i])}catch(e){console.warn("Voice ICE rejected",e)}
 }
 async function handleSignal(m){
-  var d=m.data,pc=pcFor(m.from,false);
-  try{
-    if(d.kind==="offer"){await pc.setRemoteDescription(d.sdp);var a=await pc.createAnswer();await pc.setLocalDescription(a);sendSignal({type:"signal",to:m.from,data:{kind:"answer",sdp:pc.localDescription}});}
-    else if(d.kind==="answer"){await pc.setRemoteDescription(d.sdp);}
-    else if(d.kind==="ice"&&d.candidate){await pc.addIceCandidate(d.candidate);}
-  }catch(e){console.warn("voice signal",e);}
+ var d=m&&m.data;if(!d||!m.from||m.from===voice.id)return;
+ var pc=pcFor(m.from,false);if(!pc)return;
+ try{
+  if(d.kind==="offer"){
+   await pc.setRemoteDescription(d.sdp);
+   await flushVoiceIce(pc);
+   var answer=await pc.createAnswer();
+   await pc.setLocalDescription(answer);
+   sendSignal({type:"signal",to:m.from,data:{kind:"answer",sdp:pc.localDescription}});
+  }else if(d.kind==="answer"){
+   if(pc.signalingState!=="have-local-offer")return;
+   await pc.setRemoteDescription(d.sdp);
+   await flushVoiceIce(pc);
+  }else if(d.kind==="ice"&&d.candidate){
+   if(!pc.remoteDescription)pc._iceQueue.push(d.candidate);
+   else await pc.addIceCandidate(d.candidate);
+  }
+ }catch(e){console.warn("Voice signaling error",e);voiceState("Ses bağlantı hatası · tekrar bağlanmayı dene")}
 }
-function updateVoiceCount(){var n=Object.keys(voice.peers).length+1;var e=$("voiceCount");if(e)e.textContent=n;var d=$("voiceDockSub");if(d)d.textContent=(voice.room?voice.room+" · ":"")+n+" sürücü bağlı";}
-function voiceUI(){return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div><div class="voicePanelHero"><div class="voiceStatus"><span class="mi" style="font-size:14px">check_circle</span> Hazır</div><div class="riderStrip"><div class="riderDot"><div class="riderAvatar active"><span class="mi">person</span></div>Sen</div><div class="riderDot"><div class="riderAvatar"><span class="mi">person</span></div>Sürücü 2</div><div class="riderDot"><div class="riderAvatar"><span class="mi">person</span></div>Sürücü 3</div><div class="riderDot"><div class="riderAvatar"><span class="mi">person</span></div>Sürücü 4</div></div><button class="talkBtn" id="micBtn"><span class="mi">mic</span></button><div style="font-size:11px;font-weight:850">Konuşmak için dokun</div><div class="sub">Cardo, Sena, Midland ve diğer Bluetooth kulaklıklarla telefon üzerinden çalışır.</div></div><div class="screenCard"><b>Grup bağlantısı</b><input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)"><button class="screenBtn" id="createVoice">Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button><button class="screenBtn dark" id="leaveVoice">Bağlantıyı Kes</button><div class="statRow" style="margin-top:10px"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div><div class="statBox"><b id="voiceCount">0</b><span class="sub">Sürücü</span></div></div><div class="sub" id="voiceCode" style="margin-top:10px">Bağlantı kodu: —</div></div>';}
+function voiceAudioHint(){
+ voice.audioBlocked=true;
+ var hint=$("voiceAudioHint");
+ if(hint)hint.textContent="iPhone sesi engelledi. Aşağıdaki 'Sesi Aç' düğmesine dokun.";
+ voiceState("Karşı tarafın sesi için Sesi Aç'a dokun");
+}
+function unlockRemoteAudio(){
+ voice.audioBlocked=false;
+ var hint=$("voiceAudioHint");if(hint)hint.textContent="Hoparlör / kask ses çıkışı etkinleştiriliyor…";
+ document.querySelectorAll('audio[id^="remote-"]').forEach(function(audio){
+  audio.muted=false;
+  var result=audio.play();
+  if(result&&result.catch)result.catch(voiceAudioHint);
+ });
+}
+function playRemote(stream,id){
+ var audio=document.getElementById("remote-"+id);
+ if(!audio){
+  audio=document.createElement("audio");audio.id="remote-"+id;
+  audio.autoplay=true;audio.playsInline=true;audio.setAttribute("playsinline","");
+  // Avoid display:none; iOS can suppress playback for hidden media elements.
+  audio.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0";
+  document.body.appendChild(audio);
+ }
+ if(audio.srcObject!==stream)audio.srcObject=stream;
+ audio.muted=false;
+ var playResult=audio.play();
+ if(playResult&&playResult.catch)playResult.catch(function(e){console.warn("Remote voice playback blocked",e);voiceAudioHint()});
+ updateVoiceCount();
+}
+function voiceUI(){
+ var ios=(window.GaZonIOS||/iPhone|iPad|iPod/i.test(navigator.userAgent));
+ return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div>'+
+ '<div class="voicePanelHero"><div class="voiceStatus"><span class="mi" style="font-size:14px">radio_button_checked</span> Bağlantı bekleniyor</div>'+
+ '<div style="font-size:12px;line-height:1.6">Gerçek zamanlı konuşma · Bluetooth kask kulaklık destekli</div>'+
+ '<button class="talkBtn" id="micBtn" type="button"><span class="mi">mic</span></button>'+
+ '<div style="font-size:11px;font-weight:850">Gruba katıl, sonra konuşmayı aç</div>'+
+ '<button class="screenBtn dark" type="button" id="voiceAudioEnable"><span class="mi">volume_up</span> Sesi Aç / Test Et</button>'+
+ '<div class="sub" id="voiceAudioHint">Karşı tarafı duymuyorsan Sesi Aç düğmesine dokun.</div>'+
+ (ios?'<div class="sub">iPhone: Arka planda ve ekran kilidinde konuşmayı ayrıca test et. Safari sürümünde kesintisiz çalışma garanti değildir.</div>':"")+
+ '</div><div class="screenCard"><b>Grup bağlantısı</b>'+
+ '<input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)">'+
+ '<button class="screenBtn" id="createVoice">Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button><button class="screenBtn dark" id="leaveVoice">Bağlantıyı Kes</button>'+
+ '<div class="statRow" style="margin-top:10px"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div>'+
+ '<div class="statBox"><b id="voiceCount">0</b><span class="sub">Ses bağlantısı kurulu sürücü</span></div></div>'+
+ '<div class="sub" id="voiceCode" style="margin-top:10px">Bağlantı kodu: —</div>'+
+ '<div class="sub">Mobil operatörlerde TURN sunucusu olmadan bazı bağlantılar çalışmayabilir.</div></div>';
+}
 function setupVoice(){
  $("closeScreen").onclick=closeScreen;
- $("createVoice").onclick=function(){var c=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(c,true);};
- $("joinVoice").onclick=function(){var c=$("roomCode").value.trim().toUpperCase();if(c)startVoice(c,false);else $("voiceState").textContent="Kod gerekli";};
+ $("createVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(code,true)};
+ $("joinVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase();if(code)startVoice(code,false);else voiceState("Grup kodu gerekli")};
  $("micBtn").onclick=toggleMic;
- var lv=$("leaveVoice");if(lv)lv.onclick=stopVoice;
+ $("voiceAudioEnable").onclick=unlockRemoteAudio;
+ var leave=$("leaveVoice");if(leave)leave.onclick=stopVoice;
+ if(voice.room){
+  var room=$("roomCode");if(room)room.value=voice.room;
+  var code=$("voiceCode");if(code)code.textContent=voice.room;
+  voiceState(voice.ws&&voice.ws.readyState===WebSocket.OPEN?"Grup bağlı":"Yeniden bağlanıyor…");
+  updateVoiceCount();
+ }
+}
+function scheduleVoiceReconnect(){
+ if(!voice.room||voice.retryTimer)return;
+ voice.retryCount++;
+ var delay=Math.min(20000,1500*Math.pow(2,Math.min(4,voice.retryCount-1)));
+ voiceState("Bağlantı koptu · "+Math.ceil(delay/1000)+" sn sonra yeniden denenecek");
+ voice.retryTimer=setTimeout(function(){voice.retryTimer=null;if(voice.room&&(!voice.ws||voice.ws.readyState!==WebSocket.OPEN))connectVoiceSocket()},delay);
+}
+function connectVoiceSocket(){
+ if(!voice.room)return;
+ var session=voice.session;
+ voice.id=voiceId();
+ var ws;
+ try{ws=new WebSocket(VOICE_WS)}catch(e){voiceState("Sunucuya erişilemedi");scheduleVoiceReconnect();return}
+ voice.ws=ws;
+ voiceState("Intercom sunucusuna bağlanılıyor…");
+ ws.onopen=function(){
+  if(session!==voice.session||voice.ws!==ws){ws.close();return}
+  voice.retryCount=0;
+  sendSignal({type:"join",room:voice.room,id:voice.id,name:"GaZonRide"});
+  var code=$("voiceCode");if(code)code.textContent=voice.room;
+  $("voiceDock").classList.add("active");
+  $("voiceDockTitle").textContent="Intercom · "+voice.room;
+  voiceState("Grup bağlı · diğer sürücüler bekleniyor");
+  updateVoiceCount();
+ };
+ ws.onmessage=async function(ev){
+  if(session!==voice.session||voice.ws!==ws)return;
+  var m;try{m=JSON.parse(ev.data)}catch(e){return}
+  if(m.type==="members"){
+   (m.members||[]).forEach(function(p){if(p.id!==voice.id)pcFor(p.id,true)});
+   updateVoiceCount();
+  }else if(m.type==="peer-joined"){
+   updateVoiceCount();
+  }else if(m.type==="signal")await handleSignal(m);
+  else if(m.type==="peer-left"){cleanupVoicePeer(m.id);updateVoiceCount()}
+ };
+ ws.onerror=function(){if(session===voice.session&&voice.ws===ws)voiceState("Intercom sunucusu bağlantı hatası")};
+ ws.onclose=function(){
+  if(session!==voice.session||voice.ws!==ws)return;
+  voice.ws=null;cleanupAllVoicePeers();scheduleVoiceReconnect();
+ };
+}
+async function ensureMic(){
+ if(voice.stream&&voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}))return voice.stream;
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("Mikrofon tarayıcıda desteklenmiyor");
+ voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+ return voice.stream;
 }
 async function startVoice(code,host){
  try{
-  if(!window.RTCPeerConnection||!window.WebSocket||!navigator.mediaDevices){$("voiceState").textContent="Bu cihaz tarayıcı sesini desteklemiyor";return;}
-  await ensureMic();
-  if(voice.ws)voice.ws.close();
-  Object.keys(voice.peers).forEach(function(id){try{voice.peers[id].close();}catch(e){}});voice.peers={};
-  voice.room=code;voice.id=voiceId();
-  voice.ws=new WebSocket(VOICE_WS);
-  voice.ws.onopen=function(){saveIntercomHistory(code,host);sendSignal({type:"join",room:code,id:voice.id,name:"GazonRide"});var vc=$("voiceCode");if(vc)vc.textContent=code;var vs=$("voiceState");if(vs)vs.textContent=host?"Grup hazır":"Gruba bağlanıyor";$("voiceDock").classList.add("active");$("voiceDockTitle").textContent="Intercom · "+code;updateVoiceCount();};
-  voice.ws.onmessage=async function(ev){var m;try{m=JSON.parse(ev.data)}catch(e){return}
-    if(m.type==="members"){(m.members||[]).forEach(function(p){if(p.id!==voice.id)pcFor(p.id,true);});updateVoiceCount();}
-    else if(m.type==="peer-joined"){updateVoiceCount();}
-    else if(m.type==="signal")await handleSignal(m);
-    else if(m.type==="peer-left"){if(voice.peers[m.id]){voice.peers[m.id].close();delete voice.peers[m.id];}updateVoiceCount();}
-  };
-  voice.ws.onerror=function(){var e=$("voiceState");if(e)e.textContent="Sunucu bağlantı hatası";$("voiceDockSub").textContent="Bağlantı hatası";};
-  voice.ws.onclose=function(){var e=$("voiceState");if(voice.room&&e)e.textContent="Bağlantı kapandı";$("voiceDockSub").textContent="Bağlantı kapandı";};
-  voice.mic=false;voice.stream.getAudioTracks().forEach(function(t){t.enabled=false;});var mb=$("micBtn");if(mb){mb.innerHTML='<span class="mi">mic</span>';mb.classList.remove("active");}$("voiceDockMic").innerHTML='<span class="mi">mic</span>';
- }catch(e){var vs=$("voiceState");if(vs)vs.textContent="Mikrofon izni gerekli";}
+  if(!window.RTCPeerConnection||!window.WebSocket||!navigator.mediaDevices){
+   voiceState("Bu cihaz WebRTC sesini desteklemiyor");return;
+  }
+  // The native app configures a Bluetooth voice-call audio route.
+  if(window.AndroidBridge&&typeof AndroidBridge.prepareIntercom==="function")
+   try{AndroidBridge.prepareIntercom()}catch(e){console.warn("iOS audio route",e)}
+  var stream=await ensureMic();
+  stopVoice(false);
+  voice.room=code;voice.host=host;voice.id=voiceId();voice.session++;
+  voice.stream=stream;voice.mic=false;
+  stream.getAudioTracks().forEach(function(t){t.enabled=false});
+  var mic=$("micBtn");if(mic){mic.innerHTML='<span class="mi">mic</span>';mic.classList.remove("active")}
+  var dockMic=$("voiceDockMic");if(dockMic)dockMic.innerHTML='<span class="mi">mic</span>';
+  saveIntercomHistory(code,host);
+  connectVoiceSocket();
+ }catch(e){
+  console.warn("Mic permission/connection",e);
+  var msg=e&&e.name==="NotAllowedError"?"Mikrofon izni reddedildi. iPhone ayarlarını kontrol et.":"Mikrofon açılamadı: "+String(e&&e.message||"İzin ya da cihaz hatası");
+  voiceState(msg);
+ }
 }
-async function ensureMic(){if(voice.stream)return voice.stream;voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});return voice.stream;}
-async function toggleMic(){try{var st=await ensureMic();voice.mic=!voice.mic;st.getAudioTracks().forEach(function(t){t.enabled=voice.mic;});var m=$("micBtn");if(m){m.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';m.classList.toggle("active",voice.mic);}var s=$("voiceState");if(s)s.textContent=voice.mic?"Konuşuyorsun":"Dinlemede";$("voiceDockMic").innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';$("voiceDockSub").textContent=voice.mic?"Konuşuyorsun · "+voice.room:"Dinlemede · "+voice.room;}catch(e){var s=$("voiceState");if(s)s.textContent="Mikrofon izni gerekli";}}
-function playRemote(stream,id){var a=document.getElementById("remote-"+id);if(!a){a=document.createElement("audio");a.id="remote-"+id;a.autoplay=true;a.playsInline=true;a.controls=false;a.style.display="none";document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});updateVoiceCount();}
+async function toggleMic(){
+ if(!voice.room){voiceState("Önce grup oluştur veya katıl");return}
+ try{
+  if(window.AndroidBridge&&typeof AndroidBridge.prepareIntercom==="function")
+   AndroidBridge.prepareIntercom();
+  var st=await ensureMic();voice.mic=!voice.mic;
+  st.getAudioTracks().forEach(function(t){t.enabled=voice.mic});
+  var btn=$("micBtn");
+  if(btn){btn.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';btn.classList.toggle("active",voice.mic)}
+  var dock=$("voiceDockMic");
+  if(dock)dock.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';
+  voiceState(voice.mic?"Konuşuyorsun":"Dinlemedesin");
+  // A user gesture can resume remote playback rejected by Safari.
+  unlockRemoteAudio();
+ }catch(e){console.warn("Microphone toggle",e);voiceState("Mikrofon açılamadı · izni kontrol et")}
+}
+function stopVoice(releaseNative){
+ voice.session++;
+ if(voice.retryTimer){clearTimeout(voice.retryTimer);voice.retryTimer=null}
+ if(voice.ws){try{voice.ws.close()}catch(e){}voice.ws=null}
+ cleanupAllVoicePeers();
+ voice.room="";voice.id="";voice.host=false;voice.mic=false;voice.retryCount=0;
+ if(voice.stream){
+  voice.stream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});
+  voice.stream=null;
+ }
+ document.querySelectorAll('audio[id^="remote-"]').forEach(function(a){a.remove()});
+ var dock=$("voiceDock");if(dock)dock.classList.remove("active");
+ var mic=$("micBtn");if(mic){mic.classList.remove("active");mic.innerHTML='<span class="mi">mic</span>'}
+ var count=$("voiceCount");if(count)count.textContent="0";
+ voiceState("Bağlı değil");
+ if(releaseNative!==false&&window.AndroidBridge&&typeof AndroidBridge.stopIntercom==="function")
+  try{AndroidBridge.stopIntercom()}catch(e){}
+}
+document.addEventListener("visibilitychange",function(){
+ if(document.visibilityState!=="visible"||!voice.room)return;
+ // iOS may suspend WebRTC signaling while locked. Rejoin the room on return.
+ if(!voice.ws||voice.ws.readyState===WebSocket.CLOSED)connectVoiceSocket();
+ if(voice.audioBlocked)voiceAudioHint();
+});
 function readJsonArray(key){try{var a=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
 function showFavoritesScreen(){
  var favs=readJsonArray("gazon_favorites_v1"),x=$("screen");setMode("overlay");x.classList.add("active");
@@ -1768,14 +1988,6 @@ function saveIntercomHistory(room,host){
  a.unshift({room:room,date:new Date().toLocaleString("tr-TR"),role:host?"Kurucu":"Katılımcı"});
  localStorage.setItem("gazon_intercom_history_v1",JSON.stringify(a.slice(0,20)));
  if(window.GaZonAuth&&GaZonAuth.configured){GaZonAuth.ready.then(async function(){if(!GaZonAuth.state.user)return;var r=await GaZonAuth.client.from("intercom_history").insert({user_id:GaZonAuth.state.user.id,room_code:room,role:host?"owner":"member"});if(r.error)console.warn("intercom cloud",r.error);});}
-}
-function stopVoice(){
- try{if(voice.ws)voice.ws.close();}catch(e){}
- Object.keys(voice.peers||{}).forEach(function(id){try{voice.peers[id].close()}catch(e){}});
- voice.peers={};voice.room="";voice.mic=false;
- if(voice.stream){voice.stream.getAudioTracks().forEach(function(t){t.enabled=false;});}
- var dock=$("voiceDock");if(dock)dock.classList.remove("active");
- var st=$("voiceState");if(st)st.textContent="Bağlı değil";
 }
 async function showGroupsSupabase(x){
  await GaZonAuth.ready;

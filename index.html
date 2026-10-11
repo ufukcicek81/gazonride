@@ -516,6 +516,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 (function(){
 "use strict";
 var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0,navAutoPlanTimer=null;
+var navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -675,7 +676,16 @@ function applyPosition(pos){
    $("gps").textContent="GPS bağlı · bekleme";
   }else if(accuracy>65)$("gps").textContent="GPS doğruluğu bekleniyor";
   return;
- }currentPoint=p;if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
+ }currentPoint=p;navLastLocationFixAt=Date.now();
+ if(pendingNavRouteRequest&&!navActive&&gazonCurrentMode==="navigation"){
+  var desired=pendingNavRouteRequest.target,actual=$("navDestination")?$("navDestination").value.trim():"";
+  pendingNavRouteRequest=null;
+  if(desired&&desired===actual)setTimeout(function(){
+   if(gazonCurrentMode==="navigation"&&!navActive&&$("navDestination").value.trim()===desired)
+    planNavigation();
+  },150);
+ }
+ if(!window.__gazonNearbyRoutesReady&&window.GaZonRideSocial&&GaZonRideSocial.renderRouteHub){window.__gazonNearbyRoutesReady=true;setTimeout(function(){var a=document.querySelector("[data-route-source].active");GaZonRideSocial.renderRouteHub(a?a.dataset.routeSource:"gazon")},500)}if(!fuelPriceSyncStarted){fuelPriceSyncStarted=true;setTimeout(function(){refreshCurrentFuelPrice(false)},900)}if(navActive){
   if(c.speed!=null&&Number(c.speed)>=0){var speedHUD=$("guidanceSpeed");if(speedHUD)speedHUD.textContent=Math.round(Number(c.speed)*3.6)}
   updateNavigation(p,ts,c.accuracy,c.speed)
  }
@@ -705,12 +715,46 @@ lastGpsTs=ts;
    var hours=(Date.now()-startTime)/3600000;$("avg").textContent=hours?Math.round(totalKm/hours):0;var ci=$("rideConsumptionInput"),cons=ci?Number(String(ci.value||"0").replace(",",".")):Number((getRiderProfile().motor||{}).consumption||0);var lf=$("liveFuelUsed");if(lf)lf.textContent=((totalKm*cons/100)||0).toFixed(2)+" L";
  }
 }
+function reportNavigationGpsError(err){
+ var message=err&&err.code===1?"Konum izni verilmedi. Telefonun uygulama konum iznini aç.":err&&err.code===2?"Konum tespit edilemiyor. GPS'yi aç veya Başlangıç seç.":"GPS sinyali bekleniyor. Açık alanda yeniden dene.";
+ navLastLocationError=message;
+ var gps=$("gps");if(gps)gps.textContent="GPS bekleniyor";
+ var status=$("status");if(status)status.textContent=message;
+ if(pendingNavRouteRequest&&gazonCurrentMode==="navigation")showNavActionFeedback(message,true);
+}
+function startNavigationGpsWatch(){
+ if(navGpsWatchId!==null||riding||!navigator.geolocation)return;
+ try{
+  navGpsWatchId=navigator.geolocation.watchPosition(function(pos){
+   navLastLocationError="";
+   applyPosition(pos);
+  },reportNavigationGpsError,{enableHighAccuracy:true,maximumAge:2000,timeout:20000});
+ }catch(e){console.warn("Navigation GPS watch unavailable",e)}
+}
+function stopNavigationGpsWatch(){
+ if(navGpsWatchId!==null&&navigator.geolocation){
+  try{navigator.geolocation.clearWatch(navGpsWatchId)}catch(e){}
+ }
+ navGpsWatchId=null;
+}
 function startGPS(){
  if(!navigator.geolocation){$("gps").textContent="GPS desteklenmiyor";$("location").innerHTML='<span class="mi">location_off</span><span>GPS kullanılamıyor</span>';return;}
  $("gps").textContent="Konum aranıyor...";
- navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);$("status").textContent="Konum bulundu. Sürüşe hazırsın.";},function(err){$("gps").textContent="Konum bekleniyor";$("status").textContent=err.code===1?"Konum izni verilmedi. Tarayıcı ayarlarından izin verin.":"GPS sinyali aranıyor...";},{enableHighAccuracy:false,maximumAge:30000,timeout:5000});
- navigator.geolocation.getCurrentPosition(function(pos){applyPosition(pos);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+ // Navigation requires continuous fixes, not only two boot-time snapshots.
+ if(gazonCurrentMode==="navigation"||navActive)startNavigationGpsWatch();
+ navigator.geolocation.getCurrentPosition(function(pos){
+  applyPosition(pos);$("status").textContent="Konum bulundu. Sürüşe hazırsın.";
+ },reportNavigationGpsError,{enableHighAccuracy:false,maximumAge:15000,timeout:7000});
+ navigator.geolocation.getCurrentPosition(function(pos){
+  applyPosition(pos);
+ },function(err){
+  if(!currentPoint)reportNavigationGpsError(err)
+ },{enableHighAccuracy:true,maximumAge:0,timeout:18000});
 }
+window.addEventListener("gazon-location-permission-changed",function(){
+ startGPS();
+ if(gazonCurrentMode==="navigation")startNavigationGpsWatch();
+});
 function defaultMotor(){return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),brand:"KTM",model:"1290 Super Adventure",year:"",engine:"1290",tank:23,consumption:5.5,fuelType:"benzin",fuelPrice:0,fuelCity:"",fuelSource:"",fuelUpdatedAt:"",odometer:0}}
 function blankMotor(){return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),brand:"",model:"",year:"",engine:"",tank:0,consumption:0,fuelType:"benzin",fuelPrice:0,fuelCity:"",fuelSource:"",fuelUpdatedAt:"",odometer:0}}
 function getRiderProfile(){
@@ -1016,6 +1060,8 @@ function applyModeOnly(mode){
  gazonCurrentMode=mode;
  if(mode!=="overlay"){var sx=$("screen");if(sx){sx.classList.remove("active");sx.innerHTML=""}}
  if(mode==="navigation"||mode==="ride"){setTimeout(function(){if(map&&currentPoint)setMapCenter(currentPoint);},120)}
+ if(mode==="navigation")startNavigationGpsWatch();
+ else if(!navActive)stopNavigationGpsWatch();
  window.scrollTo({top:0,behavior:"smooth"});
 }
 function setMode(mode){
@@ -1109,6 +1155,7 @@ function setupNavAutocomplete(){
   // Invalidate an old asynchronous route response when the target changes.
   ++navPlanSeq;
   var goButton=$("navGo");if(goButton)goButton.disabled=false;
+  pendingNavRouteRequest=null;
   showNavActionFeedback("",false);
   clearTimeout(navAutocompleteTimer);
   clearTimeout(navAutoPlanTimer);
@@ -1350,6 +1397,7 @@ function showNavActionFeedback(message,locationActions){
 }
 async function handleMissingNavigationGps(input,q,originInput){
  var seq=++navPlanSeq,go=$("navGo");
+ pendingNavRouteRequest={target:q,time:Date.now()};
  clearNavSuggestions();
  showNavActionFeedback("GPS konumu henüz bulunamadı. Konum aranıyor…",true);
  if(go){go.disabled=true;go.innerHTML='<span class="mi">hourglass_top</span>'}
@@ -1369,6 +1417,7 @@ async function handleMissingNavigationGps(input,q,originInput){
    if(currentPoint){showNavActionFeedback("",false);return planNavigation()}
    activeNavLabel=d.label||q;activeNavDestination={lat:d.lat,lon:d.lon};
    if(AndroidBridge.openNativeNavigation(d.lat,d.lon,activeNavLabel,false,false)){
+    pendingNavRouteRequest=null;
     showNavActionFeedback("Google navigasyonu GaZonRide içinde açılıyor. Konum izni istenirse onayla.",false);
     if(!riding)startRide();
     navStartedRide=false;
@@ -1392,6 +1441,7 @@ async function planNavigation(){
  if(!googleReady){
   showNavActionFeedback("Google Haritalar hazırlanıyor. Birkaç saniye sonra yeniden dene.",false);return
  }
+ pendingNavRouteRequest=null;
  showNavActionFeedback("",false);
  var seq=++navPlanSeq;
  var go=$("navGo"),box=$("navChoices");
@@ -2438,6 +2488,7 @@ function boot(){
   var editor=$("navOriginEditor"),origin=$("navOrigin");
   if(editor)editor.classList.add("active");
   if(origin){origin.dataset.current="0";setTimeout(function(){origin.focus()},70)}
+  pendingNavRouteRequest=null;
   showNavActionFeedback("Başlangıç noktasını seçtikten sonra turuncu yön tuşuna tekrar bas.",false);
  });
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});

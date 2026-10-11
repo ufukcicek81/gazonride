@@ -19,6 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
+import org.json.JSONArray;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.libraries.navigation.ListenableResultFuture;
@@ -51,6 +54,7 @@ public final class NativeNavigationActivity extends Activity {
     private MusicController musicController;
     private boolean closed;
     private boolean routeStarted;
+    private int tourStopsRemaining = 0;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Navigator.RemainingTimeOrDistanceChangedListener progressListener;
     private Navigator.ArrivalListener arrivalListener;
@@ -251,6 +255,22 @@ public final class NativeNavigationActivity extends Activity {
         String title = getIntent().getStringExtra("destination_title");
         if (title == null || title.isEmpty()) title = "Hedef";
         try {
+            String tourJson = getIntent().getStringExtra("tour_waypoints");
+            List<Waypoint> tourStops = new ArrayList<>();
+            if (tourJson != null) {
+                JSONArray stops = new JSONArray(tourJson);
+                if (stops.length()!=3) throw new IllegalArgumentException("Invalid tour stop count");
+                for (int i=0;i<stops.length();i++) {
+                    JSONObject p = stops.getJSONObject(i);
+                    double stopLat=p.getDouble("lat"),stopLon=p.getDouble("lon");
+                    if (!Double.isFinite(stopLat)||!Double.isFinite(stopLon)
+                            ||Math.abs(stopLat)>90||Math.abs(stopLon)>180)
+                        throw new IllegalArgumentException("Invalid tour coordinate");
+                    String name=i==2?"Turun bitişi":("Tur durağı "+(i+1));
+                    tourStops.add(Waypoint.builder().setLatLng(stopLat,stopLon).setTitle(name).build());
+                }
+            }
+            tourStopsRemaining=tourStops.size();
             Waypoint waypoint = Waypoint.builder()
                     .setLatLng(lat, lng).setTitle(title).build();
             RoutingOptions options = new RoutingOptions();
@@ -260,8 +280,11 @@ public final class NativeNavigationActivity extends Activity {
             options.avoidTolls(getIntent().getBooleanExtra("avoid_tolls",false));
             options.avoidHighways(getIntent().getBooleanExtra("avoid_highways",false));
             message("Google güzergâhı hesaplanıyor…");
+            // Keep every tour stop in the native Google Navigation SDK.
+            // This avoids silently navigating straight to the loop's end.
             ListenableResultFuture<Navigator.RouteStatus> request =
-                    navigator.setDestination(waypoint, options);
+                    tourStops.isEmpty() ? navigator.setDestination(waypoint, options)
+                                        : navigator.setDestinations(tourStops, options);
             request.setOnResultListener(code -> runOnUiThread(() -> {
                 if (closed || navigator == null) return;
                 if (code != Navigator.RouteStatus.OK) {
@@ -278,8 +301,20 @@ public final class NativeNavigationActivity extends Activity {
                     progressListener = () -> updateProgress();
                     navigator.addRemainingTimeOrDistanceChangedListener(15, 25, progressListener);
                     arrivalListener = event -> runOnUiThread(() -> {
-                        message("Hedefe ulaştın. Güvenli bir yerde navigasyonu bitirebilirsin.");
-                        progressText.setText("Varış noktasına ulaştın");
+                        if (closed || navigator == null) return;
+                        if (tourStopsRemaining > 1) {
+                            tourStopsRemaining--;
+                            try {
+                                navigator.continueToNextDestination();
+                                message("Ara durağa ulaştın. Sonraki tur durağına devam ediliyor.");
+                            } catch (Exception e) {
+                                message("Sonraki tur durağı açılamadı: "+e.getClass().getSimpleName());
+                            }
+                        } else {
+                            tourStopsRemaining = 0;
+                            message("Hedefe ulaştın. Güvenli bir yerde navigasyonu bitirebilirsin.");
+                            if (progressText != null) progressText.setText("Varış noktasına ulaştın");
+                        }
                     });
                     navigator.addArrivalListener(arrivalListener);
                     navigator.startGuidance();

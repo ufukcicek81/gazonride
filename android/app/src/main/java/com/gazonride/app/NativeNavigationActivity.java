@@ -149,19 +149,19 @@ public final class NativeNavigationActivity extends Activity {
         // Google SDK 7.3 does not expose every status of recent versions.
         // Switch on the name so diagnostics compile across SDK upgrades.
         switch (String.valueOf(code)) {
-            case LOCATION_DISABLED:
+            case "LOCATION_DISABLED":
                 return "Telefonun konum servisi kapalı. GPS'i açıp tekrar dene.";
-            case LOCATION_UNKNOWN:
+            case "LOCATION_UNKNOWN":
                 return "Konum bulunamadı. Açık alanda GPS sinyalini bekleyip tekrar dene.";
-            case NETWORK_ERROR:
+            case "NETWORK_ERROR":
                 return "Rota için internet bağlantısı bulunamadı. Bağlantıyı kontrol et.";
-            case QUOTA_CHECK_FAILED:
+            case "QUOTA_CHECK_FAILED":
                 return "Google Navigation kota hatası. Cloud Console'daki kotayı kontrol et.";
-            case WAYPOINT_ERROR:
+            case "WAYPOINT_ERROR":
                 return "Rotadaki bir ara nokta kabul edilmedi. Farklı güzergâh dene.";
-            case NO_ROUTE_FOUND:
+            case "NO_ROUTE_FOUND":
                 return "Google bu güzergâh için yol bulamadı. Farklı rota seç.";
-            case ROUTING_TIMEOUT:
+            case "ROUTING_TIMEOUT":
                 return "Rota hesaplaması zaman aşımına uğradı. Tekrar dene.";
             default:
                 return "Google rota oluşturamadı. Rota hata kodu: " + code;

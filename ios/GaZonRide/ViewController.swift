@@ -22,7 +22,7 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
             try session.setActive(true)
             intercomAudioActive = true
         } catch {
-            NSLog("GaZonRide intercom audio session failed: \\(error)")
+            NSLog("GaZonRide intercom audio session failed: \(error)")
         }
     }
 
@@ -33,7 +33,7 @@ final class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate
             try AVAudioSession.sharedInstance().setActive(false,
                                     options: [.notifyOthersOnDeactivation])
         } catch {
-            NSLog("GaZonRide intercom audio stop failed: \\(error)")
+            NSLog("GaZonRide intercom audio stop failed: \(error)")
         }
     }
 

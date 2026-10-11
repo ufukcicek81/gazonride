@@ -410,7 +410,14 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
   </div>
   <div id="grDestinationFields">
     <div class="navPointLabel"><span class="mi">flag</span>Varış</div>
-    <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
+    <div class="navSearchRow"><input class="input" id="navDestination" autocomplete="off" placeholder="Nereye sürmek istiyorsun?"><button id="navGo" type="button" title="Rota oluştur veya navigasyonu başlat"><span class="mi">navigation</span></button><div class="navSuggest" id="navSuggest"></div></div>
+    <div id="navActionFeedback" class="gr-nav-feedback" role="status" aria-live="polite" hidden>
+      <span class="mi">info</span><span id="navFeedbackText"></span>
+      <div class="gr-nav-feedback-actions" id="navFeedbackActions">
+        <button type="button" id="navRetryGps"><span class="mi">my_location</span> GPS'yi dene</button>
+        <button type="button" id="navChooseOrigin"><span class="mi">edit_location_alt</span> Başlangıç seç</button>
+      </div>
+    </div>
   </div>
   <div id="grTourPanel" class="gr-tour-panel" aria-label="Motor turu planlama" hidden>
     <div class="gr-tour-head"><b>Başladığın yere dönen tur</b><small>Mesafeyi ve yönü belirle</small></div>
@@ -1102,6 +1109,7 @@ function setupNavAutocomplete(){
   // Invalidate an old asynchronous route response when the target changes.
   ++navPlanSeq;
   var goButton=$("navGo");if(goButton)goButton.disabled=false;
+  showNavActionFeedback("",false);
   clearTimeout(navAutocompleteTimer);
   clearTimeout(navAutoPlanTimer);
   if(navReady&&!navActive){
@@ -1329,14 +1337,62 @@ async function recalculateNavigation(){
  }catch(e){console.warn("reroute",e);$("status").textContent="Yeni rota oluşturulamadı. Mevcut rota korunuyor."}
  finally{navRecalculating=false}
 }
+// Show navigation errors next to the route button. The ordinary status section
+// is below the full-screen map and cannot be seen during route planning.
+function showNavActionFeedback(message,locationActions){
+ var feedback=$("navActionFeedback"),label=$("navFeedbackText"),actions=$("navFeedbackActions");
+ if(!feedback||!label)return;
+ if(!message){feedback.hidden=true;return}
+ label.textContent=String(message);
+ feedback.hidden=false;
+ if(actions)actions.style.display=locationActions?"flex":"none";
+ var status=$("status");if(status)status.textContent=String(message);
+}
+async function handleMissingNavigationGps(input,q,originInput){
+ var seq=++navPlanSeq,go=$("navGo");
+ clearNavSuggestions();
+ showNavActionFeedback("GPS konumu henüz bulunamadı. Konum aranıyor…",true);
+ if(go){go.disabled=true;go.innerHTML='<span class="mi">hourglass_top</span>'}
+ startGPS();
+ try{
+  // Android's official Google navigator can find location independently of
+  // the embedded WebView GPS. It should still open when the web GPS is absent.
+  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"){
+   if(!googleReady||!geocoder)throw new Error("Google harita henüz hazırlanmadı");
+   var d=input.dataset.lat&&input.dataset.lon?
+    {lat:Number(input.dataset.lat),lon:Number(input.dataset.lon),label:input.dataset.label||q}:
+    await geocodeGoogle(q);
+   if(seq!==navPlanSeq||input.value.trim()!==q)return;
+   if(!isFinite(d.lat)||!isFinite(d.lon))throw new Error("Hedef koordinatı bulunamadı");
+   input.dataset.lat=String(d.lat);input.dataset.lon=String(d.lon);input.dataset.label=d.label||q;
+   // If web GPS arrived while geocoding, retain normal route alternatives.
+   if(currentPoint){showNavActionFeedback("",false);return planNavigation()}
+   activeNavLabel=d.label||q;activeNavDestination={lat:d.lat,lon:d.lon};
+   if(AndroidBridge.openNativeNavigation(d.lat,d.lon,activeNavLabel,false,false)){
+    showNavActionFeedback("Google navigasyonu GaZonRide içinde açılıyor. Konum izni istenirse onayla.",false);
+    if(!riding)startRide();
+    navStartedRide=false;
+    return
+   }
+  }
+  showNavActionFeedback("Konum alınamadı. GPS iznini kontrol et veya Başlangıç seç ile bir yer belirle.",true);
+ }catch(error){
+  console.warn("Native navigation without WebView GPS",error);
+  showNavActionFeedback("GPS bulunamadı. Hedef veya Google bağlantısı hazır değil; tekrar dene ya da Başlangıç seç.",true);
+ }finally{
+  if(seq===navPlanSeq&&go){go.disabled=false;go.innerHTML='<span class="mi">navigation</span>'}
+ }
+}
 async function planNavigation(){
  var input=$("navDestination"),q=input.value.trim(),originInput=$("navOrigin"),originQ=originInput?originInput.value.trim():"";
  clearTimeout(navAutoPlanTimer);
- if(!q){input.focus();return}
- if((!originInput||originInput.dataset.current==="1"||!originQ)&&!currentPoint){
-  $("status").textContent="Konum bulununca rotalar gösterilecek. GPS bekleniyor.";startGPS();return
+ if(!q){showNavActionFeedback("Önce bir hedef yaz veya arama önerilerinden seç.",false);input.focus();return}
+ if((!originInput||originInput.dataset.current==="1"||!originQ)&&!currentPoint)
+  return handleMissingNavigationGps(input,q,originInput);
+ if(!googleReady){
+  showNavActionFeedback("Google Haritalar hazırlanıyor. Birkaç saniye sonra yeniden dene.",false);return
  }
- if(!googleReady){$("status").textContent="Google Haritalar hazırlanıyor. Biraz sonra tekrar dene.";return}
+ showNavActionFeedback("",false);
  var seq=++navPlanSeq;
  var go=$("navGo"),box=$("navChoices");
  if(go){go.disabled=true;go.innerHTML='<span class="mi">hourglass_top</span>'}
@@ -1437,6 +1493,7 @@ async function planNavigation(){
   console.warn("Route compute failed",error);
   navReady=false;
   if(box){box.classList.remove("active");box.innerHTML=""}
+  showNavActionFeedback("Rota bulunamadı. Hedefi önerilerden seç veya bağlantıyı kontrol edip tekrar dene.",false);
   $("status").textContent="Rota bulunamadı. Varış yerini önerilerden seçip tekrar dene."
  }finally{
   if(seq===navPlanSeq&&go){go.disabled=false;go.innerHTML='<span class="mi">navigation</span>'}
@@ -2371,7 +2428,18 @@ function boot(){
   setStatus:function(message){var status=$("status");if(status)status.textContent=message}
  });
  var rb=$("navRecenterBtn");if(rb)rb.onclick=recenterNavigationOnce;
- $("navGo").addEventListener("click",planNavigation);
+ $("navGo").addEventListener("click",function(e){e.preventDefault();planNavigation()});
+ var gpsRetry=$("navRetryGps");if(gpsRetry)gpsRetry.addEventListener("click",function(){
+  showNavActionFeedback("GPS tekrar aranıyor. Konum iznini kontrol et.",true);
+  startGPS();
+  if($("navDestination").value.trim())setTimeout(function(){if(currentPoint&&gazonCurrentMode==="navigation")planNavigation()},1400);
+ });
+ var chooseOrigin=$("navChooseOrigin");if(chooseOrigin)chooseOrigin.addEventListener("click",function(){
+  var editor=$("navOriginEditor"),origin=$("navOrigin");
+  if(editor)editor.classList.add("active");
+  if(origin){origin.dataset.current="0";setTimeout(function(){origin.focus()},70)}
+  showNavActionFeedback("Başlangıç noktasını seçtikten sonra turuncu yön tuşuna tekrar bas.",false);
+ });
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});
  $("navDrive").addEventListener("click",function(){startPlannedNavigation(false)});
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);

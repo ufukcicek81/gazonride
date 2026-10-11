@@ -1903,6 +1903,10 @@ function connectVoiceSocket(){
    updateVoiceCount();
   }else if(m.type==="peer-joined"){
    updateVoiceCount();
+  }else if(m.type==="error"){
+   voiceState(m.message||"Intercom sunucu hatası");
+   if(ws.readyState===WebSocket.OPEN)ws.close();
+   stopVoice();
   }else if(m.type==="signal")await handleSignal(m);
   else if(m.type==="peer-left"){cleanupVoicePeer(m.id);updateVoiceCount()}
  };
@@ -1930,6 +1934,9 @@ async function ensureMic(){
 }
 async function startVoice(code,host){
  try{
+  if(!/^[A-Z0-9_-]{4,32}$/.test(String(code||""))){
+   voiceState("Grup kodu 4–32 harf/rakam olmalı");return;
+  }
   if(!window.RTCPeerConnection||!window.WebSocket||!navigator.mediaDevices){
    voiceState("Bu cihaz WebRTC sesini desteklemiyor");return;
   }

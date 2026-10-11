@@ -46,6 +46,8 @@ public final class NativeNavigationActivity extends Activity {
     private NavigationView navigationView;
     private Navigator navigator;
     private TextView statusText;
+    private LinearLayout diagnosticPanel;
+    private Button diagnosticRetry;
     private TextView progressText;
     private TextView trackText;
     private Button musicToggle;
@@ -103,14 +105,67 @@ public final class NativeNavigationActivity extends Activity {
         if (closed) return;
         runOnUiThread(() -> {
             if (statusText != null) statusText.setText(text);
-            // Only surface genuine errors to the rider; ordinary guidance
-            // progress is already visible in the official Google map.
-            if (text != null && (text.contains("başlatılamadı") ||
+            boolean error = text != null && (text.contains("başlatılamadı") ||
                     text.contains("oluşturamadı") || text.contains("yetkisiz") ||
-                    text.contains("Geçersiz") || text.contains("verilmeden"))) {
-                Toast.makeText(this, text, Toast.LENGTH_LONG).show();
-            }
+                    text.contains("Geçersiz") || text.contains("izin") ||
+                    text.contains("internet") || text.contains("bağlantı") ||
+                    text.contains("bulunamadı") || text.contains("hata") ||
+                    text.contains("kabul etmelisin"));
+            // Google renders its own directions. The diagnostic card is only
+            // shown while waiting or after a failure, never over active guidance.
+            if (diagnosticPanel != null)
+                diagnosticPanel.setVisibility(routeStarted && !error ? View.GONE : View.VISIBLE);
+            if (diagnosticRetry != null) diagnosticRetry.setVisibility(error ? View.VISIBLE : View.GONE);
         });
+    }
+    private void retryNavigation() {
+        if (closed) return;
+        routeStarted = false;
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            message("Navigasyon için hassas konum izni gerekli.");
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST);
+        } else if (navigator == null) {
+            initializeNavigator();
+        } else {
+            planNativeRoute();
+        }
+    }
+    private String navigationError(@NavigationApi.ErrorCode int code) {
+        switch (code) {
+            case NavigationApi.ErrorCode.NOT_AUTHORIZED:
+                return "Google Navigation SDK yetkisiz (hata 1). Google Cloud'da Navigation SDK etkinliğini, Android paket adını ve imza SHA-1 kısıtlamasını kontrol et.";
+            case NavigationApi.ErrorCode.TERMS_NOT_ACCEPTED:
+                return "Google Navigasyon kullanım koşulları kabul edilmedi (hata 2). Tekrar dene ve açılan koşulları onayla.";
+            case NavigationApi.ErrorCode.NETWORK_ERROR:
+                return "Google navigasyon için internet bağlantısı bulunamadı (hata 3). İnterneti kontrol edip tekrar dene.";
+            case NavigationApi.ErrorCode.LOCATION_PERMISSION_MISSING:
+                return "Navigasyon için hassas konum izni gerekli (hata 4). Uygulama konum iznini aç.";
+            default:
+                return "Google navigasyon başlatılamadı. SDK hata kodu: " + code;
+        }
+    }
+    private String routeError(Navigator.RouteStatus code) {
+        switch (code) {
+            case LOCATION_DISABLED:
+                return "Telefonun konum servisi kapalı. GPS'i açıp tekrar dene.";
+            case LOCATION_UNKNOWN:
+                return "Konum bulunamadı. Açık alanda GPS sinyalini bekleyip tekrar dene.";
+            case NETWORK_ERROR:
+                return "Rota için internet bağlantısı bulunamadı. Bağlantıyı kontrol et.";
+            case QUOTA_CHECK_FAILED:
+                return "Google Navigation kota hatası. Cloud Console'daki kotayı kontrol et.";
+            case WAYPOINT_ERROR:
+                return "Rotadaki bir ara nokta kabul edilmedi. Farklı güzergâh dene.";
+            case NO_ROUTE_FOUND:
+                return "Google bu güzergâh için yol bulamadı. Farklı rota seç.";
+            case DUPLICATE_WAYPOINTS_ERROR:
+                return "Rotada üst üste binen duraklar var. Tur noktalarını yenile.";
+            case ROUTING_TIMEOUT:
+                return "Rota hesaplaması zaman aşımına uğradı. Tekrar dene.";
+            default:
+                return "Google rota oluşturamadı. Rota hata kodu: " + code;
+        }
     }
 
     @Override public void onCreate(Bundle saved) {
@@ -141,7 +196,27 @@ public final class NativeNavigationActivity extends Activity {
         // destination time, and spoken maneuvers. Never duplicate these in a
         // custom overlay (which used to block the road and native controls).
         progressText = label("", 14, true);
-        statusText = label("", 11, false);
+        statusText = label("Google navigasyonu hazırlanıyor…", 15, true);
+        statusText.setMaxLines(5);
+        diagnosticPanel = new LinearLayout(this);
+        diagnosticPanel.setOrientation(LinearLayout.VERTICAL);
+        diagnosticPanel.setPadding(dp(18), dp(15), dp(18), dp(15));
+        diagnosticPanel.setBackground(shape(0xF3192637, 18));
+        diagnosticPanel.addView(statusText,
+                new LinearLayout.LayoutParams(-1, -2));
+        diagnosticRetry = control("Tekrar dene");
+        diagnosticRetry.setContentDescription("Google navigasyon bağlantısını yeniden dene");
+        diagnosticRetry.setBackground(shape(0xFF1A73E8, 12));
+        diagnosticRetry.setOnClickListener(v -> retryNavigation());
+        LinearLayout.LayoutParams retryParams =
+                new LinearLayout.LayoutParams(-1, dp(46));
+        retryParams.topMargin = dp(12);
+        diagnosticPanel.addView(diagnosticRetry, retryParams);
+        diagnosticRetry.setVisibility(View.GONE);
+        FrameLayout.LayoutParams diagnosticParams = new FrameLayout.LayoutParams(
+                -1, -2, Gravity.CENTER_VERTICAL);
+        diagnosticParams.setMargins(dp(22), 0, dp(22), 0);
+        root.addView(diagnosticPanel, diagnosticParams);
 
         // Spotify/YouTube Music remains available without leaving navigation.
         LinearLayout music = new LinearLayout(this);
@@ -234,13 +309,7 @@ public final class NativeNavigationActivity extends Activity {
                     planNativeRoute();
                 }
                 @Override public void onError(@NavigationApi.ErrorCode int code) {
-                    message(code == NavigationApi.ErrorCode.NOT_AUTHORIZED
-                            ? "Navigation anahtarı yetkisiz. Android anahtar ayarlarını kontrol et."
-                            : code == NavigationApi.ErrorCode.TERMS_NOT_ACCEPTED
-                            ? "Google Navigasyon koşullarını kabul etmelisin."
-                            : code == NavigationApi.ErrorCode.NETWORK_ERROR
-                            ? "Google Navigasyon için internet bağlantısı gerekli."
-                            : "Google navigasyon başlatılamadı (hata " + code + ").");
+                    if (!closed) message(navigationError(code));
                 }
             });
         } catch (Exception e) {
@@ -291,7 +360,7 @@ public final class NativeNavigationActivity extends Activity {
             request.setOnResultListener(code -> runOnUiThread(() -> {
                 if (closed || navigator == null) return;
                 if (code != Navigator.RouteStatus.OK) {
-                    message("Google rota oluşturamadı: " + code);
+                    message(routeError(code));
                     return;
                 }
                 try {
@@ -427,7 +496,7 @@ public final class NativeNavigationActivity extends Activity {
         if (code == LOCATION_REQUEST) {
             if (grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED)
                 initializeNavigator();
-            else message("Konum izni verilmeden navigasyon başlatılamaz.");
+            else message("Konum izni verilmeden navigasyon başlatılamaz. Uygulama Ayarları > İzinler > Konum bölümünden hassas konuma izin ver.");
         }
     }
 }

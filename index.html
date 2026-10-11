@@ -503,6 +503,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </nav>
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="gazon-nav-progress.js?v=20261009-route-progress-v1"></script>
+<script src="gazon-native-route.js?v=20261011-google-nav-handoff-v1"></script>
 <script src="gazon-tour.js?v=20261011-google-native-blue-v2"></script>
 <script>
 (function(){
@@ -1670,14 +1671,31 @@ function startPlannedNavigation(forceWeb){
  // On the Android APK the official Navigation SDK replaces our browser
  // approximation: Google handles road snapping, turn cards, voice and live ETA.
  // Browser users still use the existing navigator.
- if(!forceWeb&&window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&activeNavDestination){
+ if(!forceWeb&&window.AndroidBridge&&activeNavDestination){
   try{
    var lat=Number(activeNavDestination.lat),lon=Number(activeNavDestination.lon);
-   if(isFinite(lat)&&isFinite(lon)&&AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",/Ücretsiz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""),/Otoyolsuz|Sakin/i.test((navAlternatives[navSelectedAlternative]||{}).name||""))){
-    ++navPlanSeq; // Stop optional route API requests while native Google guidance is running.
-    if(!riding)startRide(); // Native foreground ride recording continues in navigation screen.
+   var selectedRoute=navAlternatives[navSelectedAlternative]||{};
+   var routeName=String(selectedRoute.name||"");
+   var avoidTolls=/Ücretsiz|Sakin/i.test(routeName),avoidHighways=/Otoyolsuz|Sakin/i.test(routeName);
+   var nativeStarted=false;
+   if(isFinite(lat)&&isFinite(lon)){
+    // The new APK receives the selected road geometry as intermediate stops.
+    if(window.GaZonNativeRoute&&typeof AndroidBridge.openNativeRoute==="function"){
+     var geometry=selectedRoute.pts&&selectedRoute.pts.length?selectedRoute.pts:navPathPoints;
+     var waypoints=GaZonNativeRoute.routeStops(geometry,{lat:lat,lon:lon},4);
+     if(waypoints.length)nativeStarted=!!AndroidBridge.openNativeRoute(
+      JSON.stringify(waypoints),activeNavLabel||"Hedef",avoidTolls,avoidHighways);
+    }
+    // Older installed APKs still have Google Navigation SDK and can guide to
+    // the destination, but do not receive the full selected alternative.
+    if(!nativeStarted&&typeof AndroidBridge.openNativeNavigation==="function")
+     nativeStarted=!!AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways);
+   }
+   if(nativeStarted){
+    ++navPlanSeq; // No parallel web calculation while Google native guidance runs.
+    if(!riding)startRide();
     navStartedRide=false;
-    $("status").textContent="Google canlı navigasyon GaZonRide içinde açılıyor. Sürüş kaydı devam ediyor.";
+    $("status").textContent="Google navigasyonu GaZonRide içinde açılıyor; Google yolu yeniden hesaplayabilir.";
     return
    }
   }catch(e){console.warn("Native navigation launch",e)}
@@ -2290,11 +2308,19 @@ function boot(){
   launchInside:function(tour){
    if(!tour||!tour.points||tour.points.length<3)return false;
    var stops=tour.middle.concat([tour.origin]).map(function(p){return {lat:p.lat,lon:p.lon}});
-   if(window.AndroidBridge&&typeof AndroidBridge.openNativeTour==="function"){
+   if(window.AndroidBridge){
     try {
-     if(AndroidBridge.openNativeTour(JSON.stringify(stops))){
+     var tourStarted=false;
+     if(window.GaZonNativeRoute&&typeof AndroidBridge.openNativeRoute==="function"){
+      var pathStops=GaZonNativeRoute.routeStops(tour.points,tour.origin,5);
+      if(pathStops.length)tourStarted=!!AndroidBridge.openNativeRoute(
+       JSON.stringify(pathStops),"Tur başlangıcına dönüş",false,false);
+     }
+     if(!tourStarted&&typeof AndroidBridge.openNativeTour==="function")
+      tourStarted=!!AndroidBridge.openNativeTour(JSON.stringify(stops));
+     if(tourStarted){
       if(!riding)startRide();
-      $("status").textContent="Tur GaZonRide Google navigasyonunda başlatılıyor.";
+      $("status").textContent="Google'ın uygulama içi tur navigasyonu başlatılıyor.";
       return true
      }
     }catch(e){console.warn("Native multi-stop tour",e)}

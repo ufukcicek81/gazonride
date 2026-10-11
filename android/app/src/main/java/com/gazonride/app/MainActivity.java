@@ -55,6 +55,9 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences prefs;
     private String pendingOAuthUrl = null;
     private PermissionRequest pendingWebPermission = null;
+    private GeolocationPermissions.Callback pendingGeolocationCallback = null;
+    private String pendingGeolocationOrigin = null;
+    private boolean locationPermissionRequestInFlight = false;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private static final int FILE_CHOOSER_REQ = 44;
 
@@ -347,8 +350,23 @@ public class MainActivity extends Activity {
         });
         webView.setWebChromeClient(new WebChromeClient(){
             @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback){
-                if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED) callback.invoke(origin,true,false);
-                else {requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ); callback.invoke(origin,true,false);}
+                if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
+                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
+                    callback.invoke(origin,true,false);
+                    return;
+                }
+                // Don't approve WebView GPS before Android grants permission,
+                // and don't reload the page after the user chooses an option.
+                if(pendingGeolocationCallback!=null&&pendingGeolocationOrigin!=null){
+                    pendingGeolocationCallback.invoke(pendingGeolocationOrigin,false,false);
+                }
+                pendingGeolocationCallback=callback;
+                pendingGeolocationOrigin=origin;
+                if(!locationPermissionRequestInFlight){
+                    locationPermissionRequestInFlight=true;
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
+                }
             }
             @Override public void onPermissionRequest(PermissionRequest request){
                 runOnUiThread(() -> {
@@ -376,7 +394,12 @@ public class MainActivity extends Activity {
                 }
             }
         });
-        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
+        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
+            locationPermissionRequestInFlight=true;
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
+        }
         webView.loadUrl(URL + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
     }
@@ -659,7 +682,20 @@ public class MainActivity extends Activity {
 
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
-        if(requestCode==LOCATION_REQ&&webView!=null)webView.reload();
+        if(requestCode==LOCATION_REQ){
+            locationPermissionRequestInFlight=false;
+            boolean granted=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;
+            if(pendingGeolocationCallback!=null){
+                pendingGeolocationCallback.invoke(pendingGeolocationOrigin,granted,false);
+                pendingGeolocationCallback=null;
+                pendingGeolocationOrigin=null;
+            }
+            // Keep the current destination, route selection and riding state;
+            // a location permission dialog must never reload the WebView.
+            if(webView!=null)webView.evaluateJavascript(
+                    "window.dispatchEvent(new Event('gazon-location-permission-changed'));",null);
+        }
         if(requestCode==MIC_REQ&&pendingWebPermission!=null){
             if(results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED){
                 pendingWebPermission.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});

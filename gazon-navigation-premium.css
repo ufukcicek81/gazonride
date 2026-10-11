@@ -172,3 +172,30 @@ body.guidance-active .guidanceSummary small{color:#a8b7c6}
  font-weight:600;
 }
 html.theme-light #navChoices .gr-nav-routing-note{color:#7e8c9d}
+
+
+/* Route planning must always reveal why the orange button cannot proceed.
+   The map is full-screen, so ordinary status copy below it is not visible. */
+body.mode-navigation:not(.guidance-active) #navActionFeedback.gr-nav-feedback:not([hidden]){
+ display:flex!important;flex-direction:column;gap:9px;position:relative;
+ background:rgba(18,29,42,.97);border:1px solid #91b4db;
+ border-radius:15px;padding:12px 13px;margin-top:9px;
+ color:#f7fbff;font-size:12px;font-weight:750;line-height:1.45;
+ box-shadow:0 8px 22px #0005;z-index:980;pointer-events:auto
+}
+#navActionFeedback[hidden]{display:none!important}
+#navActionFeedback>.mi{position:absolute;top:10px;left:11px;color:#7eb9ff;font-size:20px}
+#navFeedbackText{display:block;padding-left:25px;min-height:19px}
+.gr-nav-feedback-actions{display:flex;gap:7px;flex-wrap:wrap;pointer-events:auto}
+.gr-nav-feedback-actions button{
+ flex:1 1 125px;border:1px solid #5b718b;min-height:39px;
+ background:#233649;color:#fff;border-radius:11px;
+ padding:6px 9px;font-size:11px;font-weight:800;
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ cursor:pointer;touch-action:manipulation
+}
+.gr-nav-feedback-actions button .mi{font-size:18px}
+body.mode-navigation:not(.guidance-active) #navGo{
+ cursor:pointer;touch-action:manipulation;position:relative;z-index:2
+}
+body.mode-navigation:not(.guidance-active) #navGo:disabled{opacity:.74}

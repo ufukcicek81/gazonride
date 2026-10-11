@@ -274,3 +274,17 @@ body.mode-discover .discoverSection{
     min-height:50px!important;
   }
 }
+
+
+/* Every visible pixel of the central Sürüş control must hit its button.
+   The decorative motorcycle circle must not intercept touch events. */
+.bottom > .navBtn.navCenter{
+ position:relative;z-index:4;pointer-events:auto!important;
+ cursor:pointer;touch-action:manipulation;
+ min-height:82px;overflow:visible!important
+}
+.bottom > .navBtn.navCenter > b,
+.bottom > .navBtn.navCenter > b .mi{
+ pointer-events:none!important
+}
+.bottom > .navBtn.navCenter:active > b{filter:brightness(1.11)}

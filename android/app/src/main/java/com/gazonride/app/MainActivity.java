@@ -35,6 +35,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -214,6 +215,37 @@ public class MainActivity extends Activity {
                 }
             });
             return true;
+        }
+        // Three route stops (two waypoints + home) remain inside the
+        // Navigation SDK instead of redirecting to Google Maps.
+        @JavascriptInterface public boolean openNativeTour(String json){
+            if(json==null || json.length()>2500)return false;
+            try {
+                JSONArray points=new JSONArray(json);
+                if(points.length()!=3)return false;
+                for(int i=0;i<points.length();i++){
+                    JSONObject point=points.getJSONObject(i);
+                    double lat=point.getDouble("lat");
+                    double lon=point.getDouble("lon");
+                    if(!Double.isFinite(lat)||!Double.isFinite(lon)
+                        ||Math.abs(lat)>90||Math.abs(lon)>180)return false;
+                }
+                final String validated=points.toString();
+                runOnUiThread(() -> {
+                    try {
+                        Intent intent=new Intent(MainActivity.this,NativeNavigationActivity.class);
+                        intent.putExtra("tour_waypoints",validated);
+                        intent.putExtra("destination_lat",points.optJSONObject(2).optDouble("lat"));
+                        intent.putExtra("destination_lng",points.optJSONObject(2).optDouble("lon"));
+                        intent.putExtra("destination_title","Tur başlangıcına dönüş");
+                        startActivity(intent);
+                    } catch(Exception e) {
+                        Toast.makeText(MainActivity.this,
+                           "Tur navigasyonu açılamadı.",Toast.LENGTH_LONG).show();
+                    }
+                });
+                return true;
+            } catch(Exception e){return false;}
         }
         @JavascriptInterface public void openExternal(String url){
             runOnUiThread(() -> {

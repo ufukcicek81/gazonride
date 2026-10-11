@@ -942,6 +942,7 @@ function restoreActiveRideFromNative(){
  try{
   if(!(window.AndroidBridge&&typeof AndroidBridge.isRideActive==="function"&&AndroidBridge.isRideActive()))return false;
   var pts=nativeRidePoints(),started=typeof AndroidBridge.getRideStartedAt==="function"?Number(AndroidBridge.getRideStartedAt()||0):0;
+  stopNavigationGpsWatch();
   riding=true;startTime=started>0?started:Date.now();track=pts;lastPoint=null;lastGpsTs=0;gpsRideReference=pts.length?{p:{lat:pts[pts.length-1][0],lon:pts[pts.length-1][1]},ts:pts[pts.length-1][3],accuracy:25}:null;gpsCameraReference=null;headingReady=false;totalKm=trackDistanceKm(track);
   if(route)route.setPath([]);
   $("distance").textContent=totalKm.toFixed(2);
@@ -957,6 +958,8 @@ function restoreActiveRideFromNative(){
 }
 function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
+ // Only one foreground GPS watch should feed ride tracking.
+ stopNavigationGpsWatch();
  riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;gpsRideReference=null;gpsCameraReference=null;headingReady=false;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;try{if(window.AndroidBridge&&typeof AndroidBridge.resetLeanSession==="function")AndroidBridge.resetLeanSession();else startLeanSensor()}catch(e){}
  if(route)route.setPath([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
  document.body.classList.add("ride-cockpit-active");$("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';var lf=$("liveFuelUsed");if(lf)lf.textContent="0.00 L";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";

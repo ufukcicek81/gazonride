@@ -324,6 +324,21 @@ body.mode-ride .mapBottom{bottom:calc(450px + env(safe-area-inset-bottom,0px))}
  body.mode-ride .content .grid{max-height:25dvh}
  body.mode-ride .mapBottom{bottom:calc(386px + env(safe-area-inset-bottom,0px))}
 }
+
+/* Intercom stays controllable during turn-by-turn guidance. */
+body.guidance-active .voiceDock.active,
+body.mode-navigation:not(.guidance-active) .voiceDock.active{
+ display:flex!important;left:12px;right:auto;transform:none;
+ bottom:calc(121px + env(safe-area-inset-bottom,0px));
+ width:56px;min-height:56px;padding:6px;border-radius:30px;
+ justify-content:center;z-index:1820;
+}
+body.guidance-active .voiceDock:not(.active),
+body.mode-navigation:not(.guidance-active) .voiceDock:not(.active){display:none!important}
+body.guidance-active .voiceDock.active>div,
+body.mode-navigation .voiceDock.active>div{display:none!important}
+body.guidance-active .voiceDock.active button,
+body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42px}
 </style>
 <link rel="stylesheet" href="gazon-layout-fit.css?v=20261009-fit3-navbar-cards">
 <link rel="stylesheet" href="gazon-music.css?v=20261011-ride-mini1">
@@ -1936,6 +1951,8 @@ async function startVoice(code,host){
   console.warn("Mic permission/connection",e);
   var msg=e&&e.name==="NotAllowedError"?"Mikrofon izni reddedildi. iPhone ayarlarını kontrol et.":"Mikrofon açılamadı: "+String(e&&e.message||"İzin ya da cihaz hatası");
   voiceState(msg);
+  if(window.AndroidBridge&&typeof AndroidBridge.stopIntercom==="function")
+   try{AndroidBridge.stopIntercom()}catch(stopError){}
  }
 }
 async function toggleMic(){
@@ -1976,6 +1993,8 @@ document.addEventListener("visibilitychange",function(){
  if(document.visibilityState!=="visible"||!voice.room)return;
  // iOS may suspend WebRTC signaling while locked. Rejoin the room on return.
  if(!voice.ws||voice.ws.readyState===WebSocket.CLOSED)connectVoiceSocket();
+ if(voice.stream&&!voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}))
+  voiceState("iPhone mikrofonu durdurdu · konuşmayı tekrar aç");
  if(voice.audioBlocked)voiceAudioHint();
 });
 function readJsonArray(key){try{var a=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}

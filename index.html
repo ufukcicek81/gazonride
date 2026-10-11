@@ -2167,6 +2167,7 @@ window.GaZonBack=function(){
  return false;
 };
 function nav(page,button){
+ if(page!=="navigation"&&window.GaZonTour&&GaZonTour.isTourMode())GaZonTour.clear();
  document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
  closeScreen();
  if(page==="home"||page==="discover"){setMode("discover");setDiscoverFilter("discover");}

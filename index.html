@@ -2071,7 +2071,7 @@ function voiceIceServers(){
 function cleanupVoicePeer(id){
  delete voiceAnalysers.remote[id];
  var pc=voice.peers[id];
- if(pc){delete voice.peers[id];try{pc.close()}catch(e){}}
+ if(pc){delete voice.peers[id];try{pc.close()}catch(e){}tuneVoiceBitrate()}
  var audio=document.getElementById("remote-"+id);
  if(audio){try{audio.pause();audio.srcObject=null;audio.remove()}catch(e){}}
  updateVoiceCount();
@@ -2089,6 +2089,21 @@ function updateVoiceCount(){
   if(sub&&!voice.mic)sub.textContent=n+" sürücü ses bağlantısında"+(pcs.length>connected?" · "+(pcs.length-connected)+" bağlanıyor":"");
  }
 }
+// Full mesh: every rider sends one audio stream per other rider. Lower the
+// per-stream bitrate as the group grows so 10+ riders fit a mobile uplink
+// (11 riders x 20 kbps = 200 kbps up). Opus stays clear for speech at 20 kbps.
+function tuneVoiceBitrate(){
+ var ids=Object.keys(voice.peers),n=ids.length,rate=n<=3?40000:n<=6?28000:20000;
+ ids.forEach(function(k){
+  var pc=voice.peers[k];if(!pc||!pc.getSenders)return;
+  pc.getSenders().forEach(function(sn){
+   if(!sn.track||sn.track.kind!=="audio"||!sn.getParameters)return;
+   try{var prm=sn.getParameters();if(!prm.encodings||!prm.encodings.length)return;
+    if(prm.encodings[0].maxBitrate===rate)return;prm.encodings[0].maxBitrate=rate;
+    sn.setParameters(prm).catch(function(){})}catch(e){}
+  });
+ });
+}
 function pcFor(id,initiator){
  if(!id||id===voice.id)return null;
  if(voice.peers[id]&&voice.peers[id].signalingState!=="closed")return voice.peers[id];
@@ -2104,6 +2119,7 @@ function pcFor(id,initiator){
   if(e.streams&&e.streams[0])playRemote(e.streams[0],id);
  };
  pc.onconnectionstatechange=function(){
+  if(pc.connectionState==="connected")tuneVoiceBitrate();
   if(pc.connectionState==="failed"){
    voiceState(voice.turn?"Ses bağlantısı koptu. Yeniden bağlanılıyor…":"Ses bağlantısı kurulamadı · mobil veride aktarım sunucusu (TURN) gerekli. Wi-Fi ile dene.");
    if(pc._initiator&&pc.restartIce){

@@ -129,7 +129,12 @@ async function matchRideToRoads(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
  try{
   var osrmPath=await matchViaOsrm(raw);
-  if(validMatched(raw,osrmPath))return osrmPath;
+  if(validMatched(raw,osrmPath)){
+   // Road matching can trim the first/last metres; keep the real start and end.
+   if(geoKm(raw[0],osrmPath[0])>.02)osrmPath.unshift(raw[0]);
+   var rl=raw[raw.length-1];if(geoKm(rl,osrmPath[osrmPath.length-1])>.02)osrmPath.push(rl);
+   return osrmPath;
+  }
   console.warn("Road match rejected: incomplete route")
  }catch(e){console.warn("OSRM road match fallback",e)}
  // Missing GPS samples must be joined on a real roadway, not by a flight across buildings.

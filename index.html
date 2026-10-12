@@ -523,7 +523,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 (function(){
 "use strict";
 var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0;
-var navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
+var currentPointAcc=999,gpsJumpRejects=0,navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -638,11 +638,15 @@ function acceptLiveGpsFix(p,c,ts){
  if(gpsRideReference){
   var dt=(ts-gpsRideReference.ts)/1000,d=hav(gpsRideReference.p,p)*1000;
   if(!isFinite(dt)||dt<=0)return false;
-  if(dt<180&&d>Math.max(35,dt*62+Math.max(acc,gpsRideReference.accuracy)*1.2))return false;
+  if(dt<180&&d>Math.max(35,dt*62+Math.max(acc,gpsRideReference.accuracy)*1.2)){
+   // A bad first reference must not lock out the real track: after a few
+   // consistent precise fixes elsewhere, trust them instead.
+   if(acc>25||++gpsJumpRejects<4)return false;
+  }
   if(dt<8&&d<Math.max(4,Math.min(9,acc*.27)))return false;
   if(c.speed!=null&&Number(c.speed)>=0&&Number(c.speed)<1.2)return false;
  }
- gpsRideReference={p:{lat:p.lat,lon:p.lon},ts:ts,accuracy:acc};return true;
+ gpsJumpRejects=0;gpsRideReference={p:{lat:p.lat,lon:p.lon},ts:ts,accuracy:acc};return true;
 }
 // Smooth camera (gazon-camera.js): one moveCamera per frame, gliding
 // between GPS fixes; the rider arrow moves with it. Manual map drags pause
@@ -711,7 +715,7 @@ function applyPosition(pos){
    $("gps").textContent="GPS bağlı · bekleme";
   }else if(accuracy>65)$("gps").textContent="GPS doğruluğu bekleniyor";
   return;
- }currentPoint=p;navLastLocationFixAt=Date.now();
+ }currentPoint=p;currentPointAcc=Number(c.accuracy);navLastLocationFixAt=Date.now();
  if(pendingNavRouteRequest&&!navActive&&gazonCurrentMode==="navigation"){
   var desired=pendingNavRouteRequest.target,actual=$("navDestination")?$("navDestination").value.trim():"";
   pendingNavRouteRequest=null;
@@ -1017,7 +1021,11 @@ function startRide(){
  if(!navigator.geolocation){$("status").textContent="Bu cihazda GPS kullanılamıyor.";return;}
  // Only one foreground GPS watch should feed ride tracking.
  stopNavigationGpsWatch();
- riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;gpsRideReference=null;gpsCameraReference=null;headingReady=false;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;try{if(window.AndroidBridge&&typeof AndroidBridge.resetLeanSession==="function")AndroidBridge.resetLeanSession();else startLeanSensor()}catch(e){}
+ riding=true;startTime=Date.now();lastPoint=null;lastGpsTs=0;gpsRideReference=null;gpsCameraReference=null;headingReady=false;totalKm=0;maxSpeed=0;totalClimb=0;turnCount=0;prevAlt=null;track=[];track._lastTurn=0;gpsJumpRejects=0;
+ // Start the track where the rider pressed start (fresh, precise fix), even
+ // if the first moving fix arrives a few seconds later.
+ if(currentPoint&&Date.now()-navLastLocationFixAt<120000&&currentPointAcc>0&&currentPointAcc<=50)track.push([currentPoint.lat,currentPoint.lon,null,Date.now()]);
+ leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;try{if(window.AndroidBridge&&typeof AndroidBridge.resetLeanSession==="function")AndroidBridge.resetLeanSession();else startLeanSensor()}catch(e){}
  if(route)route.setPath([]);$("distance").textContent="0.00";$("duration").textContent="00:00";$("avg").textContent="0";$("max").textContent="0";$("elev").textContent="0";$("turns").textContent="0";
  document.body.classList.add("ride-cockpit-active");$("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">stop_circle</span> Sürüşü Bitir';var lf=$("liveFuelUsed");if(lf)lf.textContent="0.00 L";$("gps").textContent="GPS aranıyor";$("status").textContent="Sürüş başladı. GPS takip ediyor.";
  timer=setInterval(function(){$("duration").textContent=fmt(Math.floor((Date.now()-startTime)/1000));},1000);
@@ -2715,7 +2723,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="social.js?v=20261011-card-nav-start-v1"></script>
 <script src="gazon-guides.js?v=20261011-photo1"></script>
 <script src="gazon-destinations.js?v=20261011-card-nav-start-v1"></script>
-<script src="replay.js?v=20261012-chase3"></script>
+<script src="replay.js?v=20261012-chase4"></script>
 <script src="gazon-music.js?v=20261012-ios1"></script>
 <script src="gazon-journal.js?v=20261012-journal1"></script>
 <script src="gazon-ui.js?v=20261012-ui3"></script>

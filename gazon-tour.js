@@ -53,7 +53,7 @@ function bearing(a,b){
 // twice. Kilometer-only checks incorrectly accept long out-and-back routes.
 function loopQuality(points,reportedKm){
  const src=(Array.isArray(points)?points:[]).map(normalize).filter(Boolean);
- if(src.length<3)return {overlap:1,area:0,reach:0,ok:false};
+ if(src.length<3)return {overlap:1,area:0,reach:0,maxBacktrackKm:0,ok:false};
  const origin=src[0],rad=Math.PI/180,cos=Math.cos(origin.lat*rad);
  const sampled=[{p:src[0],at:0}];let travelled=0;
  for(let i=1;i<src.length;i++){
@@ -69,22 +69,48 @@ function loopQuality(points,reportedKm){
    at+=.12;
   }
  }
- if(travelled<=.1)return {overlap:1,area:0,reach:0,ok:false};
+ if(travelled<=.1)return {overlap:1,area:0,reach:0,maxBacktrackKm:0,ok:false};
  sampled.push({p:src[src.length-1],at:travelled});
  const cell=.16,bins=new Map(),repeated=new Set();let maxReach=0,shoelace=0;
+ let currentReverseKm=0,maxBacktrackKm=0,reverseKm=0,spurCount=0,lastReverseAt=-10;
  const coords=sampled.map(({p})=>({x:(p.lon-origin.lon)*111.195*cos,y:(p.lat-origin.lat)*111.195}));
  for(let i=0;i<sampled.length;i++){
   const {x,y}=coords[i],p=sampled[i],bx=Math.floor(x/cell),by=Math.floor(y/cell);
   maxReach=Math.max(maxReach,Math.hypot(x,y));
   if(i>0)shoelace+=coords[i-1].x*y-x*coords[i-1].y;
+  // Road spurs often look like a small "gir-çık" at 150-km map scale:
+  // outward and backward use the same 200-1500 m of road. The overall
+  // 22% overlap rule can miss them, so measure CONSECUTIVE opposite travel.
+  const prev=coords[Math.max(0,i-1)];
+  const following=coords[Math.min(coords.length-1,i+1)];
+  const hx=following.x-prev.x,hy=following.y-prev.y;
+  const hlen=Math.hypot(hx,hy);
+  let reversed=false;
   for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
    const prior=bins.get((bx+dx)+":"+(by+dy))||[];
    for(const j of prior){
-    if(p.at-sampled[j].at<2.5)continue;
+    if(p.at-sampled[j].at<.55)continue;
     const q=coords[j];
-    if((x-q.x)**2+(y-q.y)**2<=.09**2){repeated.add(i);repeated.add(j)}
+    if((x-q.x)**2+(y-q.y)**2>.075**2)continue;
+    const before=coords[Math.max(0,j-1)];
+    const after=coords[Math.min(coords.length-1,j+1)];
+    const vx=after.x-before.x,vy=after.y-before.y;
+    const vlen=Math.hypot(vx,vy);
+    if(hlen>.02&&vlen>.02&&(hx*vx+hy*vy)/(hlen*vlen)<-.76){
+     reversed=true;repeated.add(i);repeated.add(j);
+     break;
+    }
    }
+   if(reversed)break;
   }
+  if(reversed){
+   const increment=lastReverseAt>=0?Math.min(.15,p.at-lastReverseAt):.12;
+   if(p.at-lastReverseAt>.22){currentReverseKm=0;spurCount++}
+   currentReverseKm+=increment;
+   reverseKm+=increment;
+   maxBacktrackKm=Math.max(maxBacktrackKm,currentReverseKm);
+   lastReverseAt=p.at;
+  }else if(p.at-lastReverseAt>.22)currentReverseKm=0;
   const key=bx+":"+by;
   if(!bins.has(key))bins.set(key,[]);
   bins.get(key).push(i);
@@ -97,8 +123,11 @@ function loopQuality(points,reportedKm){
  // Area distinguishes a real loop from a thin corridor whose entry/exit
  // roads happen to fall just outside the 90m repeated-road tolerance.
  const areaRatio=area/(km*km);
- return {overlap,area,reach,areaRatio,
-  ok:overlap<=.22&&areaRatio>=.0035&&reach<=.48};
+ return {overlap,area,reach,areaRatio,maxBacktrackKm,reverseKm,spurCount,
+  // A single 0.5 km dead-end-and-back is unacceptable even when the
+  // overall 150 km loop is unique. Smaller bends/turnarounds are tolerated.
+  ok:overlap<=.19&&maxBacktrackKm<.45&&
+     reverseKm/Math.max(.1,km)<.045&&areaRatio>=.0035&&reach<=.48};
 }
 function curvature(points,km){
  // Sample at roughly 90m spacing to avoid inflated scores on detailed
@@ -122,7 +151,8 @@ function curvature(points,km){
 function score(o,style,target){
  const deviation=Math.abs(o.km-target)/Math.max(target,1);
  const hours=o.sec/3600;
- const loopBonus=(1-Math.min(1,Number(o.overlap)||0))*3;
+ const loopBonus=(1-Math.min(1,Number(o.overlap)||0))*3-
+  (Number(o.maxBacktrackKm)||0)*2;
  if(style==="fast")return -hours-deviation*.6+loopBonus;
  if(style==="curvy")return o.curveScore*.12-deviation*1.8-hours*.04+loopBonus;
  if(style==="verycurvy")return o.curveScore*.2-deviation*1.2-hours*.015+loopBonus;
@@ -254,7 +284,7 @@ async function plan(){
     if(!rt||!rt.path||rt.path.length<3)continue;
     const pts=rt.path.map(normalize).filter(Boolean);
     const km=Number(rt.distanceMeters)/1000,sec=Number(rt.durationMillis)/1000;
-    if(pts.length<3||!Number.isFinite(km)||km<target*.7||km>target*1.35)continue;
+    if(pts.length<3||!Number.isFinite(km)||km<target*.85||km>target*1.15)continue;
     computed++;
     const quality=loopQuality(pts,km);
     if(!quality.ok){rejectedLoops++;continue}
@@ -263,7 +293,8 @@ async function plan(){
       Math.abs(x.overlap-quality.overlap)<.035))continue;
     const curveScore=curvature(pts,km);
     found.push({name:cand.name,km,sec,origin,middle:cand.middle,points:pts,
-      steps:extractSteps(rt),curveScore,overlap:quality.overlap,area:quality.area});
+      steps:extractSteps(rt),curveScore,overlap:quality.overlap,
+      maxBacktrackKm:quality.maxBacktrackKm,area:quality.area});
     options=found.slice();
     outline(options[options.length-1],options.length-1);
     renderOptions();
@@ -274,7 +305,7 @@ async function plan(){
   }
   if(run!==sequence||mode!=="tour")return;
   if(!found.length)throw Error(rejectedLoops?
-   "Bu bölgede yollar aynı güzergâhtan geri dönüyor. Tekrarlanan yollar elendi; başka yön veya tur mesafesi seç.":
+   "Bu bölgede gereksiz gir-çıklar veya aynı yoldan geri dönüşler tespit edildi. Bu yollar elendi; başka yön veya mesafe dene.":
    "Bu bölgede hedef kilometreye yakın halkalı rota bulunamadı. Başka yön veya mesafe dene.");
   // Keep the path and rendered line arrays in the same sorted order.
   found.sort((a,b)=>score(b,style,target)-score(a,style,target));

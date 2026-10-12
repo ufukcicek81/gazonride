@@ -241,6 +241,14 @@ function clearMaps(){
  map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
 }
 function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
+// Rider puck: white ring, red core, white centre (no emoji, no default pin).
+var RIDER_SVG='<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="#E8322E" fill-opacity=".28"/><circle cx="22" cy="22" r="13" fill="#E8322E" stroke="#fff" stroke-width="4"/><circle cx="22" cy="22" r="4.5" fill="#fff"/></svg>';
+function riderIconUrl(){return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(RIDER_SVG)}
+function riderTemplate(){
+ var t=document.createElement("template");
+ t.content.append(new DOMParser().parseFromString(RIDER_SVG,"image/svg+xml").documentElement);
+ return t;
+}
 function buildOverviewMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
@@ -263,7 +271,7 @@ async function buildClassicFollowMap(ride){
  });
  classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:16,strokeOpacity:1});
  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#ffffff",strokeWeight:3,strokeOpacity:.9});
- classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},label:{text:"🏍",fontSize:"22px"},icon:makeDotIcon("#ff5a1f",13),zIndex:50});
+ classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},icon:{url:riderIconUrl(),scaledSize:new google.maps.Size(44,44),anchor:new google.maps.Point(22,22)},zIndex:50});
  lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};
  try{classicMap.setTilt(35);classicMap.setHeading(lastCameraHeading)}catch(e){}
  startReplayPlayback(ride,"Uyumlu takip görünümü");
@@ -471,8 +479,9 @@ async function build3DMap(ride){
   if(Marker3DElement){
    bike3d=new Marker3DElement({
     position:{lat:first.lat,lng:first.lng,altitude:2},
-    altitudeMode:"RELATIVE_TO_GROUND",label:"🏍",sizePreserved:true,drawsWhenOccluded:true,zIndex:30
+    altitudeMode:"RELATIVE_TO_GROUND",sizePreserved:true,drawsWhenOccluded:true,zIndex:30
    });
+   try{bike3d.append(riderTemplate())}catch(e){}
    map3d.append(bike3d);
   }
 

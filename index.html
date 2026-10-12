@@ -2043,6 +2043,7 @@ async function loadVoiceIce(){
 function voiceId(){return "rider-"+Math.random().toString(36).slice(2,10);}
 function voiceState(message){
  var el=$("voiceState");if(el)el.textContent=message;
+ var pill=$("voicePill");if(pill)pill.textContent=message;
  var sub=$("voiceDockSub");if(sub)sub.textContent=message;
 }
 function sendSignal(msg){
@@ -2060,6 +2061,7 @@ function voiceIceServers(){
  return base;
 }
 function cleanupVoicePeer(id){
+ delete voiceAnalysers.remote[id];
  var pc=voice.peers[id];
  if(pc){delete voice.peers[id];try{pc.close()}catch(e){}}
  var audio=document.getElementById("remote-"+id);
@@ -2165,7 +2167,7 @@ function playRemote(stream,id){
   audio.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0";
   document.body.appendChild(audio);
  }
- if(audio.srcObject!==stream)audio.srcObject=stream;
+ if(audio.srcObject!==stream){audio.srcObject=stream;startVoiceMeters()}
  audio.muted=false;
  var playResult=audio.play();
  if(playResult&&playResult.catch)playResult.catch(function(e){console.warn("Remote voice playback blocked",e);voiceAudioHint()});
@@ -2174,13 +2176,14 @@ function playRemote(stream,id){
 function voiceUI(){
  var ios=(window.GaZonIOS||/iPhone|iPad|iPod/i.test(navigator.userAgent));
  return '<div class="screenHead"><div><div class="ey">GRUP SÜRÜŞÜ</div><div class="screenTitle">Intercom</div></div><button class="mapBtn" id="closeScreen"><span class="mi">close</span></button></div>'+
- '<div class="voicePanelHero"><div class="voiceStatus"><span class="mi" style="font-size:14px">radio_button_checked</span> Bağlantı bekleniyor</div>'+
+ '<div class="voicePanelHero"><div class="voiceStatus"><span class="mi" style="font-size:14px">radio_button_checked</span> <span id="voicePill">Bağlantı bekleniyor</span></div>'+
  '<div style="font-size:12px;line-height:1.6">Gerçek zamanlı konuşma · Bluetooth kask kulaklık destekli</div>'+
  '<button class="talkBtn" id="micBtn" type="button"><span class="mi">mic</span></button>'+
- '<div style="font-size:11px;font-weight:850">Gruba katıl, sonra konuşmayı aç</div>'+
+ '<div style="font-size:12px;font-weight:850" id="micHint">Gruba katıl · mikrofon otomatik açılır</div>'+
+ '<div class="voiceMeters"><div><span>Senin sesin</span><i><b id="meterLocal"></b></i></div><div><span>Gelen ses</span><i><b id="meterRemote"></b></i></div></div>'+
  '<button class="screenBtn dark" type="button" id="voiceAudioEnable"><span class="mi">volume_up</span> Sesi Aç / Test Et</button>'+
  '<div class="sub" id="voiceAudioHint">Karşı tarafı duymuyorsan Sesi Aç düğmesine dokun.</div>'+
- (ios?'<div class="sub">iPhone: Arka planda ve ekran kilidinde konuşmayı ayrıca test et. Safari sürümünde kesintisiz çalışma garanti değildir.</div>':"")+
+ (ios?'<div class="sub">iPhone: Mikrofon açıkken ses kulak ahizesinden gelir (kısık duyulur). Kask Bluetooth\'unu bağla ya da telefonu kulağına götür. Kontrol Merkezi\'nden ses çıkışını seçebilirsin.</div>':"")+
  '</div><div class="screenCard"><b>Grup bağlantısı</b>'+
  '<input class="input" id="roomCode" placeholder="Grup kodu (örn. GAZON123)">'+
  '<button class="screenBtn" id="createVoice">Grup Oluştur</button><button class="screenBtn dark" id="joinVoice">Gruba Katıl</button><button class="screenBtn dark" id="leaveVoice">Bağlantıyı Kes</button>'+
@@ -2195,7 +2198,8 @@ function setupVoice(){
  $("createVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(code,true)};
  $("joinVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase();if(code)startVoice(code,false);else voiceState("Grup kodu gerekli")};
  $("micBtn").onclick=toggleMic;
- $("voiceAudioEnable").onclick=unlockRemoteAudio;
+ $("voiceAudioEnable").onclick=function(){playVoiceTestTone();unlockRemoteAudio();var h=$("voiceAudioHint");if(h)h.textContent="Bip sesi duyduysan hoparlör / kask çıkışı çalışıyor.";};
+ paintMic();if(voice.room)startVoiceMeters();
  var leave=$("leaveVoice");if(leave)leave.onclick=stopVoice;
  if(voice.room){
   var room=$("roomCode");if(room)room.value=voice.room;
@@ -2285,10 +2289,10 @@ async function startVoice(code,host){
   voiceState("Intercom sunucusu hazırlanıyor…");
   await loadVoiceIce();
   voice.room=code;voice.host=host;voice.id=voiceId();voice.session++;
-  voice.stream=stream;voice.mic=false;
-  stream.getAudioTracks().forEach(function(t){t.enabled=false});
-  var mic=$("micBtn");if(mic){mic.innerHTML='<span class="mi">mic</span>';mic.classList.remove("active")}
-  var dockMic=$("voiceDockMic");if(dockMic)dockMic.innerHTML='<span class="mi">mic</span>';
+  // Open-mic intercom: talking works right after joining; the button mutes.
+  voice.stream=stream;voice.mic=true;
+  stream.getAudioTracks().forEach(function(t){t.enabled=true});
+  paintMic();startVoiceMeters();
   saveIntercomHistory(code,host);
   connectVoiceSocket();
  }catch(e){
@@ -2299,6 +2303,55 @@ async function startVoice(code,host){
    try{AndroidBridge.stopIntercom()}catch(stopError){}
  }
 }
+// Mic button shows the CURRENT state: open mic = mic icon on orange,
+// muted = mic_off on grey.
+function paintMic(){
+ var on=!!voice.mic,btn=$("micBtn"),dock=$("voiceDockMic"),hint=$("micHint");
+ if(btn){btn.innerHTML='<span class="mi">'+(on?"mic":"mic_off")+'</span>';btn.classList.toggle("muted",!on);btn.setAttribute("aria-label",on?"Mikrofonu sessize al":"Mikrofonu aç")}
+ if(dock)dock.innerHTML='<span class="mi">'+(on?"mic":"mic_off")+'</span>';
+ if(hint)hint.textContent=voice.room?(on?"Mikrofon açık · sessize almak için dokun":"Mikrofon sessizde · açmak için dokun"):"Gruba katıl · mikrofon otomatik açılır";
+}
+// Live level meters: shows whether YOUR voice is captured and whether the
+// other riders' audio actually arrives (analysis only, playback unchanged).
+var voiceMeterCtx=null,voiceMeterTimer=null,voiceAnalysers={local:null,remote:{}};
+function analyserFor(stream){
+ try{
+  if(!voiceMeterCtx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;voiceMeterCtx=new AC()}
+  if(voiceMeterCtx.state==="suspended")voiceMeterCtx.resume();
+  var a=voiceMeterCtx.createAnalyser();a.fftSize=256;
+  voiceMeterCtx.createMediaStreamSource(stream).connect(a);
+  return a;
+ }catch(e){return null}
+}
+function levelOf(a){
+ if(!a)return 0;var d=new Uint8Array(a.fftSize);a.getByteTimeDomainData(d);
+ var m=0;for(var i=0;i<d.length;i++)m=Math.max(m,Math.abs(d[i]-128));return Math.min(1,m/64);
+}
+function startVoiceMeters(){
+ if(voice.stream&&!voiceAnalysers.local)voiceAnalysers.local=analyserFor(voice.stream);
+ if(voiceMeterTimer)return;
+ voiceMeterTimer=setInterval(function(){
+  if(!voice.room){clearInterval(voiceMeterTimer);voiceMeterTimer=null;return}
+  var l=voice.mic?levelOf(voiceAnalysers.local):0;
+  var ml=$("meterLocal");if(ml)ml.style.width=Math.round(l*100)+"%";
+  // Incoming level from RTP statistics: never touches the playing stream
+  // (Safari can silence a remote stream that is also fed to Web Audio).
+  var pcs=Object.keys(voice.peers).map(function(k){return voice.peers[k]}).filter(function(pc){return pc&&pc.getStats});
+  Promise.all(pcs.map(function(pc){return pc.getStats().then(function(rep){var m=0;rep.forEach(function(x){if(x.type==="inbound-rtp"&&(x.kind==="audio"||x.mediaType==="audio")&&x.audioLevel!=null)m=Math.max(m,x.audioLevel)});return m},function(){return 0})}))
+   .then(function(levels){var r=levels.reduce(function(a,b){return Math.max(a,b)},0),mr=$("meterRemote");if(mr)mr.style.width=Math.round(Math.min(1,r*3)*100)+"%"});
+ },120);
+}
+// Audible test through the same output path as the riders' voices.
+function playVoiceTestTone(){
+ try{
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  var ctx=voiceMeterCtx||(voiceMeterCtx=new AC());if(ctx.state==="suspended")ctx.resume();
+  var o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=660;g.gain.value=.0001;
+  o.connect(g);g.connect(ctx.destination);var t=ctx.currentTime;
+  g.gain.exponentialRampToValueAtTime(.25,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+.6);
+  o.start(t);o.stop(t+.65);
+ }catch(e){}
+}
 async function toggleMic(){
  if(!voice.room){voiceState("Önce grup oluştur veya katıl");return}
  try{
@@ -2306,17 +2359,15 @@ async function toggleMic(){
    AndroidBridge.prepareIntercom();
   var st=await ensureMic();voice.mic=!voice.mic;
   st.getAudioTracks().forEach(function(t){t.enabled=voice.mic});
-  var btn=$("micBtn");
-  if(btn){btn.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';btn.classList.toggle("active",voice.mic)}
-  var dock=$("voiceDockMic");
-  if(dock)dock.innerHTML=voice.mic?'<span class="mi">mic_off</span>':'<span class="mi">mic</span>';
-  voiceState(voice.mic?"Konuşuyorsun":"Dinlemedesin");
+  paintMic();startVoiceMeters();
+  voiceState(voice.mic?"Mikrofon açık · konuşabilirsin":"Mikrofon sessizde · dinlemedesin");
   // A user gesture can resume remote playback rejected by Safari.
   unlockRemoteAudio();
  }catch(e){console.warn("Microphone toggle",e);voiceState("Mikrofon açılamadı · izni kontrol et")}
 }
 function stopVoice(releaseNative){
  voice.session++;
+ voiceAnalysers.local=null;voiceAnalysers.remote={};
  if(voice.retryTimer){clearTimeout(voice.retryTimer);voice.retryTimer=null}
  if(voice.ws){try{voice.ws.close()}catch(e){}voice.ws=null}
  cleanupAllVoicePeers();

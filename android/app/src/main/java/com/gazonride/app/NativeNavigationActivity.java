@@ -286,10 +286,12 @@ public final class NativeNavigationActivity extends Activity {
         musicFabParams.setMargins(0, 0, dp(12), 0);
         root.addView(musicFab, musicFabParams);
 
-        totalText = label("Rota hesaplanıyor…", 19, true);
+        totalText = label("Rota hesaplanıyor…", 18, true);
+        totalText.setSingleLine(true);
+        totalText.setEllipsize(android.text.TextUtils.TruncateAt.END);
         totalText.setGravity(Gravity.CENTER);
         totalText.setBackground(shape(0xF0121821, 20));
-        totalText.setPadding(dp(16), 0, dp(80), 0);
+        totalText.setPadding(dp(16), 0, dp(76), 0);
         totalText.setContentDescription("Kalan toplam mesafe, süre ve varış saati");
         FrameLayout.LayoutParams totalParams =
                 new FrameLayout.LayoutParams(-1, dp(64), Gravity.BOTTOM);
@@ -327,8 +329,12 @@ public final class NativeNavigationActivity extends Activity {
                     if (closed) return;
                     navigator = ready;
                     try {
-                        navigationView.getMapAsync(map ->
-                                map.followMyLocation(GoogleMap.CameraPerspective.TILTED));
+                        navigationView.getMapAsync(map -> {
+                            // Keep the rider arrow ABOVE our bottom bar: map padding
+                            // moves the follow-camera centre (and puck) upwards.
+                            map.setPadding(0, 0, 0, dp(110));
+                            map.followMyLocation(GoogleMap.CameraPerspective.TILTED);
+                        });
                     } catch (Exception ignored) { }
                     planNativeRoute();
                 }
@@ -481,7 +487,7 @@ public final class NativeNavigationActivity extends Activity {
             String duration = minutes >= 60 ? (minutes / 60) + " sa " + (minutes % 60) + " dk" : minutes + " dk";
             String eta = new java.text.SimpleDateFormat("HH:mm", tr)
                     .format(new java.util.Date(System.currentTimeMillis() + seconds * 1000L));
-            totalText.setText(distance + "  ·  " + duration + "  ·  Varış " + eta);
+            totalText.setText(distance + " · " + duration + " · " + eta);
             if (progressText != null) progressText.setText(distance + " · " + duration);
         } catch (Exception ignored) {}
     }

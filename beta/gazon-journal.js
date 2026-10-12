@@ -123,8 +123,9 @@ function leanWizard(opts){
 }
 
 /* ---------- Ride card v2: real map, real numbers ----------
- * Map: CARTO basemap tiles (OpenStreetMap data, no API key) stitched in an
- * SVG with the route on top, Web Mercator so line and roads match. */
+ * Map: Google Static Maps image (the app's Maps key) with the route as an
+ * encoded polyline. Underneath, an offline SVG of the route (Web Mercator)
+ * shows when there is no key or the image fails to load. */
 function pts3(track){
  return (Array.isArray(track)?track:[]).map(function(p){
   return Array.isArray(p)?{lat:Number(p[0]),lon:Number(p[1]),alt:p[2]==null?null:Number(p[2]),t:Number(p[3])||0}:null;
@@ -188,7 +189,7 @@ function rideWhen(r){
  return d.getDate()+" "+MONTHS[d.getMonth()]+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
 }
 function isDark(){try{return !document.documentElement.classList.contains("theme-light")}catch(e){return true}}
-function mapView(track,w,h){
+function routeSvg(track,w,h){
  var pts=points(track);w=w||640;h=h||320;if(pts.length<2)return "";
  var step=Math.max(1,Math.floor(pts.length/500)),s=[];for(var i=0;i<pts.length;i+=step)s.push(pts[i]);
  if(s[s.length-1]!==pts[pts.length-1])s.push(pts[pts.length-1]);
@@ -199,11 +200,7 @@ function mapView(track,w,h){
   xs.forEach(function(q){minX=Math.min(minX,q[0]);maxX=Math.max(maxX,q[0]);minY=Math.min(minY,q[1]);maxY=Math.max(maxY,q[1])});
   if(maxX-minX<=w-2*pad&&maxY-minY<=h-2*pad)break;
  }
- var x0=(minX+maxX)/2-w/2,y0=(minY+maxY)/2-h/2,style=isDark()?"dark_all":"rastertiles/voyager",tiles="",n=Math.pow(2,z);
- for(var tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++)for(var ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){
-  if(ty<0||ty>=n)continue;var wx=((tx%n)+n)%n;
-  tiles+='<image href="https://'+"abcd"[(wx+ty)%4]+'.basemaps.cartocdn.com/'+style+'/'+z+'/'+wx+'/'+ty+'@2x.png" x="'+(tx*256-x0).toFixed(1)+'" y="'+(ty*256-y0).toFixed(1)+'" width="256" height="256" preserveAspectRatio="none"/>';
- }
+ var x0=(minX+maxX)/2-w/2,y0=(minY+maxY)/2-h/2,tiles="";
  var d=xs.map(function(q,i){return (i?"L":"M")+(q[0]-x0).toFixed(1)+" "+(q[1]-y0).toFixed(1)}).join(""),a=xs[0],b=xs[xs.length-1];
  // Zoom levels are whole numbers; scale up (max 2x, @2x tiles stay sharp)
  // so the route fills the frame.
@@ -215,7 +212,45 @@ function mapView(track,w,h){
   '<path d="'+d+'" fill="none" stroke="#E8322E" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"'+ns+'/>'+
   '<circle cx="'+(a[0]-x0).toFixed(1)+'" cy="'+(a[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#22C55E" stroke="#fff" stroke-width="3"'+ns+'/>'+
   '<circle cx="'+(b[0]-x0).toFixed(1)+'" cy="'+(b[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#DC2626" stroke="#fff" stroke-width="3"'+ns+'/></g>'+
-  '<text x="'+(w-8)+'" y="'+(h-8)+'" text-anchor="end" font-size="11" fill="'+(isDark()?"#cfd6df":"#4b5563")+'" opacity=".85">© OpenStreetMap © CARTO</text></svg>';
+  '</svg>';
+}
+function mapsKey(){
+ try{
+  var k=root.GAZONRIDE_GOOGLE_MAPS_API_KEY||"";
+  if(!k&&root.AndroidBridge&&typeof root.AndroidBridge.getGoogleMapsApiKey==="function")k=String(root.AndroidBridge.getGoogleMapsApiKey()||"");
+  return k&&k.indexOf("__")!==0?k:"";
+ }catch(e){return ""}
+}
+// Google encoded polyline (precision 5).
+function encodePath(pts){
+ var out="",pl=0,pg=0;
+ function enc(v){v=v<0?~(v<<1):v<<1;var s="";while(v>=32){s+=String.fromCharCode((32|(v&31))+63);v>>=5}return s+String.fromCharCode(v+63)}
+ pts.forEach(function(p){var la=Math.round(p.lat*1e5),lo=Math.round(p.lon*1e5);out+=enc(la-pl)+enc(lo-pg);pl=la;pg=lo});
+ return out;
+}
+var DARK_STYLE=["element:geometry|color:0x1d2229","element:labels.text.fill|color:0x9aa4b2","element:labels.text.stroke|color:0x111418",
+ "feature:road|element:geometry|color:0x3a4250","feature:road.highway|element:geometry|color:0x56606e","feature:water|element:geometry|color:0x0e2a3b",
+ "feature:poi|visibility:off","feature:transit|visibility:off"];
+var LIGHT_STYLE=["feature:poi|visibility:off","feature:transit|visibility:off"];
+function staticMapUrl(track,w,h,key){
+ var pts=points(track);if(pts.length<2||!key)return "";
+ var max=300,step=Math.max(1,Math.ceil(pts.length/max)),s=[];
+ for(var i=0;i<pts.length;i+=step)s.push(pts[i]);if(s[s.length-1]!==pts[pts.length-1])s.push(pts[pts.length-1]);
+ var a=s[0],b=s[s.length-1],q=[
+  "size="+Math.min(640,w)+"x"+Math.min(640,h),"scale=2","maptype=roadmap","language=tr",
+  "path="+encodeURIComponent("color:0xFFFFFFCC|weight:9|enc:"+encodePath(s)),
+  "path="+encodeURIComponent("color:0xE8322EFF|weight:5|enc:"+encodePath(s)),
+  "markers="+encodeURIComponent("size:mid|color:0x22C55E|"+a.lat.toFixed(5)+","+a.lon.toFixed(5)),
+  "markers="+encodeURIComponent("size:mid|color:0xDC2626|"+b.lat.toFixed(5)+","+b.lon.toFixed(5))
+ ];
+ (isDark()?DARK_STYLE:LIGHT_STYLE).forEach(function(x){q.push("style="+encodeURIComponent(x))});
+ q.push("key="+encodeURIComponent(key));
+ return "https://maps.googleapis.com/maps/api/staticmap?"+q.join("&");
+}
+function mapView(track,w,h){
+ var svg=routeSvg(track,w,h);if(!svg)return "";
+ var url=staticMapUrl(track,w||640,h||320,mapsKey());
+ return svg+(url?'<img class="gr-j-mapimg" loading="lazy" decoding="async" alt="Sürüş haritası" src="'+esc(url)+'" onerror="this.remove()">':'');
 }
 function bikeName(r){var m=r&&r.motor||{};return [m.brand,m.model].filter(Boolean).join(" ")}
 // Full card used in Keşfet / Sürüşlerim and the journal.

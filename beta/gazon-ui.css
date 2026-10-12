@@ -279,3 +279,4 @@ html.theme-light .gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-
 .gr-myride{padding:12px;flex-basis:86%;max-width:360px}
 .gr-myride>.gr-ride-card{pointer-events:none}
 .gr-myride .gr-myride-play{pointer-events:none}
+.gr-ride-map .gr-j-mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}

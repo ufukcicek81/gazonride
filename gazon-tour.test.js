@@ -28,7 +28,8 @@ for(const direction of ["auto","north","east","south","west"]){
 }
 for(const km of [50,100,150]){
  const points=Tour.candidates(home,km,"auto");
- const avg=points.flatMap(c=>c.middle.map(p=>distance(home,p))).reduce((a,b)=>a+b,0)/10;
+ const radii=points.flatMap(c=>c.middle.map(p=>distance(home,p)));
+ const avg=radii.reduce((a,b)=>a+b,0)/radii.length;
  assert.ok(avg>km/9&&avg<km/3.5,"waypoint radius follows target");
 }
 assert.equal(Tour.offset(null,90,20),null);

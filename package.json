@@ -1,0 +1,11 @@
+{
+  "name": "gazonride",
+  "private": true,
+  "description": "GaZonRide motorcycle navigation (web app + Android shell)",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\" && node gazon-tour.test.js && node gazon-native-route.test.js && node gazon-nav-progress.test.js",
+    "test:unit": "node --test \"test/*.test.js\"",
+    "check": "node scripts/check-syntax.js"
+  },
+  "engines": { "node": ">=20" }
+}

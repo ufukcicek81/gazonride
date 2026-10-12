@@ -1,0 +1,146 @@
+name: GaZonRide CI (tests, Android build, beta)
+# Every development push is verified before it can reach riders:
+#  1. web tests: tour engine (50/100/150 km), GPS simulation, route token, syntax
+#  2. Android compile (APK artifact only, never published as a release)
+#  3. beta web channel: tested web files are copied to /beta/ on GitHub Pages.
+#     The normal app (site root) is NOT changed until the branch is merged.
+on:
+  push:
+    branches: ['claude/**', 'feature/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gazonride-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check (all scripts + inline HTML scripts)
+        run: node scripts/check-syntax.js
+      - name: Unit + scenario tests
+        run: npm test
+      - name: UI layout tests (phone sizes, safe areas, themes)
+        run: |
+          if [ -f test/ui/layout.spec.js ]; then
+            npm install --no-save playwright@1.48.2
+            npx playwright install --with-deps chromium
+            node test/ui/layout.spec.js
+          fi
+
+  android-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android API 36
+        shell: bash
+        run: |
+          set -eu
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ] && [ -n "${ANDROID_HOME:-}" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          fi
+          if [ -n "$SDKMANAGER" ]; then "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"; fi
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Restore stable debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: gazonride-stable-debug-signing-v1
+      - name: Ensure signing key exists
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
+              -storepass android -alias androiddebugkey -keypass android \
+              -dname "CN=GaZonRide,O=GaZonRide,C=TR" -keyalg RSA -keysize 2048 -validity 10000
+          fi
+      - name: Restore launcher icons
+        shell: bash
+        run: |
+          set -eu
+          cat android/icon_chunks/part*.b64 | tr -d '\r\n' | base64 --decode > /tmp/launcher.webp
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-$d"
+            cp /tmp/launcher.webp "android/app/src/main/res/mipmap-$d/ic_launcher.webp"
+            cp /tmp/launcher.webp "android/app/src/main/res/mipmap-$d/ic_launcher_round.webp"
+          done
+      - name: Inject Maps key (secret, never printed)
+        shell: bash
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          mkdir -p android/app/src/main/assets
+          printf '%s' "${GOOGLE_MAPS_API_KEY:-}" > android/app/src/main/assets/google_maps_api_key.txt
+      - name: Compile APK
+        working-directory: android
+        env:
+          GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
+        run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta
+      - name: Upload test APK (not a release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GaZonRide-test-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  deploy-beta:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')
+    needs: web-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: gazonride-beta-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout tested branch
+        uses: actions/checkout@v4
+        with:
+          path: branch
+      - name: Checkout Pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: site
+      - name: Copy web files into /beta/ only
+        shell: bash
+        run: |
+          set -eu
+          rm -rf site/beta && mkdir -p site/beta
+          cd branch
+          # Web runtime files only. Tests, Android sources and tooling stay out.
+          for f in *.html *.js *.css *.json *.svg *.webmanifest; do
+            case "$f" in *.test.js|package.json|package-lock.json) continue;; esac
+            [ -f "$f" ] && cp "$f" ../site/beta/
+          done
+          cp -r icons ../site/beta/ 2>/dev/null || true
+          mkdir -p ../site/beta/android/app/src/main/res/drawable
+          cp android/app/src/main/res/drawable/gazonride_real.jpg ../site/beta/android/app/src/main/res/drawable/ 2>/dev/null || true
+          printf '{"branch":"%s","commit":"%s"}\n' "${GITHUB_REF_NAME}" "${GITHUB_SHA}" > ../site/beta/beta-build.json
+      - name: Publish beta
+        working-directory: site
+        shell: bash
+        run: |
+          git config user.name "gazonride-beta-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add beta
+          if git diff --cached --quiet; then echo "Beta unchanged"; exit 0; fi
+          git commit -m "Beta web channel: ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}"
+          git push origin HEAD:main

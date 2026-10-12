@@ -435,7 +435,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
  </select>
  <small>Viraj yoğunluğu rota geometrisinden tahmin edilir; yol güvenliği ve asfalt kalitesi doğrulanmaz.</small>
 </div>
-<button id="grTourPlan" type="button"><span class="mi">alt_route</span> Üç tur önerisi oluştur</button>
+<button id="grTourPlan" type="button"><span class="mi">alt_route</span> Tur önerisi oluştur</button>
     <div class="gr-tour-message" id="grTourMessage" aria-live="polite">Gerçek yollar üzerinden kilometre ve süre hesaplanır.</div>
   </div>
   <div class="sub" style="margin-top:8px">Rota uygulama içinde çizilir. Intercom açıkken navigasyon aynı anda çalışmaya devam eder.</div>
@@ -511,7 +511,9 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="gazon-nav-progress.js?v=20261012-circular-start-fix"></script>
 <script src="gazon-native-route.js?v=20261012-stable-road-anchor-v2"></script>
-<script src="gazon-tour.js?v=20261012-no-detours-v2"></script>
+<script src="gazon-route-token.js?v=20261012-token-v1"></script>
+<script src="gazon-tour-engine.js?v=20261012-engine-v2"></script>
+<script src="gazon-tour.js?v=20261012-engine-v2"></script>
 <script>
 (function(){
 "use strict";
@@ -1777,6 +1779,25 @@ async function launchCardDestination(item){
 
 window.GaZonNavigation={openCommunityRoute:openCommunityRouteNavigation,launchCardDestination:launchCardDestination,recenter:recenterNavigationOnce};
 
+// Open Google Navigation SDK on exactly the previewed road. The newest APK
+// accepts a Routes API token for identical stops; older APKs get the stops
+// only. Returns true when the native screen was opened.
+async function openNativeRouteExact(stops,title,avoidTolls,avoidHighways,tokenRequest){
+ if(!window.AndroidBridge||!stops||!stops.length)return false;
+ var json=JSON.stringify(stops.map(function(p){return {lat:Math.round(p.lat*1e6)/1e6,lon:Math.round(p.lon*1e6)/1e6}}));
+ if(typeof AndroidBridge.openNativeRouteToken==="function"){
+  var token=null;
+  if(window.GaZonRouteToken&&tokenRequest){
+   $("status").textContent="Seçtiğin yol Google navigasyonuna aktarılıyor…";
+   token=await GaZonRouteToken.fetchToken(tokenRequest);
+  }
+  window.GaZonLastRouteToken=token?"exact":"stops-only";
+  if(AndroidBridge.openNativeRouteToken(json,title,!!avoidTolls,!!avoidHighways,token?token.token:""))return true;
+ }
+ if(typeof AndroidBridge.openNativeRoute==="function")
+  return !!AndroidBridge.openNativeRoute(json,title,!!avoidTolls,!!avoidHighways);
+ return false;
+}
 function startPlannedNavigation(forceWeb){
  // Click handlers receive an Event argument; do not misread it as "force web".
  forceWeb=forceWeb===true;
@@ -1791,16 +1812,33 @@ function startPlannedNavigation(forceWeb){
    var routeName=String(selectedRoute.name||"");
    var avoidTolls=/Ücretsiz|Sakin/i.test(routeName),avoidHighways=/Otoyolsuz|Sakin/i.test(routeName);
    var nativeStarted=false;
+   if(isFinite(lat)&&isFinite(lon)&&typeof AndroidBridge.openNativeRouteToken==="function"){
+    // Exact alternative: Routes API token for the same origin/destination,
+    // matched against the selected road geometry.
+    var geometryExact=selectedRoute.pts&&selectedRoute.pts.length?selectedRoute.pts:navPathPoints;
+    var label=activeNavLabel||"Hedef",origin=geometryExact[0]||currentPoint,seq=++navPlanSeq;
+    openNativeRouteExact([{lat:lat,lon:lon}],label,avoidTolls,avoidHighways,origin?{
+     origin:origin,destination:{lat:lat,lon:lon},alternatives:true,avoidTolls:avoidTolls,
+     avoidHighways:avoidHighways,matchPoints:geometryExact,matchKm:selectedRoute.km||navTotalKm}:null)
+    .then(function(ok){
+     if(ok){
+      if(!riding)startRide();
+      navStartedRide=false;
+      $("status").textContent=window.GaZonLastRouteToken==="exact"?
+       "Seçtiğin rota Google navigasyonunda aynen açılıyor.":
+       "Google navigasyonu açılıyor; Google yolu yeniden hesaplayabilir.";
+     }else if(seq===navPlanSeq)startPlannedNavigation(true);
+    },function(){startPlannedNavigation(true)});
+    return
+   }
    if(isFinite(lat)&&isFinite(lon)){
-    // The new APK receives the selected road geometry as intermediate stops.
+    // Older APKs: selected road geometry sampled into intermediate stops.
     if(window.GaZonNativeRoute&&typeof AndroidBridge.openNativeRoute==="function"){
      var geometry=selectedRoute.pts&&selectedRoute.pts.length?selectedRoute.pts:navPathPoints;
      var waypoints=GaZonNativeRoute.routeStops(geometry,{lat:lat,lon:lon},4);
      if(waypoints.length)nativeStarted=!!AndroidBridge.openNativeRoute(
       JSON.stringify(waypoints),activeNavLabel||"Hedef",avoidTolls,avoidHighways);
     }
-    // Older installed APKs still have Google Navigation SDK and can guide to
-    // the destination, but do not receive the full selected alternative.
     if(!nativeStarted&&typeof AndroidBridge.openNativeNavigation==="function")
      nativeStarted=!!AndroidBridge.openNativeNavigation(lat,lon,activeNavLabel||"Hedef",avoidTolls,avoidHighways);
    }
@@ -2418,19 +2456,15 @@ function boot(){
  if(routePicker&&routePicker.parentElement!==document.body)document.body.appendChild(routePicker);
  setupNavAutocomplete();setupOriginAutocomplete();
  if(window.GaZonTour)GaZonTour.init({
-  launchInside:function(tour){
+  launchInside:async function(tour){
    if(!tour||!tour.points||tour.points.length<3)return false;
-   var stops=tour.middle.concat([tour.origin]).map(function(p){return {lat:p.lat,lon:p.lon}});
+   // Native navigation receives the SAME corners used for the preview.
+   var stops=window.GaZonTourEngine?GaZonTourEngine.navigationStops(tour):tour.middle.concat([tour.origin]);
    if(window.AndroidBridge){
     try {
-     var tourStarted=false;
-     if(window.GaZonNativeRoute&&typeof AndroidBridge.openNativeRoute==="function"){
-      var pathStops=GaZonNativeRoute.routeStops(tour.points,tour.origin,5);
-      if(pathStops.length)tourStarted=!!AndroidBridge.openNativeRoute(
-       JSON.stringify(pathStops),"Tur başlangıcına dönüş",false,false);
-     }
-     if(!tourStarted&&typeof AndroidBridge.openNativeTour==="function")
-      tourStarted=!!AndroidBridge.openNativeTour(JSON.stringify(stops));
+     var tourStarted=await openNativeRouteExact(stops,"Tur başlangıcına dönüş",false,!!tour.avoidHighways,{
+      origin:tour.origin,destination:tour.origin,intermediates:tour.middle,
+      avoidHighways:!!tour.avoidHighways,matchPoints:tour.points,matchKm:tour.km});
      if(tourStarted){
       if(!riding)startRide();
       $("status").textContent="Google'ın uygulama içi tur navigasyonu başlatılıyor.";

@@ -1143,7 +1143,10 @@
       "search": "Uzunköprü üzerinde yürü Edirne Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Uzunköprü Köprüsü",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Uzun Köprü"
+      ]
     },
     {
       "id": 68,
@@ -1305,7 +1308,10 @@
       "search": "Yesemek Açık Hava Müzesini gör Gaziantep Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Yesemek Açık Hava Müzesi",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Yesemek Taşocağı ve Heykel Atölyesi"
+      ]
     },
     {
       "id": 78,
@@ -1899,7 +1905,10 @@
       "search": "Ballıkayalar Kanyonunu gör Kocaeli Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Ballıkayalar Kanyonu",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Ballıkayalar"
+      ]
     },
     {
       "id": 116,
@@ -1913,7 +1922,10 @@
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/93/Mevlana_M%C3%BCzesi_02.jpg/960px-Mevlana_M%C3%BCzesi_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Mevlana_M%C3%BCzesi_02.jpg",
       "imageSource": "commons-search",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Mevlânâ Müzesi"
+      ]
     },
     {
       "id": 117,
@@ -2003,7 +2015,10 @@
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Sardes_Antik_Kenti%2C_Manisa%2C_T%C3%BArkiya.jpg/960px-Sardes_Antik_Kenti%2C_Manisa%2C_T%C3%BArkiya.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Sardes_Antik_Kenti,_Manisa,_T%C3%BArkiya.jpg",
       "imageSource": "commons-search",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Sardis"
+      ]
     },
     {
       "id": 123,
@@ -2101,7 +2116,10 @@
       "image": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Sakl%C4%B1kent_Kanyonu_-_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Sakl%C4%B1kent_Kanyonu_-_1.jpg",
       "imageSource": "commons-search",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Saklıkent Millî Parkı"
+      ]
     },
     {
       "id": 129,
@@ -2822,7 +2840,10 @@
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Yozgat_Roma_Hamam%C4%B1.jpg/960px-Yozgat_Roma_Hamam%C4%B1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Yozgat_Roma_Hamam%C4%B1.jpg",
       "imageSource": "commons-search",
-      "check": "unverified"
+      "check": "unverified",
+      "aka": [
+        "Basilica Therma"
+      ]
     },
     {
       "id": 172,

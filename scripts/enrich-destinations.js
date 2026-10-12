@@ -20,7 +20,8 @@ const FILE = path.join(ROOT, "gazon-destinations.json");
 const REPORT = path.join(ROOT, "docs", "destinations-check.md");
 const UA = "GaZonRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const norm = s => String(s || "").toLocaleLowerCase("tr-TR").replace(/\s+(ili|province)$/i, "").replace(/[^a-zçğıöşü]/g, "");
+const plain = s => String(s || "").replace(/[âÂ]/g, "a").replace(/[îÎ]/g, "i").replace(/[ûÛ]/g, "u");
+const norm = s => plain(s).toLocaleLowerCase("tr-TR").replace(/\s+(ili|province)$/i, "").replace(/[^a-zçğıöşü]/g, "");
 
 async function getJson(url, tries = 3) {
   for (let i = 0; i < tries; i++) {
@@ -70,7 +71,7 @@ const GENERIC = new Set(("antik kenti kent kenti gölü göl dağı dağları da
   "şelalesi şelaleleri kanyonu kanyon yaylası yayla müzesi müze kalesi kale köprüsü köprü vadisi vadi türbesi camii camisi " +
   "manastırı kilisesi sarayı höyüğü höyük adası ada yarımadası koyu plajı tepesi geçidi boğazı harabeleri ören yeri açık hava " +
   "longozu ormanları tüneli medresesi hamamı roma mezarları kaya sütunları bazalt peri bacaları tuz çayı il ili merkez").split(" "));
-const fold = s => String(s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
+const fold = s => plain(s).replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
 // Feature types: a candidate whose name adds a different type ("Müzesi",
 // "Barajı", "Üniversitesi", "Dağları" for a valley) is another place.
 const TYPES = ["şelal", "mağar", "kanyo", "göl", "dağ", "vadi", "kale", "köprü", "plaj", "koy", "tepe", "geçi", "boğaz",
@@ -157,15 +158,24 @@ async function osmSearch(place, city) {
 
 async function enrich(item) {
   const place = item.place || item.title, city = item.city, out = { status: "unverified" };
-  const all = (await wikiExact(place)).concat(await wikiCandidates(place, city));
-  const cands = all.filter(c => namesMatch(place, c.title, city));
+  // aka: known other names of the place (e.g. Wikipedia "Sardis" for Sardes).
+  const aka = Array.isArray(item.aka) ? item.aka : [];
+  const exactName = c => [place].concat(aka).some(n => fold(n) === fold(c.title));
+  let all = await wikiExact(place);
+  for (const n of aka) all = all.concat(await wikiExact(n));
+  all = all.concat(await wikiCandidates(place, city));
+  const cands = all.filter(c => exactName(c) || namesMatch(place, c.title, city));
   await fillFromWikidata(cands);
   const why = [];
   for (const c of cands) {
     if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) { why.push(c.title + ": koordinat yok"); continue; }
     const pv = await provinceAt(c.lat, c.lng);
     if (!sameProvince(pv, city)) why.push(c.title + ": " + (pv.province || "?") + " ilinde");
-    if (sameProvince(pv, city)) {
+    // A page with exactly this name is the place itself, even when it lies
+    // on a province border (Malabadi Köprüsü, Aladağlar).
+    const border = !sameProvince(pv, city) && exactName(c) && pv.country === "tr";
+    if (border) out.note = "Konum " + pv.province + " ili sınırında";
+    if (sameProvince(pv, city) || border) {
       Object.assign(out, { lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6), wiki: c.url, wikiTitle: c.title, status: "verified", source: "wikipedia+osm" });
       if (c.image) Object.assign(out, { image: c.image, imageCredit: c.url });
       break;
@@ -199,7 +209,8 @@ async function enrich(item) {
   for (const item of data.items) {
     if (only && !only.has(item.id)) continue;
     const e = await enrich(item);
-    for (const k of ["lat", "lng", "image", "imageCredit", "imageSource", "wiki", "wikiTitle", "check"]) delete item[k];
+    for (const k of ["lat", "lng", "image", "imageCredit", "imageSource", "wiki", "wikiTitle", "check", "note"]) delete item[k];
+    if (e.note && e.status === "verified") item.note = e.note;
     if (e.lat != null) { item.lat = e.lat; item.lng = e.lng; }
     if (e.image) { item.image = e.image; item.imageCredit = e.imageCredit; if (e.imageSource) item.imageSource = e.imageSource; }
     if (e.wiki) { item.wiki = e.wiki; item.wikiTitle = e.wikiTitle; }

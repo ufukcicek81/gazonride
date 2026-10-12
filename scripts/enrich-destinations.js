@@ -65,14 +65,25 @@ const GENERIC = new Set(("antik kenti kent kenti gölü göl dağı dağları da
   "manastırı kilisesi sarayı höyüğü höyük adası ada yarımadası koyu plajı tepesi geçidi boğazı harabeleri ören yeri açık hava " +
   "longozu ormanları tüneli medresesi hamamı roma mezarları kaya sütunları bazalt peri bacaları tuz çayı il ili merkez").split(" "));
 const fold = s => String(s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
-function keyWords(place) {
-  const words = fold(place).match(/[a-zçğıöşüâî0-9]+/g) || [];
-  const key = words.filter(w => w.length > 2 && !GENERIC.has(w));
-  return (key.length ? key : words).map(w => w.slice(0, Math.min(5, w.length)));
-}
-function namesMatch(place, name) {
-  const words = fold(name).match(/[a-zçğıöşüâî0-9]+/g) || [];
-  return keyWords(place).some(k => words.some(w => w.startsWith(k)));
+// Feature types: a candidate whose name adds a different type ("Müzesi",
+// "Barajı", "Üniversitesi", "Dağları" for a valley) is another place.
+const TYPES = ["şelal", "mağar", "kanyo", "göl", "dağ", "vadi", "kale", "köprü", "plaj", "koy", "tepe", "geçi", "boğaz",
+  "longo", "tünel", "medre", "hamam", "türbe", "cami", "manas", "kilis", "saray", "müze", "baraj", "ünive", "spor",
+  "salon", "stady", "kayak", "merke", "okul", "lise", "hasta", "istas", "havaa", "belediy", "saldır", "seçim"];
+const wordsOf = s => fold(s).match(/[a-zçğıöşüâî0-9]+/g) || [];
+const typesOf = s => new Set(wordsOf(s).flatMap(w => TYPES.filter(t => w.startsWith(t))));
+function namesMatch(place, name, city) {
+  if (/\((il|ilçe)\)/i.test(name)) return false;
+  const cityWords = new Set(wordsOf(city)), words = wordsOf(place), title = wordsOf(name);
+  const has = k => title.some(w => w.startsWith(k));
+  const key = words.filter(w => w.length > 2 && !GENERIC.has(w) && !cityWords.has(w)).map(w => w.slice(0, Math.min(5, w.length)));
+  // Only the city + generic words ("Kars Kalesi"): every word must appear.
+  const nameOk = key.length ? key.some(has) : words.every(w => has(w.slice(0, Math.min(5, w.length))));
+  if (!nameOk) return false;
+  const pt = typesOf(place), tt = typesOf(name);
+  for (const t of tt) if (!pt.has(t)) return false;
+  if (pt.size && !tt.size) return false; // bare town name for a waterfall/cave/valley…
+  return true;
 }
 async function wikiExact(place) {
   const q = new URLSearchParams({ action: "query", format: "json", titles: place, redirects: "1",
@@ -123,7 +134,7 @@ async function osmSearch(place, city) {
 
 async function enrich(item) {
   const place = item.place || item.title, city = item.city, out = { status: "unverified" };
-  const cands = (await wikiExact(place)).concat(await wikiCandidates(place, city)).filter(c => namesMatch(place, c.title));
+  const cands = (await wikiExact(place)).concat(await wikiCandidates(place, city)).filter(c => namesMatch(place, c.title, city));
   for (const c of cands) {
     if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) continue;
     const pv = await provinceAt(c.lat, c.lng);
@@ -135,7 +146,7 @@ async function enrich(item) {
   }
   if (out.status !== "verified") {
     for (const r of await osmSearch(place, city)) {
-      if (sameProvince({ province: r.province, country: "tr" }, city) && namesMatch(place, String(r.name).split(",")[0])) {
+      if (sameProvince({ province: r.province, country: "tr" }, city) && namesMatch(place, String(r.name).split(",")[0], city)) {
         Object.assign(out, { lat: +r.lat.toFixed(6), lng: +r.lng.toFixed(6), status: "geocoded", source: "osm", osmName: r.name });
         break;
       }

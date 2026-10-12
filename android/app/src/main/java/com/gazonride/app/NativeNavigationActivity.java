@@ -21,11 +21,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.libraries.navigation.CustomRoutesOptions;
 import com.google.android.libraries.navigation.ListenableResultFuture;
 import com.google.android.libraries.navigation.NavigationApi;
 import com.google.android.libraries.navigation.NavigationView;
@@ -60,6 +60,8 @@ public final class NativeNavigationActivity extends Activity {
     private boolean routeStarted;
     private int tourStopsRemaining = 0;
     private boolean exactRoute;
+    private String routeNote = "";
+    private TextView totalText;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Navigator.RemainingTimeOrDistanceChangedListener progressListener;
     private Navigator.ArrivalListener arrivalListener;
@@ -199,7 +201,7 @@ public final class NativeNavigationActivity extends Activity {
         back.setOnClickListener(v -> exitNavigation());
         FrameLayout.LayoutParams backParams =
                 new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.BOTTOM | Gravity.END);
-        backParams.setMargins(0, 0, dp(12), dp(150));
+        backParams.setMargins(0, 0, dp(10), dp(10));
         root.addView(back, backParams);
 
         // The Navigation SDK already shows remaining distance, travel time,
@@ -284,9 +286,21 @@ public final class NativeNavigationActivity extends Activity {
         musicFabParams.setMargins(0, 0, dp(12), 0);
         root.addView(musicFab, musicFabParams);
 
+        totalText = label("Rota hesaplanıyor…", 19, true);
+        totalText.setGravity(Gravity.CENTER);
+        totalText.setBackground(shape(0xF0121821, 20));
+        totalText.setPadding(dp(16), 0, dp(80), 0);
+        totalText.setContentDescription("Kalan toplam mesafe, süre ve varış saati");
+        FrameLayout.LayoutParams totalParams =
+                new FrameLayout.LayoutParams(-1, dp(64), Gravity.BOTTOM);
+        totalParams.setMargins(dp(10), 0, dp(10), dp(10));
+        root.addView(totalText, totalParams);
+        back.bringToFront();
         setContentView(root);
         navigationView.onCreate(saved);
-        navigationView.setEtaCardEnabled(true);
+        // Google's ETA card counts only to the NEXT stop on multi-stop tours.
+        // Our bar shows the whole remaining route instead.
+        navigationView.setEtaCardEnabled(false);
         navigationView.setHeaderEnabled(true);
 
         double lat = getIntent().getDoubleExtra("destination_lat", Double.NaN);
@@ -368,6 +382,10 @@ public final class NativeNavigationActivity extends Activity {
             // a route through the same stops.
             String token = getIntent().getStringExtra("route_token");
             ListenableResultFuture<Navigator.RouteStatus> request = null;
+            if (routeNote.isEmpty()) {
+                String note = getIntent().getStringExtra("route_token_note");
+                routeNote = note == null ? "" : note;
+            }
             if (token != null && !token.isEmpty()) request = setDestinationsWithToken(routeStops, token);
             exactRoute = request != null;
             if (request == null) request = navigator.setDestinations(routeStops, options);
@@ -376,6 +394,7 @@ public final class NativeNavigationActivity extends Activity {
                 if (code != Navigator.RouteStatus.OK) {
                     if (exactRoute) {
                         // Token expired or the rider moved: same stops, Google route.
+                        routeNote = "token reddedildi (" + code + ")";
                         getIntent().removeExtra("route_token");
                         exactRoute = false;
                         planNativeRoute();
@@ -395,7 +414,7 @@ public final class NativeNavigationActivity extends Activity {
                     navigator.addRemainingTimeOrDistanceChangedListener(15, 25, progressListener);
                     arrivalListener = event -> runOnUiThread(() -> {
                         if (closed || navigator == null) return;
-                        if (tourStopsRemaining > 1) {
+                        if (!event.isFinalDestination()) {
                             tourStopsRemaining--;
                             try {
                                 // Route corners are pass-through points for the
@@ -415,8 +434,12 @@ public final class NativeNavigationActivity extends Activity {
                     navigator.startGuidance();
                     routeStarted = true;
                     updateProgress();
-                    message(exactRoute ? "Seçtiğin rota birebir aktarıldı. Sesli yönlendirme aktif."
-                            : "Google canlı yönlendirme ve sesli komutlar aktif.");
+                    message("Google canlı yönlendirme ve sesli komutlar aktif.");
+                    // Visible confirmation: does guidance follow the previewed road?
+                    Toast.makeText(this, exactRoute
+                            ? "✓ Seçtiğin rota birebir aktarıldı"
+                            : "Google rotayı kendisi hesapladı" + (routeNote.isEmpty() ? "" : " · " + routeNote),
+                            Toast.LENGTH_LONG).show();
                 } catch (Exception error) {
                     message("Yol tarifi başlatılamadı: " + error.getClass().getSimpleName());
                 }
@@ -426,42 +449,40 @@ public final class NativeNavigationActivity extends Activity {
         }
     }
 
-    /**
-     * Navigator.setDestinations(List, CustomRoutesOptions) via reflection, so
-     * the APK still compiles and runs on SDK builds without route tokens.
-     * Returns null when tokens are unavailable; the caller then falls back.
-     */
-    @SuppressWarnings("unchecked")
+    /** Exact previewed road: Routes API token for the identical stop list. */
     private ListenableResultFuture<Navigator.RouteStatus> setDestinationsWithToken(
             List<Waypoint> stops, String token) {
         try {
-            Class<?> optionsClass = Class.forName(
-                    "com.google.android.libraries.navigation.CustomRoutesOptions");
-            Object builder = optionsClass.getMethod("builder").invoke(null);
-            builder.getClass().getMethod("setRouteToken", String.class).invoke(builder, token);
-            Object custom = builder.getClass().getMethod("build").invoke(builder);
-            Method set = navigator.getClass().getMethod("setDestinations", List.class, optionsClass);
-            return (ListenableResultFuture<Navigator.RouteStatus>) set.invoke(navigator, stops, custom);
-        } catch (Throwable unavailable) {
+            CustomRoutesOptions custom = CustomRoutesOptions.builder()
+                    .setRouteToken(token)
+                    .setTravelMode(RoutingOptions.TravelMode.DRIVING)
+                    .build();
+            return navigator.setDestinations(stops, custom);
+        } catch (Exception e) {
+            routeNote = "SDK: " + e.getClass().getSimpleName();
             return null;
         }
     }
 
+    /** Remaining distance/time to the FINAL stop (whole tour, not next corner). */
     private void updateProgress() {
-        if (closed || navigator == null || progressText == null) return;
+        if (closed || navigator == null || totalText == null) return;
         try {
-            TimeAndDistance result = navigator.getCurrentTimeAndDistance();
+            TimeAndDistance result = null;
+            List<TimeAndDistance> list = navigator.getTimeAndDistanceList();
+            if (list != null && !list.isEmpty()) result = list.get(list.size() - 1);
+            if (result == null) result = navigator.getCurrentTimeAndDistance();
             if (result == null) return;
             int meters = Math.max(0, result.getMeters());
-            int minutes = (int)Math.ceil(Math.max(0,result.getSeconds())/60d);
-            String distance = meters >= 1000
-                    ? String.format(java.util.Locale.forLanguageTag("tr-TR"),
-                            "%.1f km", meters/1000d)
-                    : meters + " m";
-            String duration = minutes>=60
-                    ? (minutes/60) + " sa " + (minutes%60) + " dk"
-                    : minutes + " dk";
-            progressText.setText(distance + " · " + duration);
+            int seconds = Math.max(0, result.getSeconds());
+            int minutes = (int) Math.ceil(seconds / 60d);
+            java.util.Locale tr = java.util.Locale.forLanguageTag("tr-TR");
+            String distance = meters >= 1000 ? String.format(tr, "%.1f km", meters / 1000d) : meters + " m";
+            String duration = minutes >= 60 ? (minutes / 60) + " sa " + (minutes % 60) + " dk" : minutes + " dk";
+            String eta = new java.text.SimpleDateFormat("HH:mm", tr)
+                    .format(new java.util.Date(System.currentTimeMillis() + seconds * 1000L));
+            totalText.setText(distance + "  ·  " + duration + "  ·  Varış " + eta);
+            if (progressText != null) progressText.setText(distance + " · " + duration);
         } catch (Exception ignored) {}
     }
 

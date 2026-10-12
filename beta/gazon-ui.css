@@ -176,3 +176,7 @@ html body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-choices.ac
 .gr-tour-route small{font-size:12px!important;color:var(--gr-muted)!important}
 .gr-tour-choices .gr-tour-action{margin-top:10px}
 .gr-tour-choices .gr-tour-disclaimer{display:none}
+
+/* Scrolling pages (Keşfet, overlays): content starts below the status bar. */
+html body.mode-discover .app,html body.mode-overlay .app,html body.mode-home .app{padding-top:var(--gr-safe-top)!important}
+html body.mode-discover .bottom~*,html body.mode-discover .history{scroll-margin-top:var(--gr-safe-top)}

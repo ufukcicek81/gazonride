@@ -57,6 +57,34 @@ function sameProvince(found, city) {
   return found.country === "tr" && !!f && (f === c || f.includes(c) || c.includes(f));
 }
 
+// The matched page/place must carry the destination's own name: generic
+// words ("Gölü", "Antik Kenti", "Milli Parkı") alone are not enough, or the
+// province article or another park in the province would be accepted.
+const GENERIC = new Set(("antik kenti kent kenti gölü göl dağı dağları dağ milli millî parkı park tabiat mağarası mağaraları " +
+  "şelalesi şelaleleri kanyonu kanyon yaylası yayla müzesi müze kalesi kale köprüsü köprü vadisi vadi türbesi camii camisi " +
+  "manastırı kilisesi sarayı höyüğü höyük adası ada yarımadası koyu plajı tepesi geçidi boğazı harabeleri ören yeri açık hava " +
+  "longozu ormanları tüneli medresesi hamamı roma mezarları kaya sütunları bazalt peri bacaları tuz çayı il ili merkez").split(" "));
+const fold = s => String(s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
+function keyWords(place) {
+  const words = fold(place).match(/[a-zçğıöşüâî0-9]+/g) || [];
+  const key = words.filter(w => w.length > 2 && !GENERIC.has(w));
+  return (key.length ? key : words).map(w => w.slice(0, Math.min(5, w.length)));
+}
+function namesMatch(place, name) {
+  const words = fold(name).match(/[a-zçğıöşüâî0-9]+/g) || [];
+  return keyWords(place).some(k => words.some(w => w.startsWith(k)));
+}
+async function wikiExact(place) {
+  const q = new URLSearchParams({ action: "query", format: "json", titles: place, redirects: "1",
+    prop: "coordinates|pageimages|info", inprop: "url", pithumbsize: "800", origin: "*" });
+  const j = await getJson("https://tr.wikipedia.org/w/api.php?" + q);
+  return Object.values((j && j.query && j.query.pages) || {}).filter(p => !p.missing && p.pageid).map(p => ({
+    title: p.title, url: p.fullurl,
+    lat: p.coordinates && p.coordinates[0] && p.coordinates[0].lat,
+    lng: p.coordinates && p.coordinates[0] && p.coordinates[0].lon,
+    image: p.thumbnail && p.thumbnail.source
+  }));
+}
 async function wikiCandidates(place, city) {
   const q = new URLSearchParams({
     action: "query", format: "json", generator: "search", gsrsearch: `${place} ${city}`, gsrlimit: "6",
@@ -95,7 +123,7 @@ async function osmSearch(place, city) {
 
 async function enrich(item) {
   const place = item.place || item.title, city = item.city, out = { status: "unverified" };
-  const cands = await wikiCandidates(place, city);
+  const cands = (await wikiExact(place)).concat(await wikiCandidates(place, city)).filter(c => namesMatch(place, c.title));
   for (const c of cands) {
     if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) continue;
     const pv = await provinceAt(c.lat, c.lng);
@@ -107,7 +135,7 @@ async function enrich(item) {
   }
   if (out.status !== "verified") {
     for (const r of await osmSearch(place, city)) {
-      if (sameProvince({ province: r.province, country: "tr" }, city)) {
+      if (sameProvince({ province: r.province, country: "tr" }, city) && namesMatch(place, String(r.name).split(",")[0])) {
         Object.assign(out, { lat: +r.lat.toFixed(6), lng: +r.lng.toFixed(6), status: "geocoded", source: "osm", osmName: r.name });
         break;
       }

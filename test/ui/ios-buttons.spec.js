@@ -23,7 +23,8 @@ const report={errors:[],tapped:0,failed:[]};
  page.on("requestfailed",r=>{report.requestsFailed=(report.requestsFailed||[]).concat(r.url().slice(0,120)+" "+(r.failure()&&r.failure().errorText))});
  page.on("dialog",d=>d.dismiss().catch(()=>{}));
  page.on("popup",p=>p.close().catch(()=>{}));
- await page.route(/maps\.googleapis|supabase\.co|onrender\.com|unpkg|fonts\.g/,r=>r.abort());
+ // Supabase is blocked: without a session the app would redirect to login.html.
+ await page.route(/maps\.googleapis|supabase|jsdelivr|onrender\.com|unpkg|fonts\.g/,r=>r.abort());
  await page.goto(`http://127.0.0.1:${port}/index.html`,{waitUntil:"load",timeout:60000});
  await page.waitForTimeout(2500);
  report.page=await page.evaluate(()=>({ready:document.readyState,scripts:document.scripts.length,bodyClass:document.body.className,

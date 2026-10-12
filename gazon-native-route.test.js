@@ -34,7 +34,7 @@ for(let i=0;i<=160;i++){
  const theta=(2*Math.PI*i)/160;
  loopRoad.push({lat:40.875+0.17*Math.cos(theta),lon:30.95+0.21*Math.sin(theta)});
 }
-const longLoopStops=Route.routeStops(loopRoad,loopRoad[0],7);
+const longLoopStops=r.routeStops(loopRoad,loopRoad[0],7);
 assert.equal(longLoopStops.length,8,"seven intermediate road anchors plus origin");
-assert.deepEqual(longLoopStops.at(-1),{lat:40.875,lon:30.95},"loop ends at origin");
+assert.deepEqual(longLoopStops.at(-1),loopRoad[0],"loop ends at origin");
 console.log("PASS: preserve intermediate road geometry, maintain destination and loop, reject invalid targets");

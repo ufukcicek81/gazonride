@@ -22,6 +22,9 @@ android {
         targetSdk 36
         multiDexEnabled true
         manifestPlaceholders = [NAVIGATION_API_KEY: (System.getenv('GAZONRIDE_NAVIGATION_API_KEY') ?: 'NAVIGATION_API_KEY_NOT_CONFIGURED')]
+        // CI test builds open the tested /beta/ web channel directly;
+        // official builds open the normal site. Riders can switch in Profil.
+        resValue "string", "default_web_channel", (project.findProperty("webChannel") ?: "stable").toString()
         versionCode buildCode
         versionName buildName
     }

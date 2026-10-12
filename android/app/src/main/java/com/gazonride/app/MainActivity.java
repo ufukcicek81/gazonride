@@ -272,7 +272,7 @@ public class MainActivity extends Activity {
             finally { pendingRouteToken=""; }
         }
         @JavascriptInterface public String getWebChannel(){
-            return prefs.getString("web_channel","stable");
+            return prefs.getString("web_channel",getString(R.string.default_web_channel));
         }
         // Beta channel: tested development builds published at /beta/.
         @JavascriptInterface public void setWebChannel(String channel){
@@ -440,7 +440,7 @@ public class MainActivity extends Activity {
     }
 
     private String startUrl(){
-        String base="beta".equals(prefs.getString("web_channel","stable")) ? URL + "beta/" : URL;
+        String base="beta".equals(prefs.getString("web_channel",getString(R.string.default_web_channel))) ? URL + "beta/" : URL;
         return base + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis();
     }
 

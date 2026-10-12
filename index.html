@@ -695,6 +695,7 @@ function followRideCamera(p,c,ts){
  }catch(e){console.warn("GaZonRide follow camera",e);}
 }
 function applyPosition(pos){
+ if(pos&&!pos.gazonNative)gazonWebFixAt=Date.now();
  var c=pos.coords,p={lat:Number(c.latitude),lon:Number(c.longitude)},ts=Number(pos.timestamp||c.timestamp||Date.now());if(!isFinite(p.lat)||!isFinite(p.lon)||!isFinite(ts))return;if((riding||navActive)&&!acceptLiveGpsFix(p,c,ts)){
   // At a traffic light or while parked the ride filter rejects tiny
   // movements, but that must not be mistaken for loss of GPS reception.
@@ -748,6 +749,17 @@ lastGpsTs=ts;
    var hours=(Date.now()-startTime)/3600000;$("avg").textContent=hours?Math.round(totalKm/hours):0;var ci=$("rideConsumptionInput"),cons=ci?Number(String(ci.value||"0").replace(",",".")):Number((getRiderProfile().motor||{}).consumption||0);var lf=$("liveFuelUsed");if(lf)lf.textContent=((totalKm*cons/100)||0).toFixed(2)+" L";
  }
 }
+// Android native GPS feed (MainActivity.pushNativeFix). Used whenever the
+// WebView's own geolocation has not delivered a fix in the last 4 s, so a
+// WebView that silently never reports location can no longer leave the
+// app at "Konum bekleniyor".
+var gazonWebFixAt=0;
+window.GaZonNativeFix=function(lat,lon,acc,speed,heading,alt,time,provider){
+ if(Date.now()-gazonWebFixAt<4000)return;
+ if(!isFinite(lat)||!isFinite(lon))return;
+ applyPosition({timestamp:Number(time)||Date.now(),gazonNative:true,coords:{latitude:lat,longitude:lon,accuracy:acc,
+  speed:speed,heading:heading,altitude:alt,altitudeAccuracy:null}});
+};
 function reportNavigationGpsError(err){
  var message=err&&err.code===1?"Konum izni verilmedi. Telefonun uygulama konum iznini aç.":err&&err.code===2?"Konum tespit edilemiyor. GPS'yi aç veya Başlangıç seç.":"GPS sinyali bekleniyor. Açık alanda yeniden dene.";
  navLastLocationError=message;

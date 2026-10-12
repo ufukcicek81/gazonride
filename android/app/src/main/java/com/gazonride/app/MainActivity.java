@@ -29,6 +29,9 @@ import android.view.View;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.provider.Settings;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -69,6 +72,16 @@ public class MainActivity extends Activity {
     private volatile String pendingRouteToken = "";
     private volatile String pendingRouteNote = "";
     private int safeTopPx = 0, safeBottomPx = 0;
+    // Native GPS feed: some WebViews never deliver navigator.geolocation
+    // fixes even with permission granted. Android's LocationManager does.
+    private LocationManager locationManager;
+    private boolean nativeLocationOn = false;
+    private final LocationListener nativeLocationListener = new LocationListener() {
+        @Override public void onLocationChanged(Location l) { pushNativeFix(l); }
+        @Override public void onStatusChanged(String p, int s, Bundle b) {}
+        @Override public void onProviderEnabled(String p) {}
+        @Override public void onProviderDisabled(String p) {}
+    };
 
     private SensorManager sensorManager;
     private Sensor rotationSensor;
@@ -388,6 +401,8 @@ public class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view, String url){
                 super.onPageFinished(view,url);
                 pushSafeArea();
+                stopNativeLocation();
+                startNativeLocation();
                 deliverPendingOAuth();
             }
         });
@@ -445,6 +460,48 @@ public class MainActivity extends Activity {
         }
         webView.loadUrl(startUrl());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
+    }
+
+    private void startNativeLocation(){
+        if(nativeLocationOn) return;
+        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED) return;
+        if(locationManager==null) locationManager=(LocationManager)getSystemService(LOCATION_SERVICE);
+        if(locationManager==null) return;
+        try{
+            Location last=null;
+            for(String provider:new String[]{LocationManager.GPS_PROVIDER,LocationManager.NETWORK_PROVIDER}){
+                try{
+                    Location l=locationManager.getLastKnownLocation(provider);
+                    if(l!=null&&(last==null||l.getTime()>last.getTime())) last=l;
+                }catch(Exception ignored){}
+            }
+            // A recent cached fix shows the rider on the map immediately.
+            if(last!=null&&System.currentTimeMillis()-last.getTime()<10*60*1000L) pushNativeFix(last);
+            if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,0,nativeLocationListener,Looper.getMainLooper());
+            if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,4000,0,nativeLocationListener,Looper.getMainLooper());
+            nativeLocationOn=true;
+        }catch(SecurityException ignored){}
+    }
+
+    private void stopNativeLocation(){
+        if(!nativeLocationOn||locationManager==null) return;
+        try{locationManager.removeUpdates(nativeLocationListener);}catch(Exception ignored){}
+        nativeLocationOn=false;
+    }
+
+    private void pushNativeFix(Location l){
+        if(webView==null||l==null) return;
+        String js=String.format(java.util.Locale.US,
+            "window.GaZonNativeFix&&GaZonNativeFix(%.7f,%.7f,%.1f,%s,%s,%s,%d,%s)",
+            l.getLatitude(),l.getLongitude(),l.hasAccuracy()?l.getAccuracy():50f,
+            l.hasSpeed()?String.format(java.util.Locale.US,"%.2f",l.getSpeed()):"null",
+            l.hasBearing()?String.format(java.util.Locale.US,"%.1f",l.getBearing()):"null",
+            l.hasAltitude()?String.format(java.util.Locale.US,"%.1f",l.getAltitude()):"null",
+            l.getTime(),JSONObject.quote(String.valueOf(l.getProvider())));
+        webView.evaluateJavascript(js,null);
     }
 
     private String startUrl(){
@@ -702,11 +759,14 @@ public class MainActivity extends Activity {
         super.onPause();
         prefs.edit().putBoolean("background",true).apply();
         boolean activeRide=prefs.getBoolean("ride_active",false);
+        // Background ride points come from RideLocationService.
+        stopNativeLocation();
         if(!activeRide && sensorManager!=null) sensorManager.unregisterListener(leanSensorListener);
     }
     @Override protected void onResume(){
         super.onResume();
         prefs.edit().putBoolean("background",false).apply();
+        startNativeLocation();
         if(pendingInstallUri==null){
             String pending=prefs.getString("pending_install_uri",null);
             if(pending!=null&&!pending.isEmpty()) pendingInstallUri=Uri.parse(pending);
@@ -751,6 +811,7 @@ public class MainActivity extends Activity {
             }
             // Keep the current destination, route selection and riding state;
             // a location permission dialog must never reload the WebView.
+            if(granted) startNativeLocation();
             if(webView!=null)webView.evaluateJavascript(
                     "window.dispatchEvent(new Event('gazon-location-permission-changed'));",null);
         }
@@ -767,6 +828,7 @@ public class MainActivity extends Activity {
             downloadReceiverRegistered=false;
         }
         stopLeanSensors();
+        stopNativeLocation();
         if(musicController!=null)musicController.release();
         super.onDestroy();
     }

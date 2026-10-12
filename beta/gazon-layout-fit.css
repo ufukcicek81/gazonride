@@ -205,8 +205,8 @@ body.mode-discover #grSocial>.gr-social-list{min-width:0;max-width:100%}
 /* No negative offset on the motorcycle icon: it is fully visible inside the bar.
    The earlier inline .bottom .navBtn overflow:hidden clipped its upper half. */
 .bottom{
-  min-height:calc(94px + env(safe-area-inset-bottom, 0px));
-  padding:9px 5px calc(10px + env(safe-area-inset-bottom, 0px));
+  min-height:calc(94px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
+  padding:9px 5px calc(10px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
   overflow:visible!important;
   align-items:end;
   box-sizing:border-box;
@@ -257,7 +257,7 @@ body.mode-discover #grSocial>.gr-social-list{min-width:0;max-width:100%}
   line-height:1;
 }
 body.mode-discover .discoverSection{
-  padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));
+  padding-bottom:calc(110px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
 }
 @media(max-width:360px){
   #grRouteHubList .gr-route-visual .gr-route-title{

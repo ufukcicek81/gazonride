@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
-<link rel="stylesheet" href="social.css?v=20261009-fix1">
-<link rel="stylesheet" href="replay.css?v=20261012-chase1">
-<link rel="stylesheet" href="gazon-guides.css?v=20261011-photo1">
-<link rel="stylesheet" href="gazon-destinations.css?v=20261009-catalog1">
+<link rel="stylesheet" href="social.css?v=20261012-safe1">
+<link rel="stylesheet" href="replay.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-guides.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-destinations.css?v=20261012-safe1">
 <script>
 (function(){
   var saved=localStorage.getItem("gazon_theme")||"system", q=new URLSearchParams(location.search).get("theme"), dark;
@@ -47,7 +47,7 @@
 html.icons-loading:not(.icons-ready) .mi{visibility:hidden!important;color:transparent!important}
 html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 body{min-height:100vh}.app{max-width:540px;margin:auto;padding-bottom:92px}
-header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 12px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950;line-height:1}.logo span{color:var(--red)}
+header{min-height:78px;padding:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 10px) 18px 12px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:950;line-height:1}.logo span{color:var(--red)}
 .motor{border:1px solid var(--line);background:#141820;color:#fff;border-radius:15px;padding:7px 9px;font-size:10px;min-width:0;max-width:152px;display:grid;grid-template-columns:22px minmax(0,1fr) 16px;align-items:center;gap:5px;text-align:left}.motor>.mi:first-child{font-size:18px;color:var(--accent)}.motor .motorText{min-width:0}.motor .motorText b{display:block;font-size:10px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.motor .motorText small{display:block;color:#9ca4af;font-size:8px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.motor .chev{font-size:16px;color:#89919d}
 .map{height:410px;margin:0 12px;border:1px solid var(--line);border-radius:25px;overflow:hidden;position:relative;background:#18201d}
 #map{position:absolute;inset:0}.live{position:absolute;z-index:500;top:12px;left:12px;right:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
@@ -61,7 +61,7 @@ header{min-height:78px;padding:calc(env(safe-area-inset-top, 0px) + 10px) 18px 1
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;padding:0 16px}.btn{border-radius:17px;padding:16px;font-weight:900;font-size:14px}.dark{background:#191d24;color:#fff;border:1px solid #343943}.red{background:var(--red);color:#fff;border:0}
 .status{margin:12px 16px;padding:12px;border-radius:14px;background:#10131a;border:1px solid var(--line);color:#a5acb6;font-size:11px;text-align:center}
 .history{padding:20px 16px}.ride{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:8px;display:flex;justify-content:space-between}.ride small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
-.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#080a0e;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(18px)}
+.bottom{position:fixed;z-index:1000;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#080a0e;border-top:1px solid var(--line);padding:9px 5px calc(9px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));backdrop-filter:blur(18px)}
 .navBtn{border:0;background:transparent;color:#737b87;font-size:10px;padding:5px;cursor:pointer}.navBtn b{display:block;font-size:21px;margin-bottom:2px}.navBtn.active{color:var(--accent)}
 .bikeIcon{font-size:25px;text-shadow:0 2px 5px #000}.screen{display:none;padding:18px 16px 30px}.screen.active{display:block}.screenHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.screenTitle{font-size:22px;font-weight:900}.screenCard{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:10px}.screenBtn{width:100%;border:0;border-radius:13px;padding:13px;background:var(--red);color:#fff;font-weight:800;margin-top:8px}.screenBtn.dark{background:#191d24;border:1px solid #343943}.input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#0c0f14;color:#fff;outline:none;margin-top:7px}.statRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.statBox{background:#0d1015;border:1px solid var(--line);border-radius:13px;padding:12px}.statBox b{font-size:20px;display:block}
 
@@ -133,7 +133,7 @@ body.mode-overlay .app{display:none}
 .mapBottom .loc{display:flex;align-items:center;gap:5px}.mapBottom .loc .mi{font-size:16px;color:var(--accent)}.mapBtn{display:grid;place-items:center;min-width:42px}.mapBtn .mi{font-size:20px}
 body.mode-navigation .appHeader{position:relative;z-index:910}
 body.mode-navigation .map{height:calc(100vh - 150px);min-height:520px;margin-top:0;border-radius:0;margin-left:0;margin-right:0;border-left:0;border-right:0}
-body.mode-navigation .navigationPanel{position:fixed;z-index:905;top:calc(env(safe-area-inset-top,0px) + 84px);left:50%;transform:translateX(-50%);width:min(516px,calc(100% - 24px));padding:0;pointer-events:none}
+body.mode-navigation .navigationPanel{position:fixed;z-index:905;top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 84px);left:50%;transform:translateX(-50%);width:min(516px,calc(100% - 24px));padding:0;pointer-events:none}
 body.mode-navigation .navigationPanel>*{pointer-events:auto}
 body.mode-navigation .navigationPanel>.ey{display:none}
 body.mode-navigation .navSearchRow{background:rgba(10,13,18,.94);padding:8px;border:1px solid #343b46;border-radius:18px;backdrop-filter:blur(18px);box-shadow:0 14px 30px #0005}
@@ -180,7 +180,7 @@ body.guidance-active .appHeader,body.guidance-active .bottom,body.guidance-activ
 body.guidance-active .map{position:fixed;z-index:880;inset:0;width:100%;height:100vh!important;min-height:0!important;margin:0!important;border:0!important;border-radius:0!important}
 body.guidance-active .map .live,body.guidance-active .mapBottom{display:none!important}
 body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inset:0;pointer-events:none}
-.guidanceTop{position:absolute;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);pointer-events:auto}
+.guidanceTop{position:absolute;left:14px;right:14px;top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 12px);pointer-events:auto}
 .guidanceMain{background:#076b67;color:#fff;border-radius:20px 20px 14px 14px;padding:16px 18px;box-shadow:0 10px 26px #0004}
 .guidanceTurnRow{display:flex;align-items:flex-start;gap:14px}
 .guidanceTurnIcon{font-size:50px;line-height:1;flex:0 0 auto}
@@ -190,7 +190,7 @@ body.guidance-active .guidanceHud{display:block;position:fixed;z-index:1500;inse
 .guidanceFloat{position:absolute;right:15px;top:34%;display:grid;gap:11px;pointer-events:auto}
 .guidanceFloat button,.guidanceSpeed{width:58px;height:58px;border-radius:50%;border:1px solid #d8dde3;background:#fff;color:#171a1f;box-shadow:0 4px 14px #0003;display:grid;place-items:center}
 .guidanceFloat button .mi{font-size:29px}.guidanceSpeed{position:absolute;left:14px;bottom:112px;width:66px;height:66px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-weight:950;pointer-events:none}.guidanceSpeed b{font-size:24px;line-height:1}.guidanceSpeed small{font-size:9px;margin-top:3px}
-.guidanceBottom{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #d9dde3;color:#171a1f;display:grid;grid-template-columns:62px 1fr 62px;align-items:center;gap:8px;pointer-events:auto;box-shadow:0 -8px 24px #0002}
+.guidanceBottom{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));background:rgba(255,255,255,.97);border-top:1px solid #d9dde3;color:#171a1f;display:grid;grid-template-columns:62px 1fr 62px;align-items:center;gap:8px;pointer-events:auto;box-shadow:0 -8px 24px #0002}
 .guidanceBottom button{width:58px;height:58px;border-radius:50%;border:1px solid #cfd5dc;background:#fff;color:#20242a;display:grid;place-items:center}.guidanceBottom button .mi{font-size:31px}
 .guidanceSummary{text-align:center;min-width:0}.guidanceSummary b{display:block;color:#1b8b42;font-size:28px;line-height:1;font-weight:900}.guidanceSummary small{display:block;color:#6d7680;font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:390px){.guidanceRoadWrap b{font-size:21px}.guidanceTurnIcon{font-size:44px}.guidanceSummary b{font-size:24px}}
@@ -218,7 +218,7 @@ body.mode-ride{overflow:hidden}
 body.mode-ride .appHeader{display:none}
 body.mode-ride .app{max-width:540px;height:100vh;padding-bottom:0;position:relative;overflow:hidden}
 body.mode-ride .map{position:absolute;inset:0 0 76px 0;height:auto;margin:0;border:0;border-radius:0}
-body.mode-ride .map .live{top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;right:14px;gap:8px}
+body.mode-ride .map .live{top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 14px);left:14px;right:14px;gap:8px}
 body.mode-ride .liveBox{background:rgba(8,10,14,.84);backdrop-filter:blur(16px);border-color:#ffffff25;border-radius:16px;padding:11px 12px;text-align:center;box-shadow:0 8px 25px #0005}
 body.mode-ride .liveBox b{font-size:25px;line-height:1}
 body.mode-ride .liveBox small{display:block;margin-top:5px;font-size:7px;letter-spacing:.8px}
@@ -306,7 +306,7 @@ html,body{max-width:100%;overflow-x:clip}
 
 /* Ride cockpit layout: stats above an always-visible stop button, clear of nav. */
 body.mode-ride .content{
- bottom:calc(174px + env(safe-area-inset-bottom,0px));
+ bottom:calc(174px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
  padding:0 10px;pointer-events:none
 }
 body.mode-ride .content .grid{
@@ -315,21 +315,21 @@ body.mode-ride .content .grid{
  border-radius:20px;padding-bottom:12px;scrollbar-width:thin
 }
 body.mode-ride .actions{
- bottom:calc(106px + env(safe-area-inset-bottom,0px));
+ bottom:calc(106px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
  z-index:1120;height:54px;pointer-events:auto
 }
 body.mode-ride .actions .btn{min-height:54px}
-body.mode-ride .mapBottom{bottom:calc(450px + env(safe-area-inset-bottom,0px))}
+body.mode-ride .mapBottom{bottom:calc(450px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
 @media(max-height:680px){
  body.mode-ride .content .grid{max-height:25dvh}
- body.mode-ride .mapBottom{bottom:calc(386px + env(safe-area-inset-bottom,0px))}
+ body.mode-ride .mapBottom{bottom:calc(386px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
 }
 
 /* Intercom stays controllable during turn-by-turn guidance. */
 body.guidance-active .voiceDock.active,
 body.mode-navigation:not(.guidance-active) .voiceDock.active{
  display:flex!important;left:12px;right:auto;transform:none;
- bottom:calc(121px + env(safe-area-inset-bottom,0px));
+ bottom:calc(121px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
  width:56px;min-height:56px;padding:6px;border-radius:30px;
  justify-content:center;z-index:1820;
 }
@@ -340,11 +340,11 @@ body.mode-navigation .voiceDock.active>div{display:none!important}
 body.guidance-active .voiceDock.active button,
 body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42px}
 </style>
-<link rel="stylesheet" href="gazon-layout-fit.css?v=20261011-ride-touch-fix">
-<link rel="stylesheet" href="gazon-music.css?v=20261011-ride-mini1">
-<link rel="stylesheet" href="gazon-route-picker.css?v=20261010-route-choice-v1">
-<link rel="stylesheet" href="gazon-navigation-premium.css?v=20261011-action-feedback-p2">
-<link rel="stylesheet" href="gazon-tour.css?v=20261011-google-native-blue-v2">
+<link rel="stylesheet" href="gazon-layout-fit.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-music.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-route-picker.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-navigation-premium.css?v=20261012-safe1">
+<link rel="stylesheet" href="gazon-tour.css?v=20261012-safe1">
 <link rel="stylesheet" href="gazon-ui.css?v=20261012-ui3">
 </head>
 <body>
@@ -578,7 +578,7 @@ function showMapsDiagnostic(msg){
   var old=document.getElementById("mapsDiagnostic");
   if(!old){
    old=document.createElement("div");old.id="mapsDiagnostic";
-   old.style.cssText="position:fixed;z-index:99999;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 72px);background:#b3261e;color:#fff;padding:12px 14px;border-radius:14px;font:700 12px/1.35 system-ui;box-shadow:0 8px 30px #0005";
+   old.style.cssText="position:fixed;z-index:99999;left:12px;right:12px;top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 72px);background:#b3261e;color:#fff;padding:12px 14px;border-radius:14px;font:700 12px/1.35 system-ui;box-shadow:0 8px 30px #0005";
    document.body.appendChild(old);
   }
   old.textContent="Google Maps hata kodu: "+window.__gazonMapsError;

@@ -5,13 +5,13 @@ body.mode-navigation:not(.guidance-active) .app{
   max-width:none!important;min-height:100dvh;padding:0!important
 }
 body.mode-navigation:not(.guidance-active) .map{
-  position:relative;width:100%;height:calc(100dvh - 88px - env(safe-area-inset-bottom,0px))!important;
+  position:relative;width:100%;height:calc(100dvh - 88px - var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))!important;
   min-height:0!important;max-height:none!important;
   margin:0!important;border:0!important;border-radius:0!important
 }
 body.mode-navigation:not(.guidance-active) .navigationPanel{
   z-index:905;
-  top:calc(env(safe-area-inset-top,0px) + 16px)!important;
+  top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 16px)!important;
   width:min(525px,calc(100% - 28px))!important;
   padding:0!important
 }
@@ -82,7 +82,7 @@ body.mode-navigation:not(.guidance-active) .navSuggest button{
   font-size:12px;border-radius:0!important
 }
 body.mode-navigation:not(.guidance-active) .navRecenterBtn{
-  z-index:899;bottom:calc(100px + env(safe-area-inset-bottom,0px));
+  z-index:899;bottom:calc(100px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
   width:48px;height:48px;background:rgba(16,20,29,.97)!important;
   border:1px solid #ffffff36;color:#fff!important;box-shadow:0 8px 24px #0007
 }
@@ -93,7 +93,7 @@ body.mode-navigation:not(.guidance-active) #navChoices.active{
   color:#fff!important;
   box-shadow:0 14px 40px #0009!important;
   padding:13px!important;
-  bottom:calc(99px + env(safe-area-inset-bottom,0px))!important;
+  bottom:calc(99px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))!important;
   max-height:min(36dvh,315px);overflow-y:auto
 }
 body.mode-navigation:not(.guidance-active) #navChoices .gr-route-chooser-title{
@@ -130,7 +130,7 @@ body.mode-navigation:not(.guidance-active) .bottom{
 body.guidance-active .guidanceTop{
   left:max(11px,env(safe-area-inset-left,0px));
   right:max(11px,env(safe-area-inset-right,0px));
-  top:calc(env(safe-area-inset-top,0px) + 10px)
+  top:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 10px)
 }
 body.guidance-active .guidanceMain{
   padding:13px 15px;border-radius:17px 17px 12px 12px;
@@ -144,7 +144,7 @@ body.guidance-active .guidanceNext{
   padding:8px 14px;font-size:12px;border-radius:0 0 12px 12px
 }
 body.guidance-active .guidanceBottom{
-  padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+  padding:10px 14px calc(10px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
   background:rgba(13,18,26,.96);border-top:1px solid #53606e88;color:#fff
 }
 body.guidance-active .guidanceBottom button{

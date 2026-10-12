@@ -1,5 +1,5 @@
 /* GaZonRide Music Center — compact, accessible and independent of replay/navigation layout */
-#grMusic{--gm-accent:#ff5a1f;position:fixed;z-index:1650;right:12px;bottom:calc(109px + env(safe-area-inset-bottom,0px));width:auto;max-width:100%;pointer-events:none;color:#f8fafc;font-family:inherit}
+#grMusic{--gm-accent:#ff5a1f;position:fixed;z-index:1650;right:12px;bottom:calc(109px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));width:auto;max-width:100%;pointer-events:none;color:#f8fafc;font-family:inherit}
 #grMusic>*{pointer-events:auto}
 .gr-music-launch{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #ffad8a77;color:#fff;background:#151b24ed;box-shadow:0 6px 26px #0008;padding:11px 13px;border-radius:30px;min-height:48px;min-width:48px;font-size:11px;font-weight:850;cursor:pointer;backdrop-filter:blur(12px)}
 .gr-music-launch>.mi{color:#ff7647;font-size:23px}
@@ -47,11 +47,11 @@
 .gr-music-permission button{background:#ff5a1f;border-color:#ff5a1f}
 .gr-music-status{font-size:11px;line-height:1.5;margin:0;color:#83e2b5}
 .gr-music-foot{font-size:10px;line-height:1.5;margin:0;color:#b0b9c7}
-body.guidance-active #grMusic{z-index:1850;bottom:calc(104px + env(safe-area-inset-bottom,0px));right:12px}
+body.guidance-active #grMusic{z-index:1850;bottom:calc(104px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));right:12px}
 body.guidance-active .gr-music-panel{max-height:calc(100dvh - 190px)}
 body.mode-overlay #grMusic{z-index:1800}
 @media(max-width:380px){
- #grMusic{right:9px;bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+ #grMusic{right:9px;bottom:calc(104px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
  .gr-music-panel{width:calc(100vw - 18px);padding:12px;max-height:calc(100dvh - 150px)}
  .gr-music-launch{padding:9px 11px}
  .gr-music-playback{gap:18px}
@@ -59,7 +59,7 @@ body.mode-overlay #grMusic{z-index:1800}
 
 /* Keep the stop control and ride telemetry unobstructed on the ride page. */
 body.mode-ride #grMusic{
- top:calc(112px + env(safe-area-inset-top,0px));
+ top:calc(112px + var(--gr-safe-top,env(safe-area-inset-top,0px)));
  bottom:auto;
  right:12px;
  z-index:990;
@@ -73,5 +73,5 @@ body.mode-ride .gr-music-panel{
  top:58px;bottom:auto;max-height:calc(100dvh - 275px);
 }
 @media(max-width:380px){
- body.mode-ride #grMusic{top:calc(112px + env(safe-area-inset-top,0px));bottom:auto}
+ body.mode-ride #grMusic{top:calc(112px + var(--gr-safe-top,env(safe-area-inset-top,0px)));bottom:auto}
 }

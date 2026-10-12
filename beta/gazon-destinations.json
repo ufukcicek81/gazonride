@@ -236,12 +236,12 @@
       "search": "Hasan Dağı manzarasını izle Aksaray Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Hasan Dağı",
-      "lat": 38.642222,
-      "lng": 34.0425,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Ekecik_Da%C4%9F%C4%B1_-_%C3%87atin_K%C3%B6y%C3%BC_g%C3%B6letinden_%C3%A7ekilmi%C5%9F_g%C3%B6r%C3%BCnt%C3%BCs%C3%BC.jpg/960px-Ekecik_Da%C4%9F%C4%B1_-_%C3%87atin_K%C3%B6y%C3%BC_g%C3%B6letinden_%C3%A7ekilmi%C5%9F_g%C3%B6r%C3%BCnt%C3%BCs%C3%BC.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Ekecik_Da%C4%9F%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/Ekecik_Da%C4%9F%C4%B1",
-      "wikiTitle": "Ekecik Dağı",
+      "lat": 38.126389,
+      "lng": 34.165,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/Vulkan_Hasan_Bagi.jpg/960px-Vulkan_Hasan_Bagi.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Hasanda%C4%9F%C4%B1",
+      "wiki": "https://tr.wikipedia.org/wiki/Hasanda%C4%9F%C4%B1",
+      "wikiTitle": "Hasandağı",
       "check": "verified"
     },
     {
@@ -253,13 +253,12 @@
       "search": "Kral Kaya Mezarlarını gör Amasya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Kral Kaya Mezarları",
-      "lat": 40.699722,
-      "lng": 35.686389,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Amasya_ve_%C5%9Fehrin_i%C3%A7inden_ge%C3%A7en_Ye%C5%9Fil%C4%B1rmak.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Amasya_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/Amasya_(il)",
-      "wikiTitle": "Amasya (il)",
-      "check": "verified"
+      "lat": 40.652995,
+      "lng": 35.829145,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Kral_Kaya_Mezarlar%C4%B1_%28Amasya%29.jpg/960px-Kral_Kaya_Mezarlar%C4%B1_%28Amasya%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Kral_Kaya_Mezarlar%C4%B1_(Amasya).jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 12,
@@ -288,12 +287,12 @@
       "search": "Anıtkabir'i ziyaret et Ankara Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Anıtkabir",
-      "lat": 39.934722,
+      "lat": 39.925,
       "lng": 32.836944,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Anadolu-An%C4%B1tkabir_Ankaray_%C4%B0stasyonu_A1_2024.jpg/960px-Anadolu-An%C4%B1tkabir_Ankaray_%C4%B0stasyonu_A1_2024.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Anadolu/An%C4%B1tkabir",
-      "wiki": "https://tr.wikipedia.org/wiki/Anadolu/An%C4%B1tkabir",
-      "wikiTitle": "Anadolu/Anıtkabir",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Ataturk%27s_Mausoleum_%286225341313%29.jpg/960px-Ataturk%27s_Mausoleum_%286225341313%29.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/An%C4%B1tkabir",
+      "wiki": "https://tr.wikipedia.org/wiki/An%C4%B1tkabir",
+      "wikiTitle": "Anıtkabir",
       "check": "verified"
     },
     {
@@ -338,13 +337,7 @@
       "search": "Termessos Antik Kenti'ni gez Antalya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Termessos Antik Kenti",
-      "lat": 36.988333,
-      "lng": 30.467778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/DJI_0206_G%C3%BCll%C3%BCk_Mountain_National_Park.jpg/960px-DJI_0206_G%C3%BCll%C3%BCk_Mountain_National_Park.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%BCll%C3%BCk_Da%C4%9F%C4%B1_Mill%C3%AE_Park%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/G%C3%BCll%C3%BCk_Da%C4%9F%C4%B1_Mill%C3%AE_Park%C4%B1",
-      "wikiTitle": "Güllük Dağı Millî Parkı",
-      "check": "verified"
+      "check": "unverified"
     },
     {
       "id": 17,
@@ -355,13 +348,10 @@
       "search": "Çıldır Gölü'nü gör Ardahan Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Çıldır Gölü",
-      "lat": 40.972778,
-      "lng": 43.072778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/K%C4%B1s%C4%B1r_Da%C4%9F%C4%B1_(Ardahan)",
-      "wiki": "https://tr.wikipedia.org/wiki/K%C4%B1s%C4%B1r_Da%C4%9F%C4%B1_(Ardahan)",
-      "wikiTitle": "Kısır Dağı (Ardahan)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/Ardahan_%C3%87%C4%B1ld%C4%B1r_Lake.jpg/960px-Ardahan_%C3%87%C4%B1ld%C4%B1r_Lake.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Ardahan_%C3%87%C4%B1ld%C4%B1r_Lake.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 18,
@@ -406,13 +396,10 @@
       "search": "Borçka Karagöl'ü gör Artvin Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Borçka Karagöl",
-      "lat": 41.133333,
-      "lng": 41.85,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Artvin-2611076.jpg/960px-Artvin-2611076.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Artvin_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/Artvin_(il)",
-      "wikiTitle": "Artvin (il)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Artvin_Bor%C3%A7ka_Karag%C3%B6l.jpg/960px-Artvin_Bor%C3%A7ka_Karag%C3%B6l.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Artvin_Bor%C3%A7ka_Karag%C3%B6l.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 21,
@@ -569,9 +556,7 @@
       "search": "Çımağıl Mağarasını gez Bayburt Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Çımağıl Mağarası",
-      "lat": 40.129383,
-      "lng": 40.631615,
-      "check": "geocoded"
+      "check": "unverified"
     },
     {
       "id": 31,
@@ -616,13 +601,10 @@
       "search": "Yüzen Adalar Tabiat Anıtı Hazarşah Solhan Bingöl",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Yüzen Ada",
-      "lat": 39.041111,
-      "lng": 40.675833,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Bingolcitycenter.jpg/960px-Bingolcitycenter.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Bing%C3%B6l_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/Bing%C3%B6l_(il)",
-      "wikiTitle": "Bingöl (il)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Y%C3%BCzen_Ada.jpg/960px-Y%C3%BCzen_Ada.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Y%C3%BCzen_Ada.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 34,
@@ -633,12 +615,10 @@
       "search": "Çir Şelalesine git Bingöl Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Çir Şelalesi",
-      "lat": 39.048659,
-      "lng": 40.66248,
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/%C3%87%C4%B1r_%C5%9Eelalesi.jpg/960px-%C3%87%C4%B1r_%C5%9Eelalesi.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:%C3%87%C4%B1r_%C5%9Eelalesi.jpg",
       "imageSource": "commons-search",
-      "check": "geocoded"
+      "check": "unverified"
     },
     {
       "id": 35,
@@ -733,13 +713,10 @@
       "search": "Sagalassos Antik Kentini gez Burdur Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Sagalassos Antik Kenti",
-      "lat": 37.65,
-      "lng": 30.533333,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Blick_auf_A%C4%9Flasun.jpg/960px-Blick_auf_A%C4%9Flasun.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/A%C4%9Flasun",
-      "wiki": "https://tr.wikipedia.org/wiki/A%C4%9Flasun",
-      "wikiTitle": "Ağlasun",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Sagalassos_Overview.jpg/960px-Sagalassos_Overview.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Sagalassos_Overview.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 41,
@@ -767,13 +744,12 @@
       "search": "Cumalıkızık sokaklarında dolaş Bursa Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Cumalıkızık",
-      "lat": 40.197222,
-      "lng": 29.062222,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Teleferik%2C_Uluda%C4%9F.jpg/960px-Teleferik%2C_Uluda%C4%9F.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Bursa",
-      "wiki": "https://tr.wikipedia.org/wiki/Bursa",
-      "wikiTitle": "Bursa",
-      "check": "verified"
+      "lat": 40.175213,
+      "lng": 29.172688,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Cumal%C4%B1k%C4%B1z%C4%B1k%2C_Bursa_6.jpg/960px-Cumal%C4%B1k%C4%B1z%C4%B1k%2C_Bursa_6.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Cumal%C4%B1k%C4%B1z%C4%B1k,_Bursa_6.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 43,
@@ -851,13 +827,10 @@
       "search": "Hattuşa Antik Kentini gez Çorum Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Hattuşa Antik Kenti",
-      "lat": 40.025278,
-      "lng": 34.608056,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/Museum_Hattusa_-_Bo%C4%9Fazk%C3%B6y_Museum%2C_Bo%C4%9Fazk%C3%B6y%2C_%C3%87orum%2C_Turkey_01.jpg/960px-Museum_Hattusa_-_Bo%C4%9Fazk%C3%B6y_Museum%2C_Bo%C4%9Fazk%C3%B6y%2C_%C3%87orum%2C_Turkey_01.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Bo%C4%9Fazk%C3%B6y_M%C3%BCzesi",
-      "wiki": "https://tr.wikipedia.org/wiki/Bo%C4%9Fazk%C3%B6y_M%C3%BCzesi",
-      "wikiTitle": "Boğazköy Müzesi",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/L1350579.jpg/960px-L1350579.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:L1350579.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 48,
@@ -933,13 +906,12 @@
       "search": "On Gözlü Köprüyü ziyaret et Diyarbakır Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "On Gözlü Köprü",
-      "lat": 37.887222,
-      "lng": 40.228889,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/OnGozluBridge.jpg/960px-OnGozluBridge.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Dicle_K%C3%B6pr%C3%BCs%C3%BC",
-      "wiki": "https://tr.wikipedia.org/wiki/Dicle_K%C3%B6pr%C3%BCs%C3%BC",
-      "wikiTitle": "Dicle Köprüsü",
-      "check": "verified"
+      "lat": 37.887165,
+      "lng": 40.228893,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/On_G%C3%B6zl%C3%BC_K%C3%B6pr%C3%BC_3.jpg/960px-On_G%C3%B6zl%C3%BC_K%C3%B6pr%C3%BC_3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:On_G%C3%B6zl%C3%BC_K%C3%B6pr%C3%BC_3.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 53,
@@ -967,13 +939,12 @@
       "search": "Fakıllı Mağarasını gör Düzce Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Fakıllı Mağarası",
-      "lat": 40.946944,
-      "lng": 31.238056,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/9/91/Duzce-efteni-golu.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/D%C3%BCzce_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/D%C3%BCzce_(il)",
-      "wikiTitle": "Düzce (il)",
-      "check": "verified"
+      "lat": 41.052734,
+      "lng": 31.176766,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Fak%C4%B1ll%C4%B1_Ma%C4%9Faras%C4%B1%2C_Ak%C3%A7akoca.jpg/960px-Fak%C4%B1ll%C4%B1_Ma%C4%9Faras%C4%B1%2C_Ak%C3%A7akoca.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Fak%C4%B1ll%C4%B1_Ma%C4%9Faras%C4%B1,_Ak%C3%A7akoca.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 55,
@@ -1067,13 +1038,12 @@
       "search": "Melen Çayında rafting yap Düzce Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Melen Çayı",
-      "lat": 40.946944,
-      "lng": 31.238056,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/9/91/Duzce-efteni-golu.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/D%C3%BCzce_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/D%C3%BCzce_(il)",
-      "wikiTitle": "Düzce (il)",
-      "check": "verified"
+      "lat": 40.892119,
+      "lng": 31.166757,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Buyuk-melen-duzce_%281%29.JPG/960px-Buyuk-melen-duzce_%281%29.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Buyuk-melen-duzce_(1).JPG",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 62,
@@ -1084,13 +1054,7 @@
       "search": "Pürenli Yaylasına çık Düzce Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Pürenli Yaylası",
-      "lat": 40.723611,
-      "lng": 31.049722,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/G%C3%BCzeldere_%C5%9Felalesi.jpg/960px-G%C3%BCzeldere_%C5%9Felalesi.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%BCzeldere_%C5%9Eelalesi_Tabiat_Park%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/G%C3%BCzeldere_%C5%9Eelalesi_Tabiat_Park%C4%B1",
-      "wikiTitle": "Güzeldere Şelalesi Tabiat Parkı",
-      "check": "verified"
+      "check": "unverified"
     },
     {
       "id": 63,
@@ -1154,11 +1118,7 @@
       "search": "Uzunköprü üzerinde yürü Edirne Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Uzunköprü Köprüsü",
-      "lat": 41.300278,
-      "lng": 26.732222,
-      "wiki": "https://tr.wikipedia.org/wiki/Y%C4%B1k%C4%B1k_Dere_K%C3%B6pr%C3%BCs%C3%BC",
-      "wikiTitle": "Yıkık Dere Köprüsü",
-      "check": "verified"
+      "check": "unverified"
     },
     {
       "id": 68,
@@ -1186,13 +1146,12 @@
       "search": "Buzluk Mağarasını gör Elazığ Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Buzluk Mağarası",
-      "lat": 38.703889,
-      "lng": 39.25,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Harput_kalesi-Harput-Elaz%C4%B1%C4%9F_-_panoramio.jpg/960px-Harput_kalesi-Harput-Elaz%C4%B1%C4%9F_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Harput",
-      "wiki": "https://tr.wikipedia.org/wiki/Harput",
-      "wikiTitle": "Harput",
-      "check": "verified"
+      "lat": 38.736105,
+      "lng": 39.282764,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Elaz%C4%B1%C4%9F_99.jpg/960px-Elaz%C4%B1%C4%9F_99.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Elaz%C4%B1%C4%9F_99.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 70,
@@ -1264,13 +1223,12 @@
       "search": "Odunpazarı sokaklarında dolaş Eskişehir Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Odunpazarı",
-      "lat": 39.764722,
-      "lng": 30.5225,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Eskisehir_Odunpazari_Art_Museum.jpg/960px-Eskisehir_Odunpazari_Art_Museum.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Odunpazar%C4%B1_Modern_M%C3%BCze",
-      "wiki": "https://tr.wikipedia.org/wiki/Odunpazar%C4%B1_Modern_M%C3%BCze",
-      "wikiTitle": "Odunpazarı Modern Müze",
-      "check": "verified"
+      "lat": 39.765554,
+      "lng": 30.523765,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/be/Odunpazar%C4%B1%2C_Eski%C5%9Fehir%2C_Turkey_12.jpg/960px-Odunpazar%C4%B1%2C_Eski%C5%9Fehir%2C_Turkey_12.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Odunpazar%C4%B1,_Eski%C5%9Fehir,_Turkey_12.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 75,
@@ -1379,13 +1337,10 @@
       "search": "Santa Harabelerini gör Gümüşhane Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Santa Harabeleri",
-      "lat": 40.388056,
-      "lng": 39.418611,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/29800_Zigana-Torul-G%C3%BCm%C3%BC%C5%9Fhane%2C_Turkey_-_panoramio.jpg/960px-29800_Zigana-Torul-G%C3%BCm%C3%BC%C5%9Fhane%2C_Turkey_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%BCm%C3%BC%C5%9Fhane_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/G%C3%BCm%C3%BC%C5%9Fhane_(il)",
-      "wikiTitle": "Gümüşhane (il)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/Santa_Harabeleri_-_panoramio.jpg/960px-Santa_Harabeleri_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Santa_Harabeleri_-_panoramio.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 82,
@@ -1421,13 +1376,12 @@
       "search": "Saint Pierre Kilisesini gör Hatay Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Saint Pierre Kilisesi",
-      "lat": 36.209444,
-      "lng": 36.178056,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2e/ChurchSaintPeterAntakya.jpg/960px-ChurchSaintPeterAntakya.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Aziz_Petrus_Kilisesi",
-      "wiki": "https://tr.wikipedia.org/wiki/Aziz_Petrus_Kilisesi",
-      "wikiTitle": "Aziz Petrus Kilisesi",
-      "check": "verified"
+      "lat": 36.20944,
+      "lng": 36.178129,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Hatay_Antakya_St._Pierre_Kilisesi_05.jpg/960px-Hatay_Antakya_St._Pierre_Kilisesi_05.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Hatay_Antakya_St._Pierre_Kilisesi_05.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 85,
@@ -1438,14 +1392,12 @@
       "search": "Titus Tünelinde yürü Hatay Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Titus Tüneli",
-      "lat": 36.269167,
-      "lng": 36.567222,
+      "lat": 36.122324,
+      "lng": 35.928624,
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/76/Vespasian-Titus-Tunnel.jpg/960px-Vespasian-Titus-Tunnel.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Vespasian-Titus-Tunnel.jpg",
       "imageSource": "commons-search",
-      "wiki": "https://tr.wikipedia.org/wiki/2013_Reyhanl%C4%B1_bombal%C4%B1_sald%C4%B1r%C4%B1lar%C4%B1",
-      "wikiTitle": "2013 Reyhanlı bombalı saldırıları",
-      "check": "verified"
+      "check": "geocoded"
     },
     {
       "id": 86,
@@ -1456,13 +1408,10 @@
       "search": "Tuzluca Tuz Mağaralarını gez Iğdır Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Tuzluca Tuz Mağaraları",
-      "lat": 39.893611,
-      "lng": 43.997778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/IgdirGenocideMuseum.jpg/960px-IgdirGenocideMuseum.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/I%C4%9Fd%C4%B1r_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/I%C4%9Fd%C4%B1r_(il)",
-      "wikiTitle": "Iğdır (il)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f0/Devasa_Tuz_Ma%C4%9Faralar%C4%B1_03.jpg/960px-Devasa_Tuz_Ma%C4%9Faralar%C4%B1_03.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Devasa_Tuz_Ma%C4%9Faralar%C4%B1_03.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 87,
@@ -1473,13 +1422,10 @@
       "search": "Meteor Çukurunu gör Iğdır Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Meteor Çukuru",
-      "lat": 39.893611,
-      "lng": 43.997778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/IgdirGenocideMuseum.jpg/960px-IgdirGenocideMuseum.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/I%C4%9Fd%C4%B1r_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/I%C4%9Fd%C4%B1r_(il)",
-      "wikiTitle": "Iğdır (il)",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Meteor_Deep_from_Igdir.jpg/960px-Meteor_Deep_from_Igdir.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Meteor_Deep_from_Igdir.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 88,
@@ -1490,14 +1436,12 @@
       "search": "Eğirdir Gölü'nü gör Isparta Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Eğirdir Gölü",
-      "lat": 37.619444,
-      "lng": 30.870833,
+      "lat": 38.059202,
+      "lng": 30.894404,
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/13/E%C4%9Firdir_G%C3%B6l%C3%BC_innerhalb_der_%E2%80%9EKurve_von_Isparta%E2%80%9C.jpg/960px-E%C4%9Firdir_G%C3%B6l%C3%BC_innerhalb_der_%E2%80%9EKurve_von_Isparta%E2%80%9C.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:E%C4%9Firdir_G%C3%B6l%C3%BC_innerhalb_der_%E2%80%9EKurve_von_Isparta%E2%80%9C.jpg",
       "imageSource": "commons-search",
-      "wiki": "https://tr.wikipedia.org/wiki/Kovada_G%C3%B6l%C3%BC_Mill%C3%AE_Park%C4%B1",
-      "wikiTitle": "Kovada Gölü Millî Parkı",
-      "check": "verified"
+      "check": "geocoded"
     },
     {
       "id": 89,
@@ -1595,8 +1539,8 @@
       "place": "Yedikuyular",
       "lat": 37.648056,
       "lng": 37.041667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_2.jpg/960px-Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-      "imageCredit": "https://commons.wikimedia.org/wiki/File:Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_2.jpg",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_4.jpg/960px-Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Kahramanmaras_Dulkadiroglu_Yedikuyular_Kayak_Merkezi_2023_4.jpg",
       "imageSource": "commons-search",
       "wiki": "https://tr.wikipedia.org/wiki/Yedikuyular_Kayak_Merkezi",
       "wikiTitle": "Yedikuyular Kayak Merkezi",
@@ -1611,14 +1555,10 @@
       "search": "Döngel Mağaralarını gör Kahramanmaraş Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Döngel Mağaraları",
-      "lat": 37.863056,
-      "lng": 36.644167,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_01.jpg/960px-D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-      "imageCredit": "https://commons.wikimedia.org/wiki/File:D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_01.jpg",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7f/D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_02.jpg/960px-D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:D%C3%B6ngel_%C3%87ay%C4%B1_-_D%C3%B6ngel_Ma%C4%9Faralar%C4%B1_02.jpg",
       "imageSource": "commons-search",
-      "wiki": "https://tr.wikipedia.org/wiki/Direkli_Ma%C4%9Faras%C4%B1",
-      "wikiTitle": "Direkli Mağarası",
-      "check": "verified"
+      "check": "unverified"
     },
     {
       "id": 96,
@@ -1629,13 +1569,12 @@
       "search": "Safranbolu evlerini gez Karabük Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Safranbolu",
-      "lat": 41.223611,
-      "lng": 32.640278,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Karabuk.jpg/960px-Karabuk.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Karab%C3%BCk_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/Karab%C3%BCk_(il)",
-      "wikiTitle": "Karabük (il)",
-      "check": "verified"
+      "lat": 41.245666,
+      "lng": 32.692957,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Safranbolu%2C_Karab%C3%BCk_24.jpg/960px-Safranbolu%2C_Karab%C3%BCk_24.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Safranbolu,_Karab%C3%BCk_24.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 97,
@@ -1646,13 +1585,12 @@
       "search": "Tokatlı Kanyonuna git Karabük Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Tokatlı Kanyonu",
-      "lat": 41.282222,
-      "lng": 32.685,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/%C4%B0ncekaya_Su_kemeri_%282013%29_-_panoramio.jpg/960px-%C4%B0ncekaya_Su_kemeri_%282013%29_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/%C4%B0ncekaya_Su_Kemeri",
-      "wiki": "https://tr.wikipedia.org/wiki/%C4%B0ncekaya_Su_Kemeri",
-      "wikiTitle": "İncekaya Su Kemeri",
-      "check": "verified"
+      "lat": 41.27384,
+      "lng": 32.686401,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b1/Tokatl%C4%B1_kanyonu.jpg/960px-Tokatl%C4%B1_kanyonu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Tokatl%C4%B1_kanyonu.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 98,
@@ -1663,12 +1601,12 @@
       "search": "Binbir Kilise kalıntılarını gör Karaman Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Binbir Kilise",
-      "lat": 37.399444,
-      "lng": 33.147222,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Karada%C4%9F_drgulcu.JPG/960px-Karada%C4%9F_drgulcu.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Karada%C4%9F_(Karaman)",
-      "wiki": "https://tr.wikipedia.org/wiki/Karada%C4%9F_(Karaman)",
-      "wikiTitle": "Karadağ (Karaman)",
+      "lat": 37.437222,
+      "lng": 33.144167,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Binbirkilise6.jpg/960px-Binbirkilise6.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Binbirkilise",
+      "wiki": "https://tr.wikipedia.org/wiki/Binbirkilise",
+      "wikiTitle": "Binbirkilise",
       "check": "verified"
     },
     {
@@ -1680,13 +1618,9 @@
       "search": "Manazan Mağaralarını gez Karaman Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Manazan Mağaraları",
-      "lat": 37.1825,
-      "lng": 33.211667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b9/Karaman_M%C3%BCze_02.jpg/960px-Karaman_M%C3%BCze_02.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Karaman_M%C3%BCzesi",
-      "wiki": "https://tr.wikipedia.org/wiki/Karaman_M%C3%BCzesi",
-      "wikiTitle": "Karaman Müzesi",
-      "check": "verified"
+      "lat": 37.143915,
+      "lng": 33.568029,
+      "check": "geocoded"
     },
     {
       "id": 100,
@@ -1891,13 +1825,9 @@
       "search": "Ravanda Kalesini gez Kilis Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Ravanda Kalesi",
-      "lat": 36.7161,
-      "lng": 37.115,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/df/Kilis_city_center.jpg/960px-Kilis_city_center.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Kilis",
-      "wiki": "https://tr.wikipedia.org/wiki/Kilis",
-      "wikiTitle": "Kilis",
-      "check": "verified"
+      "lat": 36.873068,
+      "lng": 37.053864,
+      "check": "geocoded"
     },
     {
       "id": 113,
@@ -1959,13 +1889,10 @@
       "search": "Mevlana Müzesini ziyaret et Konya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Mevlana Müzesi",
-      "lat": 37.870556,
-      "lng": 32.504722,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/MevlanaMuseum.jpg/960px-MevlanaMuseum.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Mevl%C3%A2n%C3%A2_M%C3%BCzesi",
-      "wiki": "https://tr.wikipedia.org/wiki/Mevl%C3%A2n%C3%A2_M%C3%BCzesi",
-      "wikiTitle": "Mevlânâ Müzesi",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/93/Mevlana_M%C3%BCzesi_02.jpg/960px-Mevlana_M%C3%BCzesi_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Mevlana_M%C3%BCzesi_02.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 117,
@@ -2020,13 +1947,12 @@
       "search": "Arslantepe Höyüğünü ziyaret et Malatya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Arslantepe Höyüğü",
-      "lat": 38.381944,
-      "lng": 38.361111,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Arslantepe7.jpg/960px-Arslantepe7.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Melid",
-      "wiki": "https://tr.wikipedia.org/wiki/Melid",
-      "wikiTitle": "Melid",
-      "check": "verified"
+      "lat": 38.38214,
+      "lng": 38.361235,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Arslantepe_Ruins%2C_Malatya_2018-09-28_07.jpg/960px-Arslantepe_Ruins%2C_Malatya_2018-09-28_07.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Arslantepe_Ruins,_Malatya_2018-09-28_07.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 121,
@@ -2037,13 +1963,9 @@
       "search": "Levent Vadisi seyir terasına çık Malatya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Levent Vadisi",
-      "lat": 38.350181,
-      "lng": 38.316669,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Turgut_%C3%96zal_Tabiat_Park%C4%B1_G%C3%B6l.jpg/960px-Turgut_%C3%96zal_Tabiat_Park%C4%B1_G%C3%B6l.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Malatya",
-      "wiki": "https://tr.wikipedia.org/wiki/Malatya",
-      "wikiTitle": "Malatya",
-      "check": "verified"
+      "lat": 38.408321,
+      "lng": 37.923658,
+      "check": "geocoded"
     },
     {
       "id": 122,
@@ -2054,13 +1976,10 @@
       "search": "Sardes Antik Kentini gez Manisa Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Sardes Antik Kenti",
-      "lat": 38.749444,
-      "lng": 28.122778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Manisa_Muradiye_Camii_Muradiye_Camii_side_to_southwest_6124.jpg/960px-Manisa_Muradiye_Camii_Muradiye_Camii_side_to_southwest_6124.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Manisa",
-      "wiki": "https://tr.wikipedia.org/wiki/Manisa",
-      "wikiTitle": "Manisa",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Sardes_Antik_Kenti%2C_Manisa%2C_T%C3%BArkiya.jpg/960px-Sardes_Antik_Kenti%2C_Manisa%2C_T%C3%BArkiya.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Sardes_Antik_Kenti,_Manisa,_T%C3%BArkiya.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 123,
@@ -2089,13 +2008,12 @@
       "search": "Deyrulzafaran Manastırını gör Mardin Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Deyrulzafaran Manastırı",
-      "lat": 37.299444,
-      "lng": 40.792778,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Deyrulzaferan_P1030925_20080501122627.JPG/960px-Deyrulzaferan_P1030925_20080501122627.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Deyr%C3%BCzzafer%C3%A2n_Manast%C4%B1r%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/Deyr%C3%BCzzafer%C3%A2n_Manast%C4%B1r%C4%B1",
-      "wikiTitle": "Deyrüzzaferân Manastırı",
-      "check": "verified"
+      "lat": 37.299443,
+      "lng": 40.792831,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/Mor_Hananyo_Monastery_3.jpg/960px-Mor_Hananyo_Monastery_3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Mor_Hananyo_Monastery_3.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 125,
@@ -2272,13 +2190,10 @@
       "search": "Aladağlar Milli Parkını gör Niğde Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Aladağlar Milli Parkı",
-      "lat": 37.796944,
-      "lng": 35.155833,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Alada%C4%9Flar%C4%B1n_zirvesi_KIZILKAYA_%283767%29.jpg/960px-Alada%C4%9Flar%C4%B1n_zirvesi_KIZILKAYA_%283767%29.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/K%C4%B1z%C4%B1lkaya_Da%C4%9F%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/K%C4%B1z%C4%B1lkaya_Da%C4%9F%C4%B1",
-      "wikiTitle": "Kızılkaya Dağı",
-      "check": "verified"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/%C3%87AMARDI-DEM%C4%B0RKAZIK_30.07.2018.jpg/960px-%C3%87AMARDI-DEM%C4%B0RKAZIK_30.07.2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:%C3%87AMARDI-DEM%C4%B0RKAZIK_30.07.2018.jpg",
+      "imageSource": "commons-search",
+      "check": "unverified"
     },
     {
       "id": 136,
@@ -2337,13 +2252,7 @@
       "search": "Kastabala Antik Kenti'ni gör Osmaniye Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Kastabala Antik Kenti",
-      "lat": 37.1775,
-      "lng": 36.1875,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/0/04/Bodrumkale%2C_Osmaniye_Province%2C_Turkey.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Bodrumkale",
-      "wiki": "https://tr.wikipedia.org/wiki/Bodrumkale",
-      "wikiTitle": "Bodrumkale",
-      "check": "verified"
+      "check": "unverified"
     },
     {
       "id": 140,
@@ -2388,13 +2297,12 @@
       "search": "Acarlar Longozunu gez Sakarya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Acarlar Longozu",
-      "lat": 40.697222,
-      "lng": 30.456667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Hisar_Tepesi%2C_Tarakl%C4%B1.jpg/960px-Hisar_Tepesi%2C_Tarakl%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Sakarya",
-      "wiki": "https://tr.wikipedia.org/wiki/Sakarya",
-      "wikiTitle": "Sakarya",
-      "check": "verified"
+      "lat": 41.122394,
+      "lng": 30.492526,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8f/Acarlar_Floodplain_Forest_%28Acarlar_G%C3%B6l%C3%BC_Longozu%29%2C_Karasu%2C_Sakarya%2C_Turkey_04.jpg/960px-Acarlar_Floodplain_Forest_%28Acarlar_G%C3%B6l%C3%BC_Longozu%29%2C_Karasu%2C_Sakarya%2C_Turkey_04.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Acarlar_Floodplain_Forest_(Acarlar_G%C3%B6l%C3%BC_Longozu),_Karasu,_Sakarya,_Turkey_04.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 143,
@@ -2405,13 +2313,12 @@
       "search": "Sapanca Gölü'nü dolaş Sakarya Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Sapanca Gölü",
-      "lat": 40.697222,
-      "lng": 30.456667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Hisar_Tepesi%2C_Tarakl%C4%B1.jpg/960px-Hisar_Tepesi%2C_Tarakl%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Sakarya",
-      "wiki": "https://tr.wikipedia.org/wiki/Sakarya",
-      "wikiTitle": "Sakarya",
-      "check": "verified"
+      "lat": 40.71723,
+      "lng": 30.242027,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Sapanca_g%C3%B6l%C3%BC_sakarya_-_panoramio.jpg/960px-Sapanca_g%C3%B6l%C3%BC_sakarya_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Sapanca_g%C3%B6l%C3%BC_sakarya_-_panoramio.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 144,
@@ -2506,12 +2413,12 @@
       "search": "Erfelek Şelalelerini ziyaret et Sinop Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Erfelek Şelaleleri",
-      "lat": 41.836111,
-      "lng": 34.778889,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Erfelek_%C5%9Eelaleleri.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Tatl%C4%B1ca_%C5%9Eelaleleri",
-      "wiki": "https://tr.wikipedia.org/wiki/Tatl%C4%B1ca_%C5%9Eelaleleri",
-      "wikiTitle": "Tatlıca Şelaleleri",
+      "lat": 41.883333,
+      "lng": 34.916667,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Sinop_%28tr%29.svg/960px-Sinop_%28tr%29.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Erfelek",
+      "wiki": "https://tr.wikipedia.org/wiki/Erfelek",
+      "wikiTitle": "Erfelek",
       "check": "verified"
     },
     {
@@ -2540,13 +2447,12 @@
       "search": "Gökpınar Gölüne git Sivas Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Gökpınar Gölü",
-      "lat": 39.377778,
-      "lng": 36.495,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3a/Maksutlu_Baraj%C4%B1_%28%C5%9Eark%C4%B1%C5%9Fla%29.jpg/960px-Maksutlu_Baraj%C4%B1_%28%C5%9Eark%C4%B1%C5%9Fla%29.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Maksutlu_Baraj%C4%B1",
-      "wiki": "https://tr.wikipedia.org/wiki/Maksutlu_Baraj%C4%B1",
-      "wikiTitle": "Maksutlu Barajı",
-      "check": "verified"
+      "lat": 38.655997,
+      "lng": 37.304447,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/IMG-20200607-WA0013.jpg/960px-IMG-20200607-WA0013.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:IMG-20200607-WA0013.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 152,
@@ -2557,12 +2463,12 @@
       "search": "Göbeklitepe'yi gez Şanlıurfa Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Göbeklitepe",
-      "lat": 37.153611,
-      "lng": 38.781667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/UrfaMuseumG%C3%B6bekli.jpg/960px-UrfaMuseumG%C3%B6bekli.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/%C5%9Eanl%C4%B1urfa_Arkeoloji_ve_Mozaik_M%C3%BCzesi",
-      "wiki": "https://tr.wikipedia.org/wiki/%C5%9Eanl%C4%B1urfa_Arkeoloji_ve_Mozaik_M%C3%BCzesi",
-      "wikiTitle": "Şanlıurfa Arkeoloji ve Mozaik Müzesi",
+      "lat": 37.222917,
+      "lng": 38.922444,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d5/G%C3%B6bekli_Tepe%2C_Urfa.jpg/960px-G%C3%B6bekli_Tepe%2C_Urfa.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%B6beklitepe",
+      "wiki": "https://tr.wikipedia.org/wiki/G%C3%B6beklitepe",
+      "wikiTitle": "Göbeklitepe",
       "check": "verified"
     },
     {
@@ -2574,13 +2480,12 @@
       "search": "Balıklıgöl'ü gör Şanlıurfa Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Balıklıgöl",
-      "lat": 37.153611,
-      "lng": 38.781667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/UrfaMuseumG%C3%B6bekli.jpg/960px-UrfaMuseumG%C3%B6bekli.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/%C5%9Eanl%C4%B1urfa_Arkeoloji_ve_Mozaik_M%C3%BCzesi",
-      "wiki": "https://tr.wikipedia.org/wiki/%C5%9Eanl%C4%B1urfa_Arkeoloji_ve_Mozaik_M%C3%BCzesi",
-      "wikiTitle": "Şanlıurfa Arkeoloji ve Mozaik Müzesi",
-      "check": "verified"
+      "lat": 37.147692,
+      "lng": 38.784579,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Bal%C4%B1kl%C4%B1g%C3%B6l%2C_Urfa_2015.jpg/960px-Bal%C4%B1kl%C4%B1g%C3%B6l%2C_Urfa_2015.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Bal%C4%B1kl%C4%B1g%C3%B6l,_Urfa_2015.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 154,
@@ -2624,14 +2529,12 @@
       "search": "Uçmakdere yolunda manzarayı izle Tekirdağ Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Uçmakdere",
-      "lat": 40.839722,
-      "lng": 27.318333,
+      "lat": 40.798105,
+      "lng": 27.365073,
       "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Tekirda%C4%9F_Kartaltepe_Natural_Park.jpg/960px-Tekirda%C4%9F_Kartaltepe_Natural_Park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
       "imageCredit": "https://commons.wikimedia.org/wiki/File:Tekirda%C4%9F_Kartaltepe_Natural_Park.jpg",
       "imageSource": "commons-search",
-      "wiki": "https://tr.wikipedia.org/wiki/I%C5%9F%C4%B1klar_Da%C4%9F%C4%B1",
-      "wikiTitle": "Işıklar Dağı",
-      "check": "verified"
+      "check": "geocoded"
     },
     {
       "id": 157,
@@ -2675,13 +2578,12 @@
       "search": "Kaz Gölü'nü gör Tokat Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Kaz Gölü",
-      "lat": 40.3223,
-      "lng": 36.5582,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Latrans-Turkey_location_Tokat.svg/960px-Latrans-Turkey_location_Tokat.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Tokat_(il)",
-      "wiki": "https://tr.wikipedia.org/wiki/Tokat_(il)",
-      "wikiTitle": "Tokat (il)",
-      "check": "verified"
+      "lat": 40.274725,
+      "lng": 36.150557,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Kaz_G%C3%B6l%C3%BC_Tokat.jpg/960px-Kaz_G%C3%B6l%C3%BC_Tokat.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Kaz_G%C3%B6l%C3%BC_Tokat.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 160,
@@ -2843,13 +2745,12 @@
       "search": "Termal kaplıca bölgesini gez Yalova Türkiye",
       "editorial": "GaZonRide başlangıç seçkisi",
       "place": "Termal",
-      "lat": 40.603611,
-      "lng": 29.174722,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Termal%2C_77400_Termal-Yalova%2C_Turkey_-_panoramio.jpg/960px-Termal%2C_77400_Termal-Yalova%2C_Turkey_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Yalova_Atat%C3%BCrk_K%C3%B6%C5%9Fk%C3%BC",
-      "wiki": "https://tr.wikipedia.org/wiki/Yalova_Atat%C3%BCrk_K%C3%B6%C5%9Fk%C3%BC",
-      "wikiTitle": "Yalova Atatürk Köşkü",
-      "check": "verified"
+      "lat": 40.60618,
+      "lng": 29.174289,
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Termal%2C_77400_Termal-Yalova%2C_Turkey_-_panoramio.jpg/960px-Termal%2C_77400_Termal-Yalova%2C_Turkey_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Termal,_77400_Termal-Yalova,_Turkey_-_panoramio.jpg",
+      "imageSource": "commons-search",
+      "check": "geocoded"
     },
     {
       "id": 170,
@@ -2917,5 +2818,5 @@
       "check": "verified"
     }
   ],
-  "checkedAt": "2026-10-12T17:27:26.521Z"
+  "checkedAt": "2026-10-12T17:32:06.451Z"
 }

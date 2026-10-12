@@ -28,7 +28,10 @@ test("ride card v2: moving time, title, map with tiles",()=>{
  assert.equal(J.rideTitle({destination:"Abant",track:t}),"Abant");
  assert.equal(J.fmtDur(3780),"1sa 3dk");
  const svg=J.mapView(t);
- assert.match(svg,/basemaps\.cartocdn\.com/);assert.equal((svg.match(/<circle/g)||[]).length,2);
+ assert.equal((svg.match(/<circle/g)||[]).length,2);assert.doesNotMatch(svg,/<img/,"no key, no static map");
+ globalThis.GAZONRIDE_GOOGLE_MAPS_API_KEY="k1";
+ const withKey=J.mapView(t);delete globalThis.GAZONRIDE_GOOGLE_MAPS_API_KEY;
+ assert.match(withKey,/maps\.googleapis\.com\/maps\/api\/staticmap\?/);assert.match(withKey,/enc%3A/);assert.match(withKey,/key=k1/);
  assert.equal(J.mapView([]),"");
  assert.match(J.rideCard({destination:"<b>x</b>",track:[]}),/&lt;b&gt;x/,"escapes user text");
 });

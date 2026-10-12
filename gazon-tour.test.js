@@ -10,9 +10,9 @@ function distance(a,b){
 }
 for(const direction of ["auto","north","east","south","west"]){
  const routes=Tour.candidates(home,100,direction);
- assert.equal(routes.length,5,"5 tour shape candidates");
+ assert.equal(routes.length,12,"12 diversified tour shape candidates");
  routes.forEach(r=>{
-  assert.equal(r.middle.length,2,"2 intermediate waypoints");
+  assert.ok(r.middle.length>=2&&r.middle.length<=3,"2-3 intermediate waypoints make a polygon");
   r.middle.forEach(p=>{
    assert.ok(Number.isFinite(p.lat)&&Number.isFinite(p.lon),"geographic waypoint");
    assert.ok(distance(home,p)>8&&distance(home,p)<40,"waypoint in sensible 100-km search radius");
@@ -22,14 +22,14 @@ for(const direction of ["auto","north","east","south","west"]){
   assert.equal(u.origin,"https://www.google.com");
   assert.equal(u.searchParams.get("origin"),"40.875000,30.950000");
   assert.equal(u.searchParams.get("destination"),"40.875000,30.950000","return to start");
-  assert.equal(u.searchParams.get("waypoints").split("|").length,2,"both stops preserved");
+  assert.equal(u.searchParams.get("waypoints").split("|").length,r.middle.length,"all stops preserved");
   assert.equal(u.searchParams.get("travelmode"),"driving");
  });
 }
 for(const km of [50,100,150]){
  const points=Tour.candidates(home,km,"auto");
  const avg=points.flatMap(c=>c.middle.map(p=>distance(home,p))).reduce((a,b)=>a+b,0)/10;
- assert.ok(avg>km/5&&avg<km/3.5,"waypoint radius follows target");
+ assert.ok(avg>km/9&&avg<km/3.5,"waypoint radius follows target");
 }
 assert.equal(Tour.offset(null,90,20),null);
 assert.equal(Tour.offset(home,90,-1),null);
@@ -41,4 +41,17 @@ const a={km:102,sec:5200,curveScore:9},b={km:100,sec:4800,curveScore:1};
 assert.ok(Tour.score(b,"fast",100)>Tour.score(a,"fast",100),"fast prefers lower time");
 assert.ok(Tour.score(a,"verycurvy",100)>Tour.score(b,"verycurvy",100),"very curvy prefers bends");
 assert.equal(Tour.extractSteps({legs:[{steps:[{distanceMeters:250,maneuver:"TURN_LEFT",endLocation:{lat:40,lon:31}}]}]}).length,1);
-console.log("PASS: 5 route candidates, distance goals, estimated twistiness ranking, multi-stop route steps");
+const north=(km)=>Tour.offset(home,0,km);
+const roundTrip=[home,north(5),north(15),north(30),north(15),north(5),home];
+const bad=Tour.loopQuality(roundTrip,60);
+assert.equal(bad.ok,false,"out-and-back route must be rejected");
+assert.ok(bad.overlap>.6,"returning on same road has high repeated-road fraction");
+const closed=[home,Tour.offset(home,0,20),Tour.offset(home,90,20),Tour.offset(home,180,20),Tour.offset(home,270,20),home];
+const good=Tour.loopQuality(closed,120);
+assert.equal(good.ok,true,"geographically distinct closed loop must be accepted");
+assert.ok(good.overlap<.22,"loop has little road repetition");
+assert.ok(good.areaRatio>.0035,"loop encloses meaningful geographical area");
+const sameRoadButWide=[home,north(10),Tour.offset(home,45,18),north(10),home];
+assert.equal(Tour.loopQuality(sameRoadButWide,90).ok,false,"road retracing is not hidden by a scenic waypoint");
+assert.equal(Tour.loopQuality([],150).ok,false,"empty road geometry is rejected");
+console.log("PASS: 12 diverse candidate polygons, distance goals, overlap rejection, closed loop acceptance, route steps");

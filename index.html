@@ -1139,6 +1139,8 @@ async function requestWakeLock(){
 }
 document.addEventListener("visibilitychange",function(){
  if(document.visibilityState==="visible"){
+  // iOS suspends WebSockets in the background: reconnect intercom at once.
+  try{if(voice.room&&(!voice.ws||voice.ws.readyState!==WebSocket.OPEN)){if(voice.retryTimer){clearTimeout(voice.retryTimer);voice.retryTimer=null}connectVoiceSocket()}}catch(e){}
   requestWakeLock();
   try{if(!riding&&window.AndroidBridge&&typeof AndroidBridge.isRideActive==="function"&&AndroidBridge.isRideActive())restoreActiveRideFromNative()}catch(e){}
  }
@@ -2011,7 +2013,25 @@ function stopNavigation(){
 
 function closeScreen(){var x=$("screen");x.classList.remove("active");x.innerHTML="";if(document.body.classList.contains("mode-overlay")){setMode("discover");setDiscoverFilter("discover")}window.scrollTo({top:0,behavior:"smooth"});}
 var voice={ws:null,room:"",id:"",stream:null,mic:false,peers:{},host:false,session:0,retryTimer:null,retryCount:0,audioBlocked:false};
-var VOICE_WS="wss://gazonride-voice.onrender.com";
+var VOICE_WS="wss://gazonride-voice.onrender.com",VOICE_HTTP="https://gazonride-voice.onrender.com";
+// The free signaling server sleeps when idle; wake it as soon as the rider
+// opens Intercom so "Gruba Katıl" does not wait ~40 s.
+var voiceWakeAt=0;
+function wakeVoiceServer(){
+ if(Date.now()-voiceWakeAt<60000)return;voiceWakeAt=Date.now();
+ try{fetch(VOICE_HTTP+"/",{cache:"no-store"}).catch(function(){})}catch(e){}
+}
+// Relay (TURN) servers from the signaling server: required on most mobile
+// networks. Falls back to STUN only, which works mainly on Wi-Fi.
+async function loadVoiceIce(){
+ if(voice.ice&&Date.now()-voice.iceAt<3*3600*1000)return voice.ice;
+ try{
+  var ctrl=window.AbortController?new AbortController():null,t=setTimeout(function(){if(ctrl)ctrl.abort()},45000);
+  var r=await fetch(VOICE_HTTP+"/ice",{cache:"no-store",signal:ctrl?ctrl.signal:undefined});clearTimeout(t);
+  if(r.ok){var j=await r.json();if(j&&Array.isArray(j.iceServers)){voice.ice=j.iceServers;voice.iceAt=Date.now();voice.turn=!!j.turn}}
+ }catch(e){console.warn("Voice ICE config",e)}
+ return voice.ice;
+}
 function voiceId(){return "rider-"+Math.random().toString(36).slice(2,10);}
 function voiceState(message){
  var el=$("voiceState");if(el)el.textContent=message;
@@ -2023,6 +2043,7 @@ function sendSignal(msg){
  }
 }
 function voiceIceServers(){
+ if(voice.ice&&voice.ice.length)return voice.ice;
  var base=[{urls:"stun:stun.l.google.com:19302"}];
  // Optional short-lived TURN credentials can be supplied via a trusted
  // runtime config. There are no permanent TURN secrets in the web repo.
@@ -2066,7 +2087,7 @@ function pcFor(id,initiator){
  };
  pc.onconnectionstatechange=function(){
   if(pc.connectionState==="failed"){
-   voiceState("Ses bağlantısı koptu. Yeniden bağlanılıyor…");
+   voiceState(voice.turn?"Ses bağlantısı koptu. Yeniden bağlanılıyor…":"Ses bağlantısı kurulamadı · mobil veride aktarım sunucusu (TURN) gerekli. Wi-Fi ile dene.");
    if(pc._initiator&&pc.restartIce){
     try{pc.restartIce();makeVoiceOffer(pc,id)}catch(e){console.warn("Voice ICE restart",e)}
    }
@@ -2158,9 +2179,10 @@ function voiceUI(){
  '<div class="statRow" style="margin-top:10px"><div class="statBox"><b id="voiceState">Bağlı değil</b><span class="sub">Ses durumu</span></div>'+
  '<div class="statBox"><b id="voiceCount">0</b><span class="sub">Ses bağlantısı kurulu sürücü</span></div></div>'+
  '<div class="sub" id="voiceCode" style="margin-top:10px">Bağlantı kodu: —</div>'+
- '<div class="sub">Mobil operatörlerde TURN sunucusu olmadan bazı bağlantılar çalışmayabilir.</div></div>';
+ '<div class="sub" id="voiceRelay">'+(voice.turn?"Mobil veri aktarımı (TURN) etkin.":"Mobil veride bağlantı için aktarım sunucusu (TURN) kontrol ediliyor…")+'</div></div>';
 }
 function setupVoice(){
+ wakeVoiceServer();loadVoiceIce();
  $("closeScreen").onclick=closeScreen;
  $("createVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase()||("GAZON"+Math.random().toString(36).slice(2,8).toUpperCase());startVoice(code,true)};
  $("joinVoice").onclick=function(){var code=$("roomCode").value.trim().toUpperCase();if(code)startVoice(code,false);else voiceState("Grup kodu gerekli")};
@@ -2178,7 +2200,7 @@ function scheduleVoiceReconnect(){
  if(!voice.room||voice.retryTimer)return;
  voice.retryCount++;
  var delay=Math.min(20000,1500*Math.pow(2,Math.min(4,voice.retryCount-1)));
- voiceState("Bağlantı koptu · "+Math.ceil(delay/1000)+" sn sonra yeniden denenecek");
+ voiceState(voice.retryCount<=2?"Intercom sunucusu uyanıyor · "+Math.ceil(delay/1000)+" sn sonra tekrar denenecek":"Bağlantı koptu · "+Math.ceil(delay/1000)+" sn sonra yeniden denenecek");
  voice.retryTimer=setTimeout(function(){voice.retryTimer=null;if(voice.room&&(!voice.ws||voice.ws.readyState!==WebSocket.OPEN))connectVoiceSocket()},delay);
 }
 function connectVoiceSocket(){
@@ -2192,7 +2214,8 @@ function connectVoiceSocket(){
  ws.onopen=function(){
   if(session!==voice.session||voice.ws!==ws){ws.close();return}
   voice.retryCount=0;
-  sendSignal({type:"join",room:voice.room,id:voice.id,name:"GaZonRide"});
+  var relay=$("voiceRelay");if(relay)relay.textContent=voice.turn?"Mobil veri aktarımı (TURN) etkin.":"TURN yok: mobil veride bağlantı kurulamayabilir, Wi-Fi'de çalışır.";
+  sendSignal({type:"join",room:voice.room,id:voice.id,name:(window.getRiderProfile&&getRiderProfile().name)||"GaZonRide"});
   var code=$("voiceCode");if(code)code.textContent=voice.room;
   $("voiceDock").classList.add("active");
   $("voiceDockTitle").textContent="Intercom · "+voice.room;
@@ -2251,6 +2274,8 @@ async function startVoice(code,host){
   // Otherwise stopVoice() stops the just-created iOS MediaStream.
   stopVoice(false);
   var stream=await ensureMic();
+  voiceState("Intercom sunucusu hazırlanıyor…");
+  await loadVoiceIce();
   voice.room=code;voice.host=host;voice.id=voiceId();voice.session++;
   voice.stream=stream;voice.mic=false;
   stream.getAudioTracks().forEach(function(t){t.enabled=false});

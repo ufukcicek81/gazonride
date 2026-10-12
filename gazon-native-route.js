@@ -29,7 +29,7 @@ function routeStops(points,destination,maxVia){
   distances.push(total);
  }
  // Short local routes need no extra waypoints.
- const viaCount=total<2500?0:total<10000?2:total<25000?3:Math.min(5,Math.max(1,Number(maxVia)||4));
+ const viaCount=total<2500?0:total<10000?2:total<25000?3:Math.min(7,Math.max(1,Number(maxVia)||4));
  const result=[],gap=Math.max(300,Math.min(1800,total/(viaCount+2)*.16));
  for(let n=1;n<=viaCount;n++){
   const target=total*n/(viaCount+1);

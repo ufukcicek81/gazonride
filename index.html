@@ -518,12 +518,12 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <script src="gazon-native-route.js?v=20261012-stable-road-anchor-v2"></script>
 <script src="gazon-route-token.js?v=20261012-token-v1"></script>
 <script src="gazon-tour-engine.js?v=20261012-engine-v2"></script>
-<script src="gazon-tour.js?v=20261012-engine-v2"></script>
+<script src="gazon-tour.js?v=20261012-fit2"></script>
 <script>
 (function(){
 "use strict";
 var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0;
-var currentPointAcc=999,gpsJumpRejects=0,navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
+var idleMapCentered=false,currentPointAcc=999,gpsJumpRejects=0,navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
  try{if(window.AndroidBridge&&typeof window.AndroidBridge.getSystemTheme==="function")return String(window.AndroidBridge.getSystemTheme());}catch(e){}
@@ -738,7 +738,9 @@ function applyPosition(pos){
    if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:markerIcon,zIndex:999});}
    else if(!(gazonCamera&&gazonCamera.active)){marker.setPosition(gp);marker.setIcon(markerIcon);}
  }
- if(map&&!riding&&!navActive)setMapCenter(p,16);
+ // Centre on the rider once; afterwards GPS fixes must not pull the map back
+ // to street level over a route/tour preview or a map the rider moved.
+ if(map&&!riding&&!navActive&&!idleMapCentered){setMapCenter(p,16);idleMapCentered=true;}
  if(riding){
    track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),ts]);updateTurns();
    if(lastPoint){

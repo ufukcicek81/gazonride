@@ -149,3 +149,30 @@ html body.guidance-active .map{height:100dvh!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 html body.mode-ride .content .card{background:transparent!important;box-shadow:none!important;border:0!important}
 .gr-music-launch{background:var(--gr-glass)!important;color:var(--gr-text)!important;border-color:var(--gr-line)!important;min-height:var(--gr-touch)}
+
+/* ---------- Tour results: map first ---------- */
+.gr-tour-summary{display:none}
+body.mode-navigation.gr-tour-mode.gr-tour-has-options:not(.guidance-active) .gr-tour-summary:not([hidden]){
+ display:flex;align-items:center;gap:10px;min-height:var(--gr-touch);padding:6px 6px 6px 14px;box-sizing:border-box;
+ background:var(--gr-glass);color:var(--gr-text);border:1px solid var(--gr-line);border-radius:var(--gr-r);
+ box-shadow:var(--gr-shadow);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.gr-tour-summary .mi{color:var(--gr-accent);font-size:24px}
+.gr-tour-summary b{flex:1;min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-tour-summary button{min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--gr-surface-2);color:var(--gr-text);font-weight:800;font-size:14px}
+body.gr-tour-has-options .gr-tour-panel,
+body.gr-tour-has-options.mode-navigation .navOriginCompact,
+body.gr-tour-has-options.mode-navigation .gr-music-launch{display:none!important}
+/* Compact choice sheet just above the tab bar */
+html body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-choices.active{
+ bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 8px)!important;padding:12px!important;padding-bottom:12px!important;
+ max-height:none!important;background:var(--gr-glass)!important;color:var(--gr-text)!important;border-color:var(--gr-line)!important}
+.gr-tour-choices .gr-tour-heading{margin-bottom:8px}
+.gr-tour-routes{align-items:stretch}
+.gr-tour-route{min-height:0!important;height:auto!important;flex:0 0 min(190px,58vw)!important;padding:10px 12px!important;
+ background:var(--gr-surface-2)!important;color:var(--gr-text)!important;border-color:var(--gr-line)!important}
+.gr-tour-route.active{border:2px solid var(--gr-route)!important;background:color-mix(in srgb,var(--gr-route) 14%,var(--gr-surface))!important}
+.gr-tour-route b{font-size:13px!important}
+.gr-tour-route strong{font-size:22px!important}
+.gr-tour-route small{font-size:12px!important;color:var(--gr-muted)!important}
+.gr-tour-choices .gr-tour-action{margin-top:10px}
+.gr-tour-choices .gr-tour-disclaimer{display:none}

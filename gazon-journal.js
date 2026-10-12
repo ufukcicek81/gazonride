@@ -121,7 +121,115 @@ function leanWizard(opts){
  go.onclick=function(){if(opts.calibrate)try{opts.calibrate()}catch(e){}close()};
  return {close:close};
 }
-var api={MOODS:MOODS,thumb:thumb,card:card,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points};
+
+/* ---------- Ride card v2: real map, real numbers ----------
+ * Map: CARTO basemap tiles (OpenStreetMap data, no API key) stitched in an
+ * SVG with the route on top, Web Mercator so line and roads match. */
+function pts3(track){
+ return (Array.isArray(track)?track:[]).map(function(p){
+  return Array.isArray(p)?{lat:Number(p[0]),lon:Number(p[1]),alt:p[2]==null?null:Number(p[2]),t:Number(p[3])||0}:null;
+ }).filter(function(p){return p&&isFinite(p.lat)&&isFinite(p.lon)});
+}
+function hav(a,b){var R=6371,r=Math.PI/180,dLat=(b.lat-a.lat)*r,dLon=(b.lon-a.lon)*r,x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)*Math.sin(dLon/2);return 2*R*Math.asin(Math.sqrt(x))}
+function brg(a,b){var r=Math.PI/180,y=Math.sin((b.lon-a.lon)*r)*Math.cos(b.lat*r),x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lon-a.lon)*r);return (Math.atan2(y,x)/r+360)%360}
+// Moving time, average speed, climb and curve count from the GPS track;
+// stored ride fields are the fallback (old rides, no timestamps).
+function metrics(r){
+ var a=pts3(r&&r.track),km=Number(r&&r.km)||0,sec=0,mkm=0,climb=0,turns=0;
+ for(var i=1;i<a.length;i++){
+  var dt=(a[i].t-a[i-1].t)/1000,d=hav(a[i-1],a[i]);
+  if(a[i].t&&a[i-1].t&&dt>0&&dt<=60){var v=d/(dt/3600);if(v>=4&&v<220){sec+=dt;mkm+=d}}
+ }
+ // Climb: smoothed altitude with a 3 m hysteresis against GPS noise.
+ var alts=a.map(function(p){return p.alt}).filter(function(x){return x!=null&&isFinite(x)&&x!==0});
+ if(alts.length>5){
+  var sm=alts.map(function(_,i){var s=0,n=0;for(var j=Math.max(0,i-2);j<=Math.min(alts.length-1,i+2);j++){s+=alts[j];n++}return s/n});
+  var base=sm[0];sm.forEach(function(h){if(h-base>=3){climb+=h-base;base=h}else if(h<base)base=h});
+ }
+ // Curves: resample every ~25 m, a curve = >=40° heading change within
+ // 120 m; consecutive curves at least 80 m apart.
+ if(a.length>3){
+  var rs=[a[0]],acc=0;for(i=1;i<a.length;i++){acc+=hav(a[i-1],a[i]);if(acc>=.025){rs.push(a[i]);acc=0}}
+  var hd=[];for(i=1;i<rs.length;i++)hd.push(brg(rs[i-1],rs[i]));
+  var last=-99;
+  for(i=0;i+4<hd.length;i++){
+   var turn=0;for(var j=i+1;j<=i+4;j++){var dd=((hd[j]-hd[j-1]+540)%360)-180;turn+=dd}
+   if(Math.abs(turn)>=40&&i-last>=3){turns++;last=i}
+  }
+ }
+ var out={km:km,sec:sec>60?Math.round(sec):0,climb:Math.round(climb),turns:turns};
+ if(!out.sec){var p=String(r&&r.duration||"").split(":").map(Number);var s2=Number(r&&r.durationSeconds)||(p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:0);if(s2>0&&s2<86400)out.sec=s2}
+ out.avg=out.sec>0&&(mkm||km)>0?Math.round((mkm||km)/(out.sec/3600)):0;
+ if(!out.climb&&Number(r&&r.elev)>0)out.climb=Math.round(r.elev);
+ if(!out.turns&&Number(r&&r.turns)>0)out.turns=Number(r.turns);
+ return out;
+}
+function fmtDur(sec){
+ sec=Math.round(Number(sec)||0);if(!sec)return "";
+ var h=Math.floor(sec/3600),m=Math.round((sec%3600)/60);if(m===60){h++;m=0}
+ return h?h+"sa "+m+"dk":Math.max(1,m)+"dk";
+}
+var MONTHS=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+var DAYS=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+function rideDate(r){
+ var a=pts3(r&&r.track);if(a.length&&a[0].t)return new Date(a[0].t);
+ var m=String(r&&r.date||"").match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})/);
+ return m?new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]):null;
+}
+// "12 Ekim Pazartesi · Akşam sürüşü" unless the ride had a destination.
+function rideTitle(r){
+ if(r&&r.destination)return String(r.destination);
+ var d=rideDate(r);if(!d||isNaN(d))return "Sürüş";
+ var h=d.getHours(),part=h<5?"Gece":h<11?"Sabah":h<14?"Öğle":h<18?"İkindi":h<22?"Akşam":"Gece";
+ return d.getDate()+" "+MONTHS[d.getMonth()]+" "+DAYS[d.getDay()]+" · "+part+" sürüşü";
+}
+function rideWhen(r){
+ var d=rideDate(r);if(!d||isNaN(d))return esc(r&&r.date||"");
+ return d.getDate()+" "+MONTHS[d.getMonth()]+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+function isDark(){try{return !document.documentElement.classList.contains("theme-light")}catch(e){return true}}
+function mapView(track,w,h){
+ var pts=points(track);w=w||640;h=h||320;if(pts.length<2)return "";
+ var step=Math.max(1,Math.floor(pts.length/500)),s=[];for(var i=0;i<pts.length;i+=step)s.push(pts[i]);
+ if(s[s.length-1]!==pts[pts.length-1])s.push(pts[pts.length-1]);
+ function px(p,z){var n=256*Math.pow(2,z),sin=Math.sin(p.lat*Math.PI/180);return [n*(p.lon+180)/360,n*(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))]}
+ var pad=34,z=17;
+ for(;z>3;z--){
+  var xs=s.map(function(p){return px(p,z)}),minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  xs.forEach(function(q){minX=Math.min(minX,q[0]);maxX=Math.max(maxX,q[0]);minY=Math.min(minY,q[1]);maxY=Math.max(maxY,q[1])});
+  if(maxX-minX<=w-2*pad&&maxY-minY<=h-2*pad)break;
+ }
+ var x0=(minX+maxX)/2-w/2,y0=(minY+maxY)/2-h/2,style=isDark()?"dark_all":"rastertiles/voyager",tiles="",n=Math.pow(2,z);
+ for(var tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++)for(var ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){
+  if(ty<0||ty>=n)continue;var wx=((tx%n)+n)%n;
+  tiles+='<image href="https://'+"abcd"[(wx+ty)%4]+'.basemaps.cartocdn.com/'+style+'/'+z+'/'+wx+'/'+ty+'@2x.png" x="'+(tx*256-x0).toFixed(1)+'" y="'+(ty*256-y0).toFixed(1)+'" width="256" height="256" preserveAspectRatio="none"/>';
+ }
+ var d=xs.map(function(q,i){return (i?"L":"M")+(q[0]-x0).toFixed(1)+" "+(q[1]-y0).toFixed(1)}).join(""),a=xs[0],b=xs[xs.length-1];
+ // Zoom levels are whole numbers; scale up (max 2x, @2x tiles stay sharp)
+ // so the route fills the frame.
+ var f=Math.max(1,Math.min(2,(w-2*pad)/Math.max(1,maxX-minX),(h-2*pad)/Math.max(1,maxY-minY)));
+ var g='<g transform="translate('+w/2+' '+h/2+') scale('+f.toFixed(3)+') translate('+(-w/2)+' '+(-h/2)+')">',ns=' vector-effect="non-scaling-stroke"',rr=(10/f).toFixed(2);
+ return '<svg class="gr-j-map" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Sürüş haritası">'+
+  '<rect width="'+w+'" height="'+h+'" fill="'+(isDark()?"#1d2229":"#e9edf0")+'"/>'+g+tiles+
+  '<path d="'+d+'" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"'+ns+'/>'+
+  '<path d="'+d+'" fill="none" stroke="#E8322E" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"'+ns+'/>'+
+  '<circle cx="'+(a[0]-x0).toFixed(1)+'" cy="'+(a[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#22C55E" stroke="#fff" stroke-width="3"'+ns+'/>'+
+  '<circle cx="'+(b[0]-x0).toFixed(1)+'" cy="'+(b[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#DC2626" stroke="#fff" stroke-width="3"'+ns+'/></g>'+
+  '<text x="'+(w-8)+'" y="'+(h-8)+'" text-anchor="end" font-size="11" fill="'+(isDark()?"#cfd6df":"#4b5563")+'" opacity=".85">© OpenStreetMap © CARTO</text></svg>';
+}
+function bikeName(r){var m=r&&r.motor||{};return [m.brand,m.model].filter(Boolean).join(" ")}
+// Full card used in Keşfet / Sürüşlerim and the journal.
+function rideCard(r,opts){
+ opts=opts||{};var m=metrics(r||{}),mood=moodLine(r),bike=bikeName(r);
+ var bits=[];if(m.sec)bits.push(fmtDur(m.sec));if(m.avg>0)bits.push("⌀ "+m.avg+" km/sa");if(m.climb>0)bits.push("↑ "+m.climb+" m");bits.push(m.turns+" viraj");
+ return '<div class="gr-ride-card">'+
+  '<div class="gr-ride-card-top">'+(bike?'<small class="gr-ride-bike">'+esc(bike)+'</small>':'')+'<b class="gr-ride-title">'+esc(rideTitle(r))+'</b>'+
+  (mood?'<small class="gr-ride-mood">'+esc(mood)+'</small>':'')+'</div>'+
+  '<div class="gr-ride-map">'+(mapView(r&&r.track,opts.w||640,opts.h||320)||'<div class="gr-ride-nomap">GPS izi yok</div>')+(opts.badge||'')+'</div>'+
+  '<div class="gr-ride-stats"><b>'+(Number(m.km)||0).toFixed(1).replace(".",",")+' km</b><span>'+bits.map(esc).join(" · ")+'</span></div>'+
+  '<small class="gr-ride-when">'+rideWhen(r)+'</small></div>';
+}
+var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points};
 root.GaZonJournal=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

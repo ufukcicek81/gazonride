@@ -247,9 +247,7 @@ body.gr-discover-mine #grSocial,body.gr-discover-mine .gr-travel,body.gr-discove
 .gr-myrides-list{display:grid;gap:12px}
 .gr-myride{flex:0 0 74%;max-width:300px;scroll-snap-align:start;display:grid;gap:3px;text-align:left;padding:10px;border-radius:var(--gr-r);border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);cursor:pointer}
 .gr-myride.wide{max-width:none;padding:12px}
-.gr-myride-map{position:relative;border-radius:var(--gr-r-sm);overflow:hidden;min-height:110px;background:linear-gradient(135deg,#1d3a2e,#20304a);display:grid;place-items:center}
-html.theme-light .gr-myride-map{background:linear-gradient(135deg,#dff1e4,#dbe8f7)}
-.gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-radius:0}
+html.theme-light .gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-radius:0}
 .gr-myride.wide .gr-myride-map .gr-j-thumb{aspect-ratio:640/220}
 .gr-myride-map>.mi{font-size:40px;color:var(--gr-muted)}
 .gr-myride-play{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:16px;background:rgba(10,12,16,.82);color:#fff;font-size:12px;font-weight:800}
@@ -263,3 +261,21 @@ html.theme-light .gr-myride-map{background:linear-gradient(135deg,#dff1e4,#dbe8f
 .gr-myrides-empty small{display:block;color:var(--gr-muted);font-size:13px;margin-top:2px}
 .gr-myrides-empty button{grid-column:1/-1;min-height:52px;border:0;border-radius:var(--gr-r-sm);background:var(--gr-accent);color:#fff;font-weight:900;font-size:15px}
 .discoverTabs .chip.active{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff}
+
+/* Ride card v2 (GaZonJournal.rideCard) */
+.gr-ride-card{display:grid;gap:8px;text-align:left;min-width:0}
+.gr-ride-card-top{display:grid;gap:2px;min-width:0}
+.gr-ride-bike{color:var(--gr-accent);font-size:13px;font-weight:700}
+.gr-ride-title{font-size:20px;font-weight:800;line-height:1.2;color:var(--gr-text)}
+.gr-ride-mood{color:var(--gr-muted);font-size:14px}
+.gr-ride-map{position:relative;border-radius:16px;overflow:hidden;background:var(--gr-surface-2);aspect-ratio:2/1}
+.gr-myride:not(.wide) .gr-ride-map{aspect-ratio:640/300}
+.gr-ride-map .gr-j-map{display:block;width:100%;height:100%}
+.gr-ride-nomap{display:grid;place-items:center;height:100%;color:var(--gr-muted);font-size:13px}
+.gr-ride-stats{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.gr-ride-stats b{font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--gr-text)}
+.gr-ride-stats span{font-size:15px;color:var(--gr-muted)}
+.gr-ride-when{color:var(--gr-muted);font-size:12px}
+.gr-myride{padding:12px;flex-basis:86%;max-width:360px}
+.gr-myride>.gr-ride-card{pointer-events:none}
+.gr-myride .gr-myride-play{pointer-events:none}

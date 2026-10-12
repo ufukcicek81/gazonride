@@ -48,13 +48,19 @@ async function provinceAt(lat, lng) {
   if (provCache.has(key)) return provCache.get(key);
   const j = await osm(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=8&addressdetails=1&lat=${lat}&lon=${lng}`);
   const a = (j && j.address) || {};
-  const out = { province: a.province || a.state || a.city || "", country: a.country_code || "" };
+  const out = { province: a.province || a.city || a.state || "", names: addressNames(a), country: a.country_code || "" };
   provCache.set(key, out);
   return out;
 }
+// Metropolitan provinces often come back as city=... with no province key,
+// so any administrative name of the address may carry the province.
+function addressNames(a) {
+  return ["province", "city", "state", "county", "state_district", "region"].map(k => a && a[k]).filter(Boolean);
+}
 function sameProvince(found, city) {
-  const f = norm(found.province), c = norm(city);
-  return found.country === "tr" && !!f && (f === c || f.includes(c) || c.includes(f));
+  const c = norm(city);
+  const names = (found.names && found.names.length ? found.names : [found.province]).map(norm).filter(Boolean);
+  return found.country === "tr" && names.some(f => f === c);
 }
 
 // The matched page/place must carry the destination's own name: generic
@@ -87,19 +93,20 @@ function namesMatch(place, name, city) {
 }
 async function wikiExact(place) {
   const q = new URLSearchParams({ action: "query", format: "json", titles: place, redirects: "1",
-    prop: "coordinates|pageimages|info", inprop: "url", pithumbsize: "800", origin: "*" });
+    prop: "coordinates|pageimages|info|pageprops", ppprop: "wikibase_item", inprop: "url", pithumbsize: "800", origin: "*" });
   const j = await getJson("https://tr.wikipedia.org/w/api.php?" + q);
   return Object.values((j && j.query && j.query.pages) || {}).filter(p => !p.missing && p.pageid).map(p => ({
     title: p.title, url: p.fullurl,
     lat: p.coordinates && p.coordinates[0] && p.coordinates[0].lat,
     lng: p.coordinates && p.coordinates[0] && p.coordinates[0].lon,
-    image: p.thumbnail && p.thumbnail.source
+    image: p.thumbnail && p.thumbnail.source,
+    qid: p.pageprops && p.pageprops.wikibase_item
   }));
 }
 async function wikiCandidates(place, city) {
   const q = new URLSearchParams({
     action: "query", format: "json", generator: "search", gsrsearch: `${place} ${city}`, gsrlimit: "6",
-    prop: "coordinates|pageimages|info", inprop: "url", pithumbsize: "800", colimit: "max", origin: "*"
+    prop: "coordinates|pageimages|info|pageprops", ppprop: "wikibase_item", inprop: "url", pithumbsize: "800", colimit: "max", origin: "*"
   });
   const j = await getJson("https://tr.wikipedia.org/w/api.php?" + q);
   const pages = Object.values((j && j.query && j.query.pages) || {}).sort((a, b) => a.index - b.index);
@@ -107,8 +114,24 @@ async function wikiCandidates(place, city) {
     title: p.title, url: p.fullurl,
     lat: p.coordinates && p.coordinates[0] && p.coordinates[0].lat,
     lng: p.coordinates && p.coordinates[0] && p.coordinates[0].lon,
-    image: p.thumbnail && p.thumbnail.source
+    image: p.thumbnail && p.thumbnail.source,
+    qid: p.pageprops && p.pageprops.wikibase_item
   }));
+}
+// Many Turkish articles have no coordinates; their Wikidata item often does.
+async function fillFromWikidata(cands) {
+  const need = cands.filter(c => c.qid && (!Number.isFinite(c.lat) || !c.image));
+  if (!need.length) return;
+  const ids = [...new Set(need.map(c => c.qid))].slice(0, 50).join("|");
+  const j = await getJson("https://www.wikidata.org/w/api.php?" + new URLSearchParams({ action: "wbgetentities", ids, props: "claims", format: "json", origin: "*" }));
+  const ents = (j && j.entities) || {};
+  for (const c of need) {
+    const cl = ents[c.qid] && ents[c.qid].claims || {};
+    const co = cl.P625 && cl.P625[0] && cl.P625[0].mainsnak.datavalue && cl.P625[0].mainsnak.datavalue.value;
+    if (co && !Number.isFinite(c.lat)) { c.lat = co.latitude; c.lng = co.longitude; c.coordSource = "wikidata"; }
+    const im = cl.P18 && cl.P18[0] && cl.P18[0].mainsnak.datavalue && cl.P18[0].mainsnak.datavalue.value;
+    if (im && !c.image) c.image = "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(im) + "?width=800";
+  }
 }
 async function commonsImage(place, city) {
   const q = new URLSearchParams({
@@ -129,15 +152,19 @@ async function osmSearch(place, city) {
   const q = new URLSearchParams({ format: "jsonv2", q: `${place}, ${city}, Türkiye`, countrycodes: "tr", limit: "3", addressdetails: "1" });
   const j = await osm("https://nominatim.openstreetmap.org/search?" + q);
   return (Array.isArray(j) ? j : []).map(r => ({ lat: Number(r.lat), lng: Number(r.lon), name: r.display_name,
-    province: (r.address && (r.address.province || r.address.state || r.address.city)) || "" }));
+    province: (r.address && (r.address.province || r.address.city || r.address.state)) || "", names: addressNames(r.address) }));
 }
 
 async function enrich(item) {
   const place = item.place || item.title, city = item.city, out = { status: "unverified" };
-  const cands = (await wikiExact(place)).concat(await wikiCandidates(place, city)).filter(c => namesMatch(place, c.title, city));
+  const all = (await wikiExact(place)).concat(await wikiCandidates(place, city));
+  const cands = all.filter(c => namesMatch(place, c.title, city));
+  await fillFromWikidata(cands);
+  const why = [];
   for (const c of cands) {
-    if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) continue;
+    if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) { why.push(c.title + ": koordinat yok"); continue; }
     const pv = await provinceAt(c.lat, c.lng);
+    if (!sameProvince(pv, city)) why.push(c.title + ": " + (pv.province || "?") + " ilinde");
     if (sameProvince(pv, city)) {
       Object.assign(out, { lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6), wiki: c.url, wikiTitle: c.title, status: "verified", source: "wikipedia+osm" });
       if (c.image) Object.assign(out, { image: c.image, imageCredit: c.url });
@@ -146,7 +173,7 @@ async function enrich(item) {
   }
   if (out.status !== "verified") {
     for (const r of await osmSearch(place, city)) {
-      if (sameProvince({ province: r.province, country: "tr" }, city) && namesMatch(place, String(r.name).split(",")[0], city)) {
+      if (sameProvince({ province: r.province, names: r.names, country: "tr" }, city) && namesMatch(place, String(r.name).split(",")[0], city)) {
         Object.assign(out, { lat: +r.lat.toFixed(6), lng: +r.lng.toFixed(6), status: "geocoded", source: "osm", osmName: r.name });
         break;
       }
@@ -161,6 +188,7 @@ async function enrich(item) {
       if (ci) Object.assign(out, { image: ci.image, imageCredit: ci.credit, imageSource: "commons-search" });
     }
   }
+  if (out.status === "unverified") out.why = (why.length ? why : [all.length ? "ad eşleşmedi: " + all.slice(0, 3).map(c => c.title).join(" / ") : "Wikipedia sonucu yok"]).join("; ").slice(0, 160);
   return out;
 }
 
@@ -176,7 +204,7 @@ async function enrich(item) {
     if (e.image) { item.image = e.image; item.imageCredit = e.imageCredit; if (e.imageSource) item.imageSource = e.imageSource; }
     if (e.wiki) { item.wiki = e.wiki; item.wikiTitle = e.wikiTitle; }
     item.check = e.status;
-    rows.push(`| ${item.id} | ${item.city} | ${item.place} | ${e.status} | ${e.wikiTitle || e.osmName || ""} | ${e.lat != null ? e.lat + ", " + e.lng : "—"} | ${e.image ? (e.imageSource ? "commons" : "wiki") : "yok"} |`);
+    rows.push(`| ${item.id} | ${item.city} | ${item.place} | ${e.status} | ${e.wikiTitle || e.osmName || e.why || ""} | ${e.lat != null ? e.lat + ", " + e.lng : "—"} | ${e.image ? (e.imageSource ? "commons" : "wiki") : "yok"} |`);
     console.log(item.id, item.city, item.place, "→", e.status, e.wikiTitle || e.osmName || "", e.image ? "📷" : "");
   }
   data.checkedAt = new Date().toISOString();

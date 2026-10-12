@@ -250,7 +250,7 @@ function buildOverviewMap(ride){
  var e=a[a.length-1];
  endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#d9272e",9),title:"Varış"});
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
- mode="overview";$("grReplayPlay3D").style.display="inline-flex";$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
+ mode="overview";$("grReplayPlay3D").style.display="inline-flex";modal.classList.remove("gr-replay-live");$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
 }
 async function buildClassicFollowMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
@@ -288,6 +288,72 @@ function routePoint(progress){
  var at=pointAtDistance(Math.max(0,Math.min(1,progress)));
  return at&&at.point
 }
+/* ---------- Chase camera ("Takip") ----------
+ * Camera sits behind and above the rider and looks along the road ahead,
+ * like a drone following the bike. Heading = direction to a point ~350 m
+ * ahead (so it pre-rotates into bends instead of snapping), smoothed with a
+ * time-based exponential filter; range opens up on twisty sections. Center
+ * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
+var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
+var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
+function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
+function angleGap(a,b){return Math.abs(((b-a+540)%360)-180)}
+function chaseTarget(progress){
+ var d=progress*playTotal,cur=pointAtKm(d),ahead=pointAtKm(d+.35),near=pointAtKm(d+.12),far=pointAtKm(d+.6);
+ if(!cur||!ahead)return null;
+ var heading=geoKm(cur,ahead)>.01?bearing(cur,ahead):(chase.heading||0);
+ // Twistiness of the next ~600 m opens the frame so bends stay in view.
+ var bend=near&&far?angleGap(bearing(cur,near),bearing(near,far)):0;
+ return {center:pointAtKm(d+.03)||cur,heading:heading,range:620+Math.min(700,bend*9),tilt:67};
+}
+function updateChaseCamera(progress,now,force){
+ if(!force&&now-chase.ts<30&&progress<1)return;
+ var t=chaseTarget(progress);if(!t)return;
+ var dt=chase.ts?Math.min(.25,(now-chase.ts)/1000):1;chase.ts=now;
+ var kH=1-Math.exp(-dt/.85),kR=1-Math.exp(-dt/1.6),kC=1-Math.exp(-dt/.18);
+ chase.heading=chase.heading==null?t.heading:lerpAngle(chase.heading,t.heading,kH);
+ chase.range=chase.range==null?t.range:chase.range+(t.range-chase.range)*kR;
+ chase.center=chase.center?{lat:chase.center.lat+(t.center.lat-chase.center.lat)*kC,lng:chase.center.lng+(t.center.lng-chase.center.lng)*kC}:{lat:t.center.lat,lng:t.center.lng};
+ orbitLatest={center:chase.center,heading:chase.heading,tilt:t.tilt,range:chase.range};orbitFrames++;
+ if(using3d&&map3d){
+  try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:25};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
+ }else if(classicMap){
+  try{classicMap.moveCamera({center:chase.center,zoom:16.4,heading:chase.heading,tilt:60})}catch(e){}
+ }
+}
+// Recorded speed by distance (needs timestamps), smoothed over ~300 m.
+function buildSpeedProfile(ride){
+ speedProfile=[];
+ var a=cleanTrack(pts(ride)).filter(function(p){return Number(p.time)>0});if(a.length<3)return;
+ var cum=0,raw=[];
+ for(var i=1;i<a.length;i++){
+  var d=geoKm(a[i-1],a[i]),dt=(Number(a[i].time)-Number(a[i-1].time))/3600000;cum+=d;
+  if(dt>0&&d/dt<220)raw.push({km:cum,v:d/dt});
+ }
+ if(!raw.length||cum<=0)return;
+ raw.forEach(function(r,i){
+  var sum=0,n=0;for(var j=i;j>=0&&r.km-raw[j].km<.15;j--){sum+=raw[j].v;n++}
+  for(j=i+1;j<raw.length&&raw[j].km-r.km<.15;j++){sum+=raw[j].v;n++}
+  speedProfile.push({f:r.km/cum,v:sum/n});
+ });
+}
+function speedAt(progress){
+ var sp=speedProfile;if(!sp.length)return null;
+ var lo=0,hi=sp.length-1;while(lo<hi){var m=(lo+hi)>>1;if(sp[m].f<progress)lo=m+1;else hi=m}
+ return sp[lo].v;
+}
+function altitudeAt(progress){
+ var x=pointAtDistance(progress);return x&&x.point&&Number(x.point.alt)>0?x.point.alt:null;
+}
+function updateHud(progress,now,force){
+ if(!force&&now-lastHudTs<120)return;lastHudTs=now;
+ var km=$("grHudKm"),sp=$("grHudSpeed"),al=$("grHudAlt"),cp=$("grHudCompass");
+ if(km)km.textContent=Math.floor(progress*playTotal);
+ if(sp){var v=speedAt(progress);sp.textContent=v==null?"—":Math.round(v)}
+ if(al){var h=altitudeAt(progress);al.textContent=h==null?"—":Math.round(h)}
+ if(cp&&chase.heading!=null)cp.style.transform="rotate("+(-(camMode==="chase"?chase.heading:(orbitLatest&&orbitLatest.heading||0)))+"deg)";
+}
+
 function buildOrbitRail(){
  // A continuous camera axis is derived from the entire measured route.
  // Smooth GPS noise spatially once, before playback; never chase each recorded sample.
@@ -359,15 +425,15 @@ function updateOrbitCamera(progress,ts,force){
  }
 }
 function startReplayPlayback(ride,label){
- mode="3d";$("grReplayPlay3D").style.display="none";$("grReplayPause").style.display="inline-flex";
+ mode="3d";$("grReplayPlay3D").style.display="none";modal.classList.add("gr-replay-live");$("grReplayPause").style.display="inline-flex";
  $("grReplayState").textContent=label||"Sinematik drone uçuşu hazırlanıyor";
  auto=false;start=0;lastProgress=0;lastTrailTs=0;lastBikeTs=0;
- preparePlayback(ride);buildOrbitRail();cancelAnimationFrame(anim);
+ preparePlayback(ride);buildOrbitRail();buildSpeedProfile(ride);chase={heading:null,range:null,ts:0,center:null};lastHudTs=0;cancelAnimationFrame(anim);
  var thisSession=++playSessionId;
  setTimeout(function(){
   if(mode!=="3d"||thisSession!==playSessionId)return;
   auto=true;start=0;
-  $("grReplayState").textContent=using3d?"Cinematic Replay v8 · kesintisiz rota ekseni · "+qualityLabel(ride):"Rota ekseninde uçuş · "+qualityLabel(ride);
+  $("grReplayState").textContent=(camMode==="chase"?"Takip kamerası · ":"Drone yörüngesi · ")+qualityLabel(ride);
   anim=requestAnimationFrame(loop)
  },using3d?2300:introDelay)
 }
@@ -390,15 +456,15 @@ async function build3DMap(ride){
 
   route3d=new Polyline3DElement({
    path:simplifyForMatch(a,900).map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#21F2DE",strokeWidth:22,
-   outerColor:"#07191A",outerWidth:.30,drawsOccludedSegments:true,geodesic:true,zIndex:8
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:camMode==="chase"?"#FFFFFF99":"#21F2DE",strokeWidth:camMode==="chase"?7:22,
+   outerColor:"#07191A",outerWidth:camMode==="chase"?0:.30,drawsOccludedSegments:true,geodesic:true,zIndex:8
   });
   map3d.append(route3d);
 
   travel3d=new Polyline3DElement({
    path:[{lat:first.lat,lng:first.lng,altitude:2}],
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#FFFFFF",strokeWidth:10,
-   outerColor:"#20E0D0",outerWidth:.28,drawsOccludedSegments:true,zIndex:12
+   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:camMode==="chase"?"#E8322E":"#FFFFFF",strokeWidth:camMode==="chase"?16:10,
+   outerColor:camMode==="chase"?"#FFFFFF":"#20E0D0",outerWidth:camMode==="chase"?.18:.28,drawsOccludedSegments:true,zIndex:12
   });
   map3d.append(travel3d);
 
@@ -413,8 +479,11 @@ async function build3DMap(ride){
   using3d=true;lastCameraHeading=head;lastCameraPoint={lat:first.lat,lng:first.lng};
   $("grReplayState").textContent="Google Earth görünümü hazırlanıyor…";
   try{
+   preparePlayback(ride);chase={heading:null,range:null,ts:0,center:null};
+   var t0=camMode==="chase"?chaseTarget(0):null;
    map3d.flyCameraTo({
-    endCamera:{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},
+    endCamera:t0?{center:{lat:t0.center.lat,lng:t0.center.lng,altitude:25},range:t0.range,tilt:t0.tilt,heading:t0.heading}
+                :{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},
     durationMillis:2100
    });
   }catch(e){
@@ -436,9 +505,9 @@ function updateScene(progress,ts){
    lastBikeTs=now
   }
   // The thick full route stays static. Update only the travelled highlight at a modest rate.
-  if(travel3d&&(now-lastTrailTs>480||progress>=1)){
+  if(travel3d&&(now-lastTrailTs>(camMode==="chase"?110:480)||progress>=1)){
    try{
-    var traveled=simplifyForMatch(playPoints.slice(0,x.i+1).concat([p]),520);
+    var traveled=simplifyForMatch(playPoints.slice(0,x.i+1),camMode==="chase"?1600:520).concat([p]);
     travel3d.path=traveled.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}})
    }catch(e){console.warn("Travel trace update",e)}
    lastTrailTs=now
@@ -451,8 +520,9 @@ function updateScene(progress,ts){
    lastTrailTs=now
   }
  }
- // Crucial: no map.center/heading/range assignments on every animation frame.
- updateOrbitCamera(progress,now,progress>=1);
+ if(camMode==="chase")updateChaseCamera(progress,now,progress>=1);
+ else updateOrbitCamera(progress,now,progress>=1);
+ updateHud(progress,now,progress>=1);
  var bar=$("grReplayBar");if(bar)bar.style.width=Math.round(progress*100)+"%";
  setDistanceLabel(progress)
 }
@@ -561,8 +631,14 @@ function scan(){
 }
 function install(){
  modal=document.createElement("div");modal.id="grReplay";modal.className="gr-replay";
- modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><p>Başlangıç ve varış konumunu içeren harita bağlantısı paylaşılır; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button></div></div></div>';
- document.body.appendChild(modal);$("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div>'+
+ '<div class="gr-replay-hud" aria-live="off"><div><b id="grHudKm">0</b><small>km</small><span>mesafe</span></div><div><b id="grHudSpeed">—</b><small>km/sa</small><span>hız</span></div><div><b id="grHudAlt">—</b><small>m</small><span>rakım</span></div></div>'+
+ '<div class="gr-replay-compass" id="grHudCompass" aria-hidden="true"><i>N</i></div>'+
+ '<button class="gr-replay-cam" id="grReplayCam" type="button"></button></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><p>Başlangıç ve varış konumunu içeren harita bağlantısı paylaşılır; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button></div></div></div>';
+ document.body.appendChild(modal);
+ var camBtn=$("grReplayCam"),paintCam=function(){camBtn.innerHTML='<span class="mi">'+(camMode==="chase"?"two_wheeler":"flight")+'</span> '+(camMode==="chase"?"Takip":"Drone")};
+ paintCam();camBtn.onclick=function(){camMode=camMode==="chase"?"orbit":"chase";try{localStorage.setItem("gazon_replay_cam",camMode)}catch(e){}paintCam();if(mode==="3d"&&currentRide)build3DMap(currentRide)};
+ $("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {type:"continuous-route-axis-orbit",frames:orbitFrames,railPoints:orbitRail.length,orbitDegrees:orbitTotalDegrees,latest:orbitLatest,mode:using3d?"3d":"classic"}}};

@@ -97,7 +97,14 @@ jobs:
           assert 'pendingNavRouteRequest={target:q,time:Date.now()}' in html
           assert 'if(desired&&desired===actual)setTimeout(function()' in html
           assert 'return handleMissingNavigationGps(input,q,originInput)' in html
-          assert 'AndroidBridge.openNativeNavigation(d.lat,d.lon' in html
+          assert 'navAutoPlanTimer' not in html, "Typing must not automatically start route planning"
+          autocomplete = html.split('function setupNavAutocomplete(){', 1)[1].split('function clearOriginSuggestions', 1)[0]
+          typing = autocomplete.split('input.addEventListener("input",function(){', 1)[1].split('input.addEventListener("focus"', 1)[0]
+          assert 'planNavigation()' not in typing, "Destination input handler must only display suggestions"
+          assert 'b.addEventListener("click",function(){selectNavSuggestion(p);});' in html
+          gps_fallback = html.split('async function handleMissingNavigationGps(', 1)[1].split('async function planNavigation(', 1)[0]
+          assert 'openNativeNavigation(' not in gps_fallback, "GPS fallback must not start driving"
+          assert 'AndroidBridge.openNativeNavigation(lat,lon' in html, "SÜR must retain native navigation"
           assert 'showNavActionFeedback("Rota bulunamadı.' in html
           assert 'gazon-navigation-premium.css?v=20261011-action-feedback-p2' in html
           assert 'gazon-native-route.js?v=' in html

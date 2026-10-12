@@ -345,6 +345,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261010-route-choice-v1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261011-action-feedback-p2">
 <link rel="stylesheet" href="gazon-tour.css?v=20261011-google-native-blue-v2">
+<link rel="stylesheet" href="gazon-ui.css?v=20261012-ui3">
 </head>
 <body>
 <div class="app">
@@ -503,13 +504,13 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
   <div><span class="mi">headset_mic</span></div><div class="vMain"><b id="voiceDockTitle">Intercom aktif</b><small id="voiceDockSub">Grup bağlantısı sürüyor</small></div>
   <button id="voiceDockMic"><span class="mi">mic</span></button>
 </div><nav class="bottom">
-<button class="navBtn active" data-page="discover"><b><span class="mi">home</span></b>Keşfet</button>
-<button class="navBtn" data-page="navigation"><b><span class="mi">map</span></b>Navigasyon</button>
-<button type="button" class="navBtn navCenter" data-page="ride" aria-label="Sürüş ekranını aç"><b><span class="mi">two_wheeler</span></b>Sürüş</button>
-<button class="navBtn" data-page="voice"><b><span class="mi">graphic_eq</span></b>Intercom</button>
-<button class="navBtn" data-page="profile"><b><span class="mi">person</span></b>Profil</button>
+<button type="button" class="navBtn" data-page="ride" aria-label="Sürüş: harita ve sürüş kaydı"><b><span class="mi">two_wheeler</span></b>Sürüş</button>
+<button type="button" class="navBtn" data-page="navigation" aria-label="Rota oluştur"><b><span class="mi">directions</span></b>Rota</button>
+<button type="button" class="navBtn" data-page="tours" aria-label="Başladığın yere dönen turlar"><b><span class="mi">all_inclusive</span></b>Turlar</button>
+<button type="button" class="navBtn active" data-page="discover" aria-label="Keşfet"><b><span class="mi">explore</span></b>Keşfet</button>
+<button type="button" class="navBtn" data-page="profile" aria-label="Profil"><b><span class="mi">person</span></b>Profil</button>
 </nav>
-<script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script>
 <script src="gazon-nav-progress.js?v=20261012-offroute-v1"></script>
 <script src="gazon-camera.js?v=20261012-camera-v1"></script>
 <script src="gazon-native-route.js?v=20261012-stable-road-anchor-v2"></script>
@@ -2430,8 +2431,10 @@ window.GaZonBack=function(){
  return false;
 };
 function nav(page,button){
+ // "Turlar" tab = planning map in tour mode (gazon-ui.js switches the panel).
+ if(page==="tours")page="navigation";
  if(page!=="navigation"&&window.GaZonTour&&GaZonTour.isTourMode())GaZonTour.clear();
- document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});button.classList.add("active");
+ document.querySelectorAll(".navBtn").forEach(function(b){b.classList.remove("active");});if(button)button.classList.add("active");
  closeScreen();
  if(page==="home"||page==="discover"){setMode("discover");setDiscoverFilter("discover");}
  else if(page==="navigation"){setMode("navigation");startGPS();setTimeout(function(){if(currentPoint)setMapCenter(currentPoint,16)},120);}
@@ -2596,5 +2599,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-destinations.js?v=20261011-card-nav-start-v1"></script>
 <script src="replay.js?v=20261009-ui-share-fix1"></script>
 <script src="gazon-music.js?v=20261009-native-duck2"></script>
+<script src="gazon-ui.js?v=20261012-ui3"></script>
 </body>
 </html>

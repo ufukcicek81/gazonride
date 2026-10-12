@@ -1,0 +1,151 @@
+/* GaZonRide UI v3 · "Ride-first" design system
+ * Loaded LAST: it overrides the older layered patches with one set of tokens.
+ * Principles: full-screen map, glanceable numbers, 56-64 px glove targets,
+ * nothing under the status bar / gesture bar, same layout in light + dark.
+ * Safe areas: Android injects --gr-safe-top/--gr-safe-bottom (WebView has no
+ * env(safe-area-inset-*) on most devices); browsers fall back to env().
+ */
+:root{
+ --gr-safe-top:env(safe-area-inset-top,0px);
+ --gr-safe-bottom:env(safe-area-inset-bottom,0px);
+ --gr-nav-h:72px;
+ --gr-sheet-h:190px;
+ --gr-touch:56px;
+ --gr-touch-lg:64px;
+ --gr-r-sm:12px;--gr-r:18px;--gr-r-lg:24px;
+ --gr-route:#1A73E8;
+ --gr-accent:#FF5A1F;
+ --gr-ok:#16A34A;--gr-warn:#D97706;--gr-danger:#DC2626;
+ --gr-font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+ --gr-ease:cubic-bezier(.2,.8,.2,1);
+}
+html.theme-dark,html:not(.theme-light){
+ --gr-bg:#0A0C10;--gr-surface:#12161D;--gr-surface-2:#1A1F29;--gr-line:#272D39;
+ --gr-text:#F3F5F8;--gr-muted:#A0A9B8;--gr-glass:rgba(13,16,22,.88);--gr-shadow:0 10px 30px rgba(0,0,0,.45);
+ --gr-hud:#0E5E4A;--gr-hud-2:#0B4D3D;
+}
+html.theme-light{
+ --gr-bg:#F4F5F7;--gr-surface:#FFFFFF;--gr-surface-2:#EEF0F3;--gr-line:#DCE0E6;
+ --gr-text:#11151B;--gr-muted:#56606D;--gr-glass:rgba(255,255,255,.94);--gr-shadow:0 10px 26px rgba(17,21,27,.14);
+ --gr-hud:#0F6E56;--gr-hud-2:#0C5B47;
+}
+/* Map the legacy variables onto the tokens so every older component follows. */
+html.theme-dark,html.theme-light{--bg:var(--gr-bg);--card:var(--gr-surface);--card2:var(--gr-surface-2);--line:var(--gr-line);--muted:var(--gr-muted);--text:var(--gr-text);--accent:var(--gr-accent)}
+body{font-family:var(--gr-font);background:var(--gr-bg);color:var(--gr-text);-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--gr-accent) 70%,transparent);outline-offset:2px}
+
+/* ---------- Bottom navigation: 5 equal tabs, pill indicator ---------- */
+html body .bottom,html body.mode-ride .bottom,html body.mode-navigation:not(.guidance-active) .bottom{
+ padding:6px 6px calc(6px + var(--gr-safe-bottom))!important;min-height:0!important;align-items:center!important;
+ background:var(--gr-glass)!important;border-top:1px solid var(--gr-line)!important;
+ -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+ grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:2px!important;
+}
+.bottom>.navBtn{
+ min-height:58px!important;height:58px;border-radius:16px;padding:4px 0!important;gap:4px!important;justify-content:center!important;
+ font-size:12px!important;font-weight:700;letter-spacing:0!important;
+ color:var(--gr-muted)!important;background:transparent!important;transition:color .2s var(--gr-ease)
+}
+.bottom>.navBtn>b{
+ width:58px!important;height:32px!important;border-radius:16px!important;margin:0 auto!important;
+ background:transparent!important;box-shadow:none!important;color:inherit!important;
+ transition:background .25s var(--gr-ease)
+}
+.bottom>.navBtn>b .mi{font-size:25px!important}
+.bottom>.navBtn.active{color:var(--gr-text)!important}
+.bottom>.navBtn.active>b{background:color-mix(in srgb,var(--gr-accent) 20%,transparent)!important;color:var(--gr-accent)!important}
+@media(max-width:350px){.bottom>.navBtn{font-size:10.5px!important}.bottom>.navBtn>b{width:48px!important}}
+
+/* ---------- Shared surfaces ---------- */
+.card,.screenCard,.homeMenuBtn{border-radius:var(--gr-r)!important}
+.mapBtn,.navRecenterBtn{min-width:var(--gr-touch);min-height:var(--gr-touch)}
+.btn{min-height:var(--gr-touch);border-radius:var(--gr-r)!important;font-weight:800}
+.input,select{min-height:48px;font-size:16px}  /* 16px: no zoom-on-focus */
+.screenHead{padding-top:calc(var(--gr-safe-top) + 10px)!important}
+.appHeader{padding-top:calc(var(--gr-safe-top) + 8px)!important}
+.screen{padding-bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 16px)!important}
+.gr-beta-badge{position:fixed;z-index:3000;left:50%;transform:translateX(-50%);top:calc(var(--gr-safe-top) + 4px);
+ background:#7C3AED;color:#fff;font:800 10px/1 var(--gr-font);letter-spacing:.8px;padding:4px 8px;border-radius:999px;pointer-events:none;opacity:.9}
+
+/* ---------- Sürüş (ride): full map, compact sheet, big start ---------- */
+html body.mode-ride .map{inset:0 0 calc(var(--gr-nav-h) + var(--gr-safe-bottom)) 0!important}
+html body.mode-ride .map .live{top:calc(var(--gr-safe-top) + 12px)!important;left:12px!important;right:12px!important;gap:8px!important}
+html body.mode-ride .liveBox{background:var(--gr-glass)!important;color:var(--gr-text)!important;border:1px solid var(--gr-line)!important;border-radius:var(--gr-r)!important;padding:10px 8px!important}
+html body.mode-ride .liveBox b{font-size:30px!important;font-weight:900;letter-spacing:-.5px}
+html body.mode-ride .liveBox small{font-size:10.5px!important;letter-spacing:.4px!important;color:var(--gr-muted)!important;font-weight:700}
+html body.mode-ride .content{bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom))!important;padding:0 10px calc(var(--gr-touch-lg) + 18px)!important}
+html body.mode-ride .content .grid{
+ background:var(--gr-glass)!important;border:1px solid var(--gr-line)!important;box-shadow:var(--gr-shadow);
+ border-radius:var(--gr-r-lg) var(--gr-r-lg) var(--gr-r) var(--gr-r)!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;padding:20px 8px 10px!important;
+ max-height:none!important;overflow:visible!important;position:relative;pointer-events:auto
+}
+html body.mode-ride .content .card{padding:6px 2px!important}
+html body.mode-ride .content .card .big{font-size:22px!important;font-weight:900;color:var(--gr-text)}
+html body.mode-ride .content .card .sub{font-size:11px!important;line-height:1.25!important;color:var(--gr-muted)!important;font-weight:600}
+html body.mode-ride .content .fuelInline input{font-size:20px!important;width:58px!important;min-height:36px;color:var(--gr-text)}
+html body.mode-ride .content .fuelInline span{font-size:11px!important}
+/* Collapsed: the 4 key numbers only. Handle expands consumption + lean. */
+html body.mode-ride:not(.gr-ride-expanded) .content .card:nth-of-type(n+5){display:none!important}
+.gr-sheet-handle{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;border:0;background:transparent;
+ display:grid;place-items:center;cursor:pointer;padding:0}
+.gr-sheet-handle::before{content:"";width:42px;height:5px;border-radius:3px;background:var(--gr-muted);opacity:.55}
+html body.mode-ride .leanStats small,html body.mode-ride .leanCenter small{font-size:10px!important}
+html body.mode-ride .leanActions button{min-height:44px;font-size:13px!important}
+html body.mode-ride .actions{bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 10px)!important;height:var(--gr-touch-lg)!important;
+ grid-template-columns:var(--gr-touch-lg) 1fr!important;gap:10px!important;width:min(520px,calc(100% - 20px))!important}
+html body.mode-ride .actions .btn{min-height:var(--gr-touch-lg)!important;height:var(--gr-touch-lg)!important;border-radius:20px!important;font-size:18px!important}
+html body.mode-ride .actions .btn.dark{background:var(--gr-glass)!important;color:var(--gr-text)!important;border:1px solid var(--gr-line)!important;padding:0!important;font-size:0!important}
+html body.mode-ride .actions .btn.dark .mi{font-size:26px!important}
+html body.mode-ride .mapBottom{bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + var(--gr-sheet-h) + 16px)!important;
+ grid-template-columns:var(--gr-touch)!important;gap:12px!important}
+html body.mode-ride .mapBottom .mapBtn,.gr-map-fab{width:var(--gr-touch)!important;height:var(--gr-touch)!important;border-radius:50%!important;
+ background:var(--gr-glass)!important;color:var(--gr-text)!important;border:1px solid var(--gr-line)!important;box-shadow:var(--gr-shadow)}
+html body.mode-ride .mapBottom .mapBtn .mi{font-size:26px!important}
+
+/* ---------- Rota / Turlar (planning) ---------- */
+html body.mode-navigation:not(.guidance-active) .navigationPanel{top:calc(var(--gr-safe-top) + 12px)!important}
+html body.mode-navigation:not(.guidance-active) .map{height:calc(100dvh - var(--gr-nav-h) - var(--gr-safe-bottom))!important}
+/* Tabs choose Rota or Turlar; the old in-panel switch is redundant. */
+.gr-tabs-v3 .navigationPanel .gr-plan-modes{display:none!important}
+html body.mode-navigation .navSearchRow{min-height:60px!important;border-radius:var(--gr-r)!important}
+html body.mode-navigation #navGo{min-width:52px;min-height:48px;border-radius:14px}
+#navDrive,#grTourOpen{min-height:var(--gr-touch-lg)!important;font-size:18px!important;font-weight:900!important;border-radius:20px!important}
+#grTourPlan{min-height:var(--gr-touch)!important;font-size:16px!important;border-radius:var(--gr-r)!important}
+.gr-tour-panel select{min-height:48px!important;font-size:16px!important}
+.navChoices,.gr-tour-choices{padding-bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 10px)!important}
+.navChoices.active,.gr-tour-choices.active{bottom:0!important}
+.gr-tour-route,.gr-route-option{min-height:var(--gr-touch)}
+.navRecenterBtn{bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 24px)!important}
+
+/* ---------- Guidance HUD (web / iOS navigation) ---------- */
+html body.guidance-active .map{height:100dvh!important}
+.guidanceTop{top:calc(var(--gr-safe-top) + 10px)!important;left:10px!important;right:10px!important}
+.guidanceMain{background:var(--gr-hud)!important;border-radius:var(--gr-r-lg) var(--gr-r-lg) var(--gr-r-sm) var(--gr-r-sm)!important;box-shadow:var(--gr-shadow)!important}
+.guidanceNext{background:var(--gr-hud-2)!important}
+.guidanceRoadWrap b{font-size:clamp(22px,6.6vw,30px)!important}
+.guidanceRoadWrap small{font-size:15px!important;font-weight:600}
+.guidanceTurnIcon{font-size:clamp(46px,13vw,58px)!important}
+.guidanceFloat{right:10px!important;top:auto!important;bottom:calc(112px + var(--gr-safe-bottom))!important;gap:12px!important}
+.guidanceFloat button,.guidanceBottom button{width:var(--gr-touch-lg)!important;height:var(--gr-touch-lg)!important;
+ background:var(--gr-glass)!important;color:var(--gr-text)!important;border:1px solid var(--gr-line)!important;box-shadow:var(--gr-shadow)!important}
+.guidanceFloat .gr-view-label{font:900 17px/1 var(--gr-font)}
+.guidanceSpeed{left:10px!important;bottom:calc(112px + var(--gr-safe-bottom))!important;width:72px!important;height:72px!important;
+ background:var(--gr-glass)!important;color:var(--gr-text)!important;border:1px solid var(--gr-line)!important}
+.guidanceBottom{padding:10px 12px calc(10px + var(--gr-safe-bottom))!important;background:var(--gr-glass)!important;color:var(--gr-text)!important;
+ border-top:1px solid var(--gr-line)!important;grid-template-columns:var(--gr-touch-lg) 1fr var(--gr-touch-lg)!important;
+ -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.guidanceSummary b{color:var(--gr-ok)!important;font-size:30px!important}
+.guidanceSummary small{color:var(--gr-muted)!important;font-size:15px!important;font-weight:600}
+#guidanceClose{color:var(--gr-danger)!important}
+
+/* Music mini-player and intercom dock never cover HUD or tabs. */
+.voiceDock{bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 8px)!important}
+
+/* ---------- Motion ---------- */
+.screen.active{animation:grRise .28s var(--gr-ease)}
+@keyframes grRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+html body.mode-ride .content .card{background:transparent!important;box-shadow:none!important;border:0!important}
+.gr-music-launch{background:var(--gr-glass)!important;color:var(--gr-text)!important;border-color:var(--gr-line)!important;min-height:var(--gr-touch)}

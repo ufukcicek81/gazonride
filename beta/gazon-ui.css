@@ -221,3 +221,10 @@ html body.mode-ride .gr-lean-box{display:block;font:inherit;cursor:pointer}
 html body.mode-ride .gr-lean-box small{white-space:nowrap}
 html body.mode-ride .liveBox b{font-size:clamp(22px,7vw,30px)!important}
 html body.mode-ride .liveBox small{font-size:clamp(9px,2.6vw,10.5px)!important}
+
+/* Intercom level meters + muted mic */
+.voiceMeters{display:grid;gap:8px;margin:12px 0;text-align:left}
+.voiceMeters div{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--gr-muted)}
+.voiceMeters i{display:block;height:10px;border-radius:5px;background:var(--gr-surface-2);overflow:hidden}
+.voiceMeters b{display:block;height:100%;width:0;background:var(--gr-ok);transition:width .1s linear}
+.talkBtn.muted{background:var(--gr-surface-2)!important;color:var(--gr-muted)!important;box-shadow:none!important}

@@ -212,7 +212,7 @@ function renderOptions(){
  box.innerHTML='<div class="gr-tour-heading"><b>Turunu seç</b><small>'+options.length+' gerçek yol rotası</small></div>'+
  '<div class="gr-tour-routes">'+options.map(function(x,i){
   return '<button type="button" data-tour="'+i+'" aria-pressed="'+(i===selected)+'" class="gr-tour-route'+(i===selected?' active':'')+'">'+
-  '<b>'+(i+1)+'. '+esc(x.name)+'</b><strong>'+x.km.toFixed(1)+' km</strong><small>'+Math.round(x.sec/60)+' dk · dönüş yolu ayrı · tahmini viraj '+x.curveScore+' /10 km</small></button>'
+  '<b>'+(i+1)+'. '+esc(x.name)+'</b><strong>'+x.km.toFixed(1)+' km</strong><small>'+Math.round(x.sec/60)+' dk · tahmini yol tekrarı %'+Math.round(x.overlap*100)+' · viraj '+x.curveScore+' /10 km</small></button>'
  }).join("")+'</div>'+
  '<div class="gr-tour-action"><button id="grTourOpen" type="button"><span class="mi">navigation</span> GaZonRide’da turu başlat</button></div>'+
  '<p class="gr-tour-disclaimer">Viraj puanı Google yol çizgilerinden tahmindir; asfalt kalitesi, kapalı yollar ve motosiklete uygunluk doğrulanmaz. Canlı navigasyon gerektiğinde rotayı yeniden hesaplayabilir.</p>';

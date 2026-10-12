@@ -67,6 +67,7 @@ public class MainActivity extends Activity {
     private volatile boolean nativeUpdateCheckRunning = false;
     // Set only for the duration of one openNativeRouteToken bridge call.
     private volatile String pendingRouteToken = "";
+    private volatile String pendingRouteNote = "";
     private int safeTopPx = 0, safeBottomPx = 0;
 
     private SensorManager sensorManager;
@@ -241,6 +242,8 @@ public class MainActivity extends Activity {
                 double lat=last.getDouble("lat"),lon=last.getDouble("lon");
                 final String validated=points.toString();
                 final String token=pendingRouteToken==null?"":pendingRouteToken;
+                final String note=pendingRouteNote==null?"":pendingRouteNote;
+                pendingRouteNote="";
                 final String safeTitle=title==null?"Hedef":title.length()>140?
                         title.substring(0,140):title;
                 runOnUiThread(() -> {
@@ -248,6 +251,7 @@ public class MainActivity extends Activity {
                         Intent intent=new Intent(MainActivity.this,NativeNavigationActivity.class);
                         intent.putExtra("route_waypoints",validated);
                         if(!token.isEmpty()) intent.putExtra("route_token",token);
+                        intent.putExtra("route_token_note",note);
                         intent.putExtra("destination_lat",lat);
                         intent.putExtra("destination_lng",lon);
                         intent.putExtra("destination_title",safeTitle);
@@ -270,6 +274,10 @@ public class MainActivity extends Activity {
             pendingRouteToken=token==null?"":token;
             try { return openNativeRoute(json,title,avoidTolls,avoidHighways); }
             finally { pendingRouteToken=""; }
+        }
+        // Why the exact (token) route was unavailable; shown on the nav screen.
+        @JavascriptInterface public void setRouteTokenNote(String note){
+            pendingRouteNote=note==null?"":(note.length()>200?note.substring(0,200):note);
         }
         @JavascriptInterface public String getWebChannel(){
             return prefs.getString("web_channel",getString(R.string.default_web_channel));

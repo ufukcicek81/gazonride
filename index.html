@@ -1828,6 +1828,8 @@ async function openNativeRouteExact(stops,title,avoidTolls,avoidHighways,tokenRe
    token=await GaZonRouteToken.fetchToken(tokenRequest);
   }
   window.GaZonLastRouteToken=token?"exact":"stops-only";
+  // Native screen shows why the exact route was not available.
+  try{if(typeof AndroidBridge.setRouteTokenNote==="function")AndroidBridge.setRouteTokenNote(token?"":(window.GaZonRouteToken&&GaZonRouteToken.lastError||"bilinmiyor"))}catch(e){}
   if(AndroidBridge.openNativeRouteToken(json,title,!!avoidTolls,!!avoidHighways,token?token.token:""))return true;
  }
  if(typeof AndroidBridge.openNativeRoute==="function")

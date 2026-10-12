@@ -67,13 +67,22 @@ function fetchToken(req,opts){
  opts=opts||{};
  var key=opts.key||apiKey(),doFetch=opts.fetch||root.fetch;
  var b=body(req||{});
- if(!key||!b||typeof doFetch!=="function")return Promise.resolve(null);
+ api.lastError="";
+ if(!key||!b||typeof doFetch!=="function"){api.lastError=!key?"anahtar yok":!b?"geçersiz nokta":"fetch yok";return Promise.resolve(null)}
  var timeout=null,controller=typeof AbortController!=="undefined"?new AbortController():null;
  if(controller)timeout=setTimeout(function(){try{controller.abort()}catch(e){}},opts.timeoutMs||8000);
  return Promise.resolve(doFetch(ENDPOINT,{method:"POST",
   headers:{"Content-Type":"application/json","X-Goog-Api-Key":key,"X-Goog-FieldMask":FIELDS},
   body:JSON.stringify(b),signal:controller?controller.signal:undefined}))
- .then(function(res){if(!res||!res.ok)return null;return res.json()})
+ .then(function(res){
+  if(!res||!res.ok){
+   api.lastError="HTTP "+(res&&res.status);
+   // Google explains key / API restrictions in the error body.
+   return res&&res.json?res.json().then(function(j){
+    if(j&&j.error&&j.error.message)api.lastError+=" · "+String(j.error.message).slice(0,140);return null
+   },function(){return null}):null;
+  }
+  return res.json()})
  .then(function(json){
   var routes=json&&Array.isArray(json.routes)?json.routes:[];
   var target=req.matchPoints?cells(req.matchPoints):null,best=null,bestScore=-1;
@@ -88,13 +97,14 @@ function fetchToken(req,opts){
   });
   // A token for a DIFFERENT road would make native guidance disagree with
   // the map preview; reject anything under 80% shared road.
-  if(!best||(target&&bestScore<.8))return null;
+  if(!best){if(json&&!api.lastError)api.lastError="token dönmedi";return null}
+  if(target&&bestScore<.8){api.lastError="farklı yol (%"+Math.round(bestScore*100)+")";return null}
   return best;
  })
- .catch(function(){return null})
+ .catch(function(e){api.lastError="bağlantı: "+String(e&&e.name||e).slice(0,60);return null})
  .then(function(r){if(timeout)clearTimeout(timeout);return r});
 }
-var api={fetchToken:fetchToken,body:body,decode:decode,cells:cells,overlap:overlap};
+var api={fetchToken:fetchToken,body:body,decode:decode,cells:cells,overlap:overlap,lastError:""};
 root.GaZonRouteToken=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

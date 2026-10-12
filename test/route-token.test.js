@@ -55,3 +55,10 @@ test("errors, HTTP failures and missing key fall back to null",async()=>{
  assert.equal(await T.fetchToken({origin:home,destination:dest},{key:"k",fetch:async()=>{throw new Error("cors")}}),null);
  assert.equal(await T.fetchToken({origin:home,destination:dest},{key:"",fetch:async()=>({ok:true})}),null);
 });
+
+test("failure reason is recorded for the rider",async()=>{
+ await T.fetchToken({origin:home,destination:dest},{key:"k",fetch:async()=>({ok:false,status:403,json:async()=>({error:{message:"Routes API has not been used in project"}})})});
+ assert.match(T.lastError,/HTTP 403 · Routes API/);
+ await T.fetchToken({origin:home,destination:dest},{key:"k",fetch:async()=>({ok:true,json:async()=>({routes:[{distanceMeters:5}]})})});
+ assert.equal(T.lastError,"token dönmedi");
+});

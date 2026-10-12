@@ -15,7 +15,7 @@
 .gr-post-title{font-size:15px;font-weight:950;margin-top:11px}.gr-post-text{font-size:11px;color:var(--text);line-height:1.45;margin-top:5px}.gr-post-meta{font-size:9px;color:var(--muted);margin-top:6px}
 .gr-post-actions{display:flex;gap:7px;margin-top:10px}.gr-post-actions button{border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:11px;padding:8px 10px;font-size:10px;font-weight:800}
 .gr-badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:8px;font-weight:900;margin-left:5px}.gr-badge.pending{background:#fff3cd;color:#7a5700}.gr-badge.approved{background:#e7f7ec;color:#176b33}
-.gr-modal{position:fixed;z-index:5000;inset:0;background:rgba(0,0,0,.72);display:none;padding:calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 16px);overflow:auto}
+.gr-modal{position:fixed;z-index:5000;inset:0;background:rgba(0,0,0,.72);display:none;padding:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 16px) 12px calc(var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)) + 16px);overflow:auto}
 .gr-modal.active{display:block}.gr-modal-card{width:min(520px,100%);margin:0 auto;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:0 20px 60px #0008}
 .gr-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.gr-modal-head b{font-size:20px}.gr-close{border:1px solid var(--line);background:var(--card);color:var(--text);width:40px;height:40px;border-radius:12px}
 .gr-field{width:100%;margin-top:8px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:12px;outline:none;font:inherit}

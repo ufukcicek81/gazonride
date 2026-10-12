@@ -7,7 +7,7 @@
 #grRouteHubList .gr-route-title{font-size:19px;line-height:1.22;max-width:95%;overflow-wrap:anywhere}
 #grRouteHubList .gr-route-tile-body p{font-size:12px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .gr-gallery-hint{position:absolute;z-index:5;bottom:12px;right:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(4,8,13,.82);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 9px;border-radius:10px;font-size:10px;font-weight:800;box-shadow:0 5px 18px #0006}
-.gr-guide-overlay{position:fixed;inset:0;z-index:8500;overflow-y:auto;overscroll-behavior:contain;background:rgba(3,6,11,.92);backdrop-filter:blur(12px);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.gr-guide-overlay{position:fixed;inset:0;z-index:8500;overflow-y:auto;overscroll-behavior:contain;background:rgba(3,6,11,.92);backdrop-filter:blur(12px);padding:var(--gr-safe-top,env(safe-area-inset-top,0px)) 0 var(--gr-safe-bottom,env(safe-area-inset-bottom,0px))}
 .gr-guide-sheet{margin:0 auto;min-height:100%;width:min(620px,100%);background:var(--bg);color:var(--text);padding:18px 14px 28px}
 .gr-guide-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;min-width:0}
 .gr-guide-head>div{min-width:0}

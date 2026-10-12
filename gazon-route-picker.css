@@ -17,7 +17,7 @@ body.mode-navigation:not(.guidance-active) #navChoices.active{
  z-index:1501;
  left:12px;
  right:12px;
- bottom:calc(106px + env(safe-area-inset-bottom,0px));
+ bottom:calc(106px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));
  width:auto;
  max-width:min(540px,calc(100% - 24px));
  margin:0 auto;
@@ -142,11 +142,11 @@ body.mode-navigation:not(.guidance-active) #navChoices.active{
 }
 #navChoices #navRouteMaps .mi{font-size:20px}
 body.mode-navigation:not(.guidance-active) #navInstruction.active{display:none!important}
-body.mode-navigation #grMusic{bottom:calc(339px + env(safe-area-inset-bottom,0px))}
+body.mode-navigation #grMusic{bottom:calc(339px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
 @media(max-width:360px){
- body.mode-navigation:not(.guidance-active) #navChoices.active{left:8px;right:8px;max-width:calc(100% - 16px);padding:10px;bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+ body.mode-navigation:not(.guidance-active) #navChoices.active{left:8px;right:8px;max-width:calc(100% - 16px);padding:10px;bottom:calc(100px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
  #navChoices .navChoice{flex-basis: min(160px,55vw);min-height:80px}
  #navChoices .gr-route-chooser-title{font-size:12px}
  #navChoices #navRouteStart{font-size:12px}
- body.mode-navigation #grMusic{bottom:calc(323px + env(safe-area-inset-bottom,0px))}
+ body.mode-navigation #grMusic{bottom:calc(323px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))}
 }

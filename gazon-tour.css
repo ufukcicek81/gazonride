@@ -50,7 +50,7 @@ body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-panel{
 .gr-tour-choices{display:none}
 body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-choices.active{
  display:block;position:fixed;z-index:1600;pointer-events:auto;
- bottom:calc(107px + env(safe-area-inset-bottom,0px));left:12px;right:12px;
+ bottom:calc(107px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));left:12px;right:12px;
  width:min(516px,calc(100% - 24px));margin:auto;max-height:34dvh;overflow-y:auto;
  background:rgba(12,16,24,.98);border:1px solid #ffffff35;border-radius:21px;
  padding:13px;box-shadow:0 15px 40px #000a;box-sizing:border-box;
@@ -79,7 +79,7 @@ body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-choices.active{
 .gr-tour-action .mi{font-size:20px}
 .gr-tour-disclaimer{font-size:9px;line-height:1.4;color:#9cabbc;margin:9px 1px 1px}
 body.mode-navigation.gr-tour-mode .navRecenterBtn{
- bottom:calc(360px + env(safe-area-inset-bottom,0px))
+ bottom:calc(360px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)))
 }
 @media(max-height:735px){
  body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-panel{

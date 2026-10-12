@@ -93,6 +93,16 @@ jobs:
         env:
           GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
         run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta -PwebChannel=beta
+      - name: Navigation SDK API report (method signatures used via reflection)
+        if: always()
+        shell: bash
+        run: |
+          AAR=$(find ~/.gradle/caches -name 'navigation-7.3.0.aar' | head -1)
+          echo "AAR: $AAR"; [ -n "$AAR" ] || exit 0
+          mkdir -p /tmp/nav && cd /tmp/nav && unzip -oq "$AAR" classes.jar
+          for c in Navigator CustomRoutesOptions 'CustomRoutesOptions$Builder' TimeAndDistance ArrivalEvent NavigationView; do
+            echo "=== $c"; javap -cp classes.jar "com.google.android.libraries.navigation.$c" 2>&1 | grep -iE 'destination|token|travel|timeanddistance|eta|final|builder|build|header|footer|speed' || true
+          done
       - name: Upload test APK (not a release)
         uses: actions/upload-artifact@v4
         with:

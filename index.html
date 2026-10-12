@@ -515,7 +515,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <script>
 (function(){
 "use strict";
-var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0,navAutoPlanTimer=null;
+var riding=false,watchId=null,startTime=0,lastPoint=null,totalKm=0,maxSpeed=0,totalClimb=0,turnCount=0,prevAlt=null,timer=null,track=[],leanAngleNow=0,leanMaxLeft=0,leanMaxRight=0,leanSamples=[],leanLastSampleTs=0,leanCalibrated=false,map=null,marker=null,route=null,satellite=false,lastGpsTs=0,currentPoint=null,navRoute=null,navActive=false,navReady=false,navSteps=[],navStepIndex=0,navTotalKm=0,navTotalSec=0,navStartedRide=false,activeNavLabel="",activeRouteMode="DRIVING",activeNavDestination=null,navAlternatives=[],navAlternativePolylines=[],navAlternativeMarkers=[],navSelectedAlternative=0,navPathPoints=[],navOffRouteCount=0,navRecalculating=false,navLastRecalc=0,navLastPanAt=0,navGpsErrorAt=0,navGuidanceTimer=null,guidanceMuted=false,lastGuidanceStep=-1,lastHeading=0,headingReady=false,gpsRideReference=null,gpsCameraReference=null,navLastRouteTrim=-1,navGuidanceStart=0,wakeLock=null,googleReady=false,placesService=null,geocoder=null,navAutocompleteToken=null,navAutocompleteSeq=0,navAutocompleteTimer=null,originAutocompleteToken=null,originAutocompleteSeq=0,originAutocompleteTimer=null,navPlanSeq=0;
 var navGpsWatchId=null,pendingNavRouteRequest=null,navLastLocationError="",navLastLocationFixAt=0;
 function $(id){return document.getElementById(id);}
 function systemTheme(){
@@ -1110,9 +1110,10 @@ function clearNavSuggestions(){
 }
 async function selectNavSuggestion(prediction){
  try{
+  var selectionSeq=navAutocompleteSeq,typedValue=$("navDestination").value;
   var place=prediction.toPlace();
   await place.fetchFields({fields:["displayName","formattedAddress","location"]});
-  if(!place.location)return;
+  if(selectionSeq!==navAutocompleteSeq||$("navDestination").value!==typedValue||!place.location)return;
   var input=$("navDestination"),label=place.formattedAddress||place.displayName||prediction.text.toString();
   input.value=label;
   input.dataset.lat=String(place.location.lat());
@@ -1121,7 +1122,7 @@ async function selectNavSuggestion(prediction){
   clearNavSuggestions();
   ++navAutocompleteSeq;
   clearTimeout(navAutocompleteTimer);
-  clearTimeout(navAutoPlanTimer);
+  
   navAutocompleteToken=null;
   input.blur();
   await planNavigation(); // Directly preview all route options after choosing the destination.
@@ -1161,7 +1162,7 @@ function setupNavAutocomplete(){
   pendingNavRouteRequest=null;
   showNavActionFeedback("",false);
   clearTimeout(navAutocompleteTimer);
-  clearTimeout(navAutoPlanTimer);
+  
   if(navReady&&!navActive){
    clearAlternativeRoutes();
    navReady=false;
@@ -1169,13 +1170,8 @@ function setupNavAutocomplete(){
   }
   if(value.length<2){clearNavSuggestions();return;}
   navAutocompleteTimer=setTimeout(function(){fetchNavSuggestions(value,seq);},180);
-  // Also work for manually typed or pasted destinations. Wait until typing
-  // pauses, so we don't bill Google Routes for every keystroke.
-  if(value.length>=6){
-   navAutoPlanTimer=setTimeout(function(){
-    if(input.value.trim()===value&&gazonCurrentMode==="navigation"&&!navActive)planNavigation()
-   },1550)
-  }
+  // Typing only lists suggestions. Planning requires an explicit rider action:
+  // tap a suggestion, tap the route button, or press keyboard Search.
  });
  input.addEventListener("focus",function(){if(input.value.trim().length>=2){var seq=++navAutocompleteSeq;fetchNavSuggestions(input.value.trim(),seq);}});
  document.addEventListener("click",function(e){if(!e.target.closest(".navSearchRow"))clearNavSuggestions();});
@@ -1418,17 +1414,9 @@ async function handleMissingNavigationGps(input,q,originInput){
   if(currentPoint){showNavActionFeedback("",false);return planNavigation()}
   activeNavLabel=d.label||q;activeNavDestination={lat:d.lat,lon:d.lon};
   if(map){map.panTo({lat:d.lat,lng:d.lon});map.setZoom(11)}
-  // Android's official Google navigator can acquire location independently of
-  // WebView; browser users can manually select an origin instead.
-  if(window.AndroidBridge&&typeof AndroidBridge.openNativeNavigation==="function"&&
-    AndroidBridge.openNativeNavigation(d.lat,d.lon,activeNavLabel,false,false)){
-   pendingNavRouteRequest=null;
-   showNavActionFeedback("Google navigasyonu GaZonRide içinde açılıyor. Konum izni istenirse onayla.",false);
-   if(!riding)startRide();
-   navStartedRide=false;
-   return
-  }
-  showNavActionFeedback("Hedef haritada bulundu; başlangıç için GPS bekleniyor. GPS'yi dene veya Başlangıç seç.",true);
+  // Preparing a route must never launch turn-by-turn navigation.
+  // Wait for GPS (or a manual origin); only the SÜR button starts guidance.
+  showNavActionFeedback("Hedef bulundu. Rota seçenekleri için GPS bekleniyor; GPS'yi dene veya Başlangıç seç.",true);
  }catch(error){
   console.warn("Native navigation without WebView GPS",error);
   showNavActionFeedback("GPS bulunamadı. Hedef veya Google bağlantısı hazır değil; tekrar dene ya da Başlangıç seç.",true);
@@ -1438,7 +1426,7 @@ async function handleMissingNavigationGps(input,q,originInput){
 }
 async function planNavigation(){
  var input=$("navDestination"),q=input.value.trim(),originInput=$("navOrigin"),originQ=originInput?originInput.value.trim():"";
- clearTimeout(navAutoPlanTimer);
+ 
  if(!q){showNavActionFeedback("Önce bir hedef yaz veya arama önerilerinden seç.",false);input.focus();return}
  if((!originInput||originInput.dataset.current==="1"||!originQ)&&!currentPoint)
   return handleMissingNavigationGps(input,q,originInput);
@@ -1716,7 +1704,7 @@ async function launchCardDestination(item){
  if(window.GaZonTour)GaZonTour.setMode("destination");
  var tab=document.querySelector('.navBtn[data-page="navigation"]');
  if(tab)nav("navigation",tab);else setMode("navigation");
- clearTimeout(navAutoPlanTimer);clearTimeout(navAutocompleteTimer);
+ clearTimeout(navAutocompleteTimer);
  ++navPlanSeq; // Old asynchronous route previews must not override the selected card.
  clearNavSuggestions();clearAlternativeRoutes();
  navReady=false;navActive=false;
@@ -2495,7 +2483,7 @@ function boot(){
   pendingNavRouteRequest=null;
   showNavActionFeedback("Başlangıç noktasını seçtikten sonra turuncu yön tuşuna tekrar bas.",false);
  });
- $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearTimeout(navAutoPlanTimer);clearNavSuggestions();this.blur();planNavigation();}});
+ $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearNavSuggestions();this.blur();planNavigation();}});
  $("navDrive").addEventListener("click",function(){startPlannedNavigation(false)});
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",calibrateLeanSensor);

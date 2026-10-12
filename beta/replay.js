@@ -154,10 +154,21 @@ function pointAtDistance(progress){
 function waitForGoogle(){return new Promise(function(resolve,reject){var n=0;(function tick(){if(window.google&&google.maps&&google.maps.importLibrary)return resolve();if(++n>100)return reject(new Error("Google Maps hazır değil"));setTimeout(tick,100)})()})}
 function parseDuration(s){var a=String(s||"0").split(":").map(Number);if(a.length===3)return a[0]*3600+a[1]*60+a[2];if(a.length===2)return a[0]*60+a[1];return Number(a[0]||0)}
 function fmtDuration(sec){sec=Math.max(0,Math.round(Number(sec||0)));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return (h?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+// Moving time and speeds from the GPS timestamps (stops and gaps excluded).
+function trackStats(ride){
+ var a=cleanTrack(pts(ride)).filter(function(p){return Number(p.time)>0}),sec=0,km=0;
+ for(var i=1;i<a.length;i++){
+  var dt=(Number(a[i].time)-Number(a[i-1].time))/1000,d=geoKm(a[i-1],a[i]);
+  if(dt>0&&dt<=60&&d/(dt/3600)>=4&&d/(dt/3600)<220){sec+=dt;km+=d}
+ }
+ return sec>60?{sec:sec,avg:km/(sec/3600)}:null;
+}
 function avgSpeed(ride){var sec=parseDuration(ride.duration);return sec>0?Math.round(Number(ride.km||0)/(sec/3600)):0}
 function replayDurationMs(ride){
+ // ~6 s per km at 1x: fast enough to feel like a flight, slow enough for
+ // the 3D tiles to load sharp and the eye to follow the road.
  var km=Math.max(1,playTotal||Number(ride&&ride.km||0));
- return Math.max(22000,Math.min(90000,km*2500));
+ return Math.max(40000,Math.min(300000,km*6000));
 }
 function routeIntegrity(ride){
  var reported=Number(ride&&ride.km||0),actual=pathLength(replaySource(ride));
@@ -305,6 +316,12 @@ function routePoint(progress){
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
+function offsetPoint(a,brg,km){
+ var R=6371,p=Math.PI/180,d=km/R,b=brg*p,la=a.lat*p,lo=a.lng*p;
+ var la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(b));
+ var lo2=lo+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));
+ return {lat:la2/p,lng:lo2/p};
+}
 function angleGap(a,b){return Math.abs(((b-a+540)%360)-180)}
 function chaseTarget(progress){
  var d=progress*playTotal,cur=pointAtKm(d),ahead=pointAtKm(d+.35),near=pointAtKm(d+.12),far=pointAtKm(d+.6);
@@ -312,19 +329,20 @@ function chaseTarget(progress){
  var heading=geoKm(cur,ahead)>.01?bearing(cur,ahead):(chase.heading||0);
  // Twistiness of the next ~600 m opens the frame so bends stay in view.
  var bend=near&&far?angleGap(bearing(cur,near),bearing(near,far)):0;
- return {center:pointAtKm(d+.03)||cur,heading:heading,range:620+Math.min(700,bend*9),tilt:67};
+ return {rider:cur,heading:heading,range:520+Math.min(600,bend*8),tilt:68};
 }
 function updateChaseCamera(progress,now,force){
- if(!force&&now-chase.ts<30&&progress<1)return;
  var t=chaseTarget(progress);if(!t)return;
- var dt=chase.ts?Math.min(.25,(now-chase.ts)/1000):1;chase.ts=now;
- var kH=1-Math.exp(-dt/.85),kR=1-Math.exp(-dt/1.6),kC=1-Math.exp(-dt/.18);
+ var dt=chase.ts?Math.min(.1,(now-chase.ts)/1000):1;chase.ts=now;
+ var kH=1-Math.exp(-dt/1.1),kR=1-Math.exp(-dt/2.2);
  chase.heading=chase.heading==null?t.heading:lerpAngle(chase.heading,t.heading,kH);
  chase.range=chase.range==null?t.range:chase.range+(t.range-chase.range)*kR;
- chase.center=chase.center?{lat:chase.center.lat+(t.center.lat-chase.center.lat)*kC,lng:chase.center.lng+(t.center.lng-chase.center.lng)*kC}:{lat:t.center.lat,lng:t.center.lng};
+ // Look at a point just ahead of the rider along the camera heading: the
+ // rider stays fixed in the lower middle of the frame, the road opens ahead.
+ chase.center=offsetPoint(t.rider,chase.heading,chase.range*.00018);
  orbitLatest={center:chase.center,heading:chase.heading,tilt:t.tilt,range:chase.range};orbitFrames++;
  if(using3d&&map3d){
-  try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:25};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
+  try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:0};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
  }else if(classicMap){
   try{classicMap.moveCamera({center:chase.center,zoom:16.4,heading:chase.heading,tilt:60})}catch(e){}
  }
@@ -462,18 +480,10 @@ async function build3DMap(ride){
   map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
   host.appendChild(map3d);
 
-  route3d=new Polyline3DElement({
-   path:simplifyForMatch(a,900).map(function(p){return {lat:p.lat,lng:p.lng,altitude:2}}),
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:camMode==="chase"?"#FFFFFF99":"#21F2DE",strokeWidth:camMode==="chase"?7:22,
-   outerColor:"#07191A",outerWidth:camMode==="chase"?0:.30,drawsOccludedSegments:true,geodesic:true,zIndex:8
-  });
-  map3d.append(route3d);
+  // The route is revealed only as the rider covers it (no full line ahead).
 
-  travel3d=new Polyline3DElement({
-   path:[{lat:first.lat,lng:first.lng,altitude:2}],
-   altitudeMode:"RELATIVE_TO_GROUND",strokeColor:camMode==="chase"?"#E8322E":"#FFFFFF",strokeWidth:camMode==="chase"?16:10,
-   outerColor:camMode==="chase"?"#FFFFFF":"#20E0D0",outerWidth:camMode==="chase"?.18:.28,drawsOccludedSegments:true,zIndex:12
-  });
+  trailCtor=Polyline3DElement;trailChunks=[];trailFrom=0;
+  travel3d=newTrail([first]);
   map3d.append(travel3d);
 
   if(Marker3DElement){
@@ -491,7 +501,7 @@ async function build3DMap(ride){
    preparePlayback(ride);chase={heading:null,range:null,ts:0,center:null};
    var t0=camMode==="chase"?chaseTarget(0):null;
    map3d.flyCameraTo({
-    endCamera:t0?{center:{lat:t0.center.lat,lng:t0.center.lng,altitude:25},range:t0.range,tilt:t0.tilt,heading:t0.heading}
+    endCamera:t0?(function(){var c=offsetPoint(t0.rider,t0.heading,t0.range*.00018);return {center:{lat:c.lat,lng:c.lng,altitude:0},range:t0.range,tilt:t0.tilt,heading:t0.heading}})()
                 :{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},
     durationMillis:2100
    });
@@ -504,21 +514,41 @@ async function build3DMap(ride){
   await buildClassicFollowMap(ride)
  }
 }
+/* Travelled trail: finished pieces are frozen as their own polylines, so
+ * each frame only redraws the short live piece behind the rider. */
+var trailCtor=null,trailChunks=[],trailFrom=0;
+function newTrail(points){
+ return new trailCtor({
+  path:points.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}}),
+  altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#E8322E",strokeWidth:14,
+  outerColor:"#FFFFFF",outerWidth:.22,drawsOccludedSegments:true,zIndex:12
+ });
+}
+function resetTrail(){
+ trailChunks.forEach(function(c){try{c.remove()}catch(e){}});trailChunks=[];trailFrom=0;
+ if(travel3d&&playPoints[0])travel3d.path=[{lat:playPoints[0].lat,lng:playPoints[0].lng,altitude:3}];
+}
+function growTrail(i,p){
+ if(i<trailFrom)resetTrail();
+ if(i-trailFrom>=120&&trailCtor&&map3d){
+  // Freeze the current piece up to point i and start a new live piece there.
+  travel3d.path=playPoints.slice(trailFrom,i+1).map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}});
+  trailChunks.push(travel3d);trailFrom=i;
+  travel3d=newTrail([playPoints[i]]);map3d.append(travel3d);
+ }
+ travel3d.path=playPoints.slice(trailFrom,i+1).concat([p]).map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}});
+}
 function updateScene(progress,ts){
  if(playPoints.length<2)preparePlayback(currentRide);
  var x=pointAtDistance(progress);if(!x)return;
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
  if(using3d&&map3d){
-  if(bike3d&&(now-lastBikeTs>=32||progress>=1)){
+  if(bike3d){
    try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
    lastBikeTs=now
   }
-  // The thick full route stays static. Update only the travelled highlight at a modest rate.
-  if(travel3d&&(now-lastTrailTs>(camMode==="chase"?110:480)||progress>=1)){
-   try{
-    var traveled=simplifyForMatch(playPoints.slice(0,x.i+1),camMode==="chase"?1600:520).concat([p]);
-    travel3d.path=traveled.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}})
-   }catch(e){console.warn("Travel trace update",e)}
+  if(travel3d&&(now-lastTrailTs>=33||progress>=1)){
+   try{growTrail(x.i,p)}catch(e){console.warn("Travel trace update",e)}
    lastTrailTs=now
   }
  }else if(classicMap){
@@ -551,13 +581,15 @@ function loop(ts){
  anim=requestAnimationFrame(loop)
 }
 async function open(ride){
- currentRide=ride;playbackSpeed=2;if(!modal)install();modal.classList.add("active");updateSpeedControls();document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
+ currentRide=ride;playbackSpeed=1;if(!modal)install();modal.classList.add("active");updateSpeedControls();document.body.style.overflow="hidden";clearMaps();$("grReplayState").textContent="Gerçek yol rotası hazırlanıyor…";var host=$("grReplayMap");if(host)host.innerHTML='<div style="height:100%;display:grid;place-items:center;padding:24px;text-align:center;color:#c7ced8;font-weight:800">Google yol rotası hazırlanıyor…</div>';
  try{
   await waitForGoogle();currentRide=await resolveDemoRoadRoute(currentRide);currentRide._matchedReplayPath=await matchRideToRoads(currentRide);
   $("grReplayKm").textContent=Number(currentRide.km||0).toFixed(1);
-  $("grReplayTime").textContent=currentRide.duration||"00:00";
-  $("grReplayMax").textContent=Math.round(Number(currentRide.max||0));
-  $("grReplayAvg").textContent=avgSpeed(currentRide);
+  preparePlayback(currentRide);buildSpeedProfile(currentRide);
+  var ts=trackStats(currentRide),vmax=speedProfile.reduce(function(m,x){return Math.max(m,x.v)},0);
+  $("grReplayTime").textContent=ts?fmtDuration(ts.sec):(currentRide.duration||"00:00");
+  $("grReplayMax").textContent=Math.round(Math.max(Number(currentRide.max||0),vmax));
+  $("grReplayAvg").textContent=ts?Math.round(ts.avg):avgSpeed(currentRide);
   $("grReplayTurns").textContent=Math.round(Number(currentRide.turns||0));
   var lm=$("grReplayLean");if(lm)lm.textContent=Math.max(Number(currentRide.leanMaxLeft||0),Number(currentRide.leanMaxRight||0)).toFixed(1)+"°";
   var fuel=$("grReplayFuel");if(fuel)fuel.textContent=Number(currentRide.fuelLiters||0).toFixed(1)+" L";
@@ -570,8 +602,8 @@ function close(){closeReplayShare();clearMaps();if(modal)modal.classList.remove(
 function pauseResume(){
  var restarting=!auto&&lastProgress>=.999;
  if(restarting){
-  lastProgress=0;start=0;lastTrailTs=0;lastBikeTs=0;orbitLastFrame=0;
-  updateScene(0,performance.now())
+  lastProgress=0;start=0;lastTrailTs=0;lastBikeTs=0;orbitLastFrame=0;chase={heading:null,range:null,ts:0,center:null};
+  resetTrail();updateScene(0,performance.now())
  }
  auto=!auto;
  $("grReplayPause").innerHTML=auto?'<span class="mi">pause</span> Duraklat':'<span class="mi">play_arrow</span> Devam et';

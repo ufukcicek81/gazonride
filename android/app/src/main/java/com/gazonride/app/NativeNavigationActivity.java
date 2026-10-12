@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +59,7 @@ public final class NativeNavigationActivity extends Activity {
     private boolean closed;
     private boolean routeStarted;
     private int tourStopsRemaining = 0;
+    private boolean exactRoute;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Navigator.RemainingTimeOrDistanceChangedListener progressListener;
     private Navigator.ArrivalListener arrivalListener;
@@ -95,7 +98,7 @@ public final class NativeNavigationActivity extends Activity {
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.WHITE);
-        button.setTextSize(12);
+        button.setTextSize(15);
         button.setPadding(dp(8), 0, dp(8), 0);
         button.setBackground(shape(Color.rgb(35, 42, 55), 14));
         return button;
@@ -177,19 +180,26 @@ public final class NativeNavigationActivity extends Activity {
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(12, 18, 27));
+        // Android 15+ draws edge-to-edge for targetSdk 35+. Keep Google's
+        // maneuver banner and ETA card clear of the status and gesture bars.
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+            return insets.consumeSystemWindowInsets();
+        });
         navigationView = new NavigationView(this);
         root.addView(navigationView, new FrameLayout.LayoutParams(-1, -1));
 
         // Keep Google's turn-by-turn banner unobstructed. Exit remains
         // available as a small one-tap control above the native ETA card.
         Button back = control("✕");
-        back.setTextSize(18);
+        back.setTextSize(22);
         back.setContentDescription("Navigasyonu bitir ve GaZonRide'a dön");
-        back.setBackground(shape(0xEC151D2B, 26));
+        back.setBackground(shape(0xEC151D2B, 32));
         back.setOnClickListener(v -> exitNavigation());
         FrameLayout.LayoutParams backParams =
-                new FrameLayout.LayoutParams(dp(49), dp(49), Gravity.BOTTOM | Gravity.END);
-        backParams.setMargins(0, 0, dp(12), dp(205));
+                new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.BOTTOM | Gravity.END);
+        backParams.setMargins(0, 0, dp(12), dp(150));
         root.addView(back, backParams);
 
         // The Navigation SDK already shows remaining distance, travel time,
@@ -239,9 +249,9 @@ public final class NativeNavigationActivity extends Activity {
         trackText = label("Müzik", 11, true);
         trackText.setSingleLine(true);
         trackText.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        music.addView(trackText, new LinearLayout.LayoutParams(0, dp(40), 1));
-        music.addView(play, new LinearLayout.LayoutParams(dp(68), dp(40)));
-        LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(dp(45), dp(40));
+        music.addView(trackText, new LinearLayout.LayoutParams(0, dp(52), 1));
+        music.addView(play, new LinearLayout.LayoutParams(dp(76), dp(52)));
+        LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(dp(56), dp(52));
         nextParams.leftMargin = dp(6);
         music.addView(next, nextParams);
         // Compact music control: hidden panel until the rider asks for it.
@@ -252,25 +262,25 @@ public final class NativeNavigationActivity extends Activity {
             music.setVisibility(View.GONE);
             musicFab.setVisibility(View.VISIBLE);
         });
-        music.addView(closeMusic, new LinearLayout.LayoutParams(dp(42), dp(40)));
+        music.addView(closeMusic, new LinearLayout.LayoutParams(dp(52), dp(52)));
         FrameLayout.LayoutParams musicParams =
-                new FrameLayout.LayoutParams(dp(292), dp(54), Gravity.CENTER_VERTICAL | Gravity.END);
+                new FrameLayout.LayoutParams(dp(320), dp(64), Gravity.CENTER_VERTICAL | Gravity.END);
         musicParams.setMargins(0, 0, dp(12), 0);
         root.addView(music, musicParams);
         music.setVisibility(View.GONE);
         musicPanel = music;
         musicToggle = play;
         musicFab = control("♫");
-        musicFab.setTextSize(23);
+        musicFab.setTextSize(26);
         musicFab.setContentDescription("Müzik kontrolünü aç");
-        musicFab.setBackground(shape(0xEC151D2B, 26));
+        musicFab.setBackground(shape(0xEC151D2B, 32));
         musicFab.setOnClickListener(v -> {
             musicFab.setVisibility(View.GONE);
             music.setVisibility(View.VISIBLE);
             refreshMusic();
         });
         FrameLayout.LayoutParams musicFabParams =
-                new FrameLayout.LayoutParams(dp(50), dp(50), Gravity.CENTER_VERTICAL | Gravity.END);
+                new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.CENTER_VERTICAL | Gravity.END);
         musicFabParams.setMargins(0, 0, dp(12), 0);
         root.addView(musicFab, musicFabParams);
 
@@ -352,14 +362,25 @@ public final class NativeNavigationActivity extends Activity {
             options.avoidTolls(getIntent().getBooleanExtra("avoid_tolls",false));
             options.avoidHighways(getIntent().getBooleanExtra("avoid_highways",false));
             message("Google güzergâhı hesaplanıyor…");
-            // Keep every tour stop in the native Google Navigation SDK.
-            // This avoids silently navigating straight to the loop's end.
-            ListenableResultFuture<Navigator.RouteStatus> request =
-                    routeStops.isEmpty() ? navigator.setDestination(waypoint, options)
-                                         : navigator.setDestinations(routeStops, options);
+            if (routeStops.isEmpty()) routeStops.add(waypoint);
+            // Preferred: the exact road previewed in GaZonRide (Routes API
+            // token for the identical stop list). Otherwise Google computes
+            // a route through the same stops.
+            String token = getIntent().getStringExtra("route_token");
+            ListenableResultFuture<Navigator.RouteStatus> request = null;
+            if (token != null && !token.isEmpty()) request = setDestinationsWithToken(routeStops, token);
+            exactRoute = request != null;
+            if (request == null) request = navigator.setDestinations(routeStops, options);
             request.setOnResultListener(code -> runOnUiThread(() -> {
                 if (closed || navigator == null) return;
                 if (code != Navigator.RouteStatus.OK) {
+                    if (exactRoute) {
+                        // Token expired or the rider moved: same stops, Google route.
+                        getIntent().removeExtra("route_token");
+                        exactRoute = false;
+                        planNativeRoute();
+                        return;
+                    }
                     message(routeError(code));
                     return;
                 }
@@ -377,8 +398,10 @@ public final class NativeNavigationActivity extends Activity {
                         if (tourStopsRemaining > 1) {
                             tourStopsRemaining--;
                             try {
+                                // Route corners are pass-through points for the
+                                // rider: continue silently, keep the map clear.
                                 navigator.continueToNextDestination();
-                                message("Ara durağa ulaştın. Sonraki tur durağına devam ediliyor.");
+                                navigator.startGuidance();
                             } catch (Exception e) {
                                 message("Sonraki tur durağı açılamadı: "+e.getClass().getSimpleName());
                             }
@@ -392,13 +415,35 @@ public final class NativeNavigationActivity extends Activity {
                     navigator.startGuidance();
                     routeStarted = true;
                     updateProgress();
-                    message("Google canlı yönlendirme ve sesli komutlar aktif.");
+                    message(exactRoute ? "Seçtiğin rota birebir aktarıldı. Sesli yönlendirme aktif."
+                            : "Google canlı yönlendirme ve sesli komutlar aktif.");
                 } catch (Exception error) {
                     message("Yol tarifi başlatılamadı: " + error.getClass().getSimpleName());
                 }
             }));
         } catch (Exception error) {
             message("Hedef işlenemedi: " + error.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Navigator.setDestinations(List, CustomRoutesOptions) via reflection, so
+     * the APK still compiles and runs on SDK builds without route tokens.
+     * Returns null when tokens are unavailable; the caller then falls back.
+     */
+    @SuppressWarnings("unchecked")
+    private ListenableResultFuture<Navigator.RouteStatus> setDestinationsWithToken(
+            List<Waypoint> stops, String token) {
+        try {
+            Class<?> optionsClass = Class.forName(
+                    "com.google.android.libraries.navigation.CustomRoutesOptions");
+            Object builder = optionsClass.getMethod("builder").invoke(null);
+            builder.getClass().getMethod("setRouteToken", String.class).invoke(builder, token);
+            Object custom = builder.getClass().getMethod("build").invoke(builder);
+            Method set = navigator.getClass().getMethod("setDestinations", List.class, optionsClass);
+            return (ListenableResultFuture<Navigator.RouteStatus>) set.invoke(navigator, stops, custom);
+        } catch (Throwable unavailable) {
+            return null;
         }
     }
 

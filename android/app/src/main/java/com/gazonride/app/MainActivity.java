@@ -65,6 +65,9 @@ public class MainActivity extends Activity {
     private Uri pendingInstallUri = null;
     private boolean downloadReceiverRegistered = false;
     private volatile boolean nativeUpdateCheckRunning = false;
+    // Set only for the duration of one openNativeRouteToken bridge call.
+    private volatile String pendingRouteToken = "";
+    private int safeTopPx = 0, safeBottomPx = 0;
 
     private SensorManager sensorManager;
     private Sensor rotationSensor;
@@ -237,12 +240,14 @@ public class MainActivity extends Activity {
                 JSONObject last=points.getJSONObject(points.length()-1);
                 double lat=last.getDouble("lat"),lon=last.getDouble("lon");
                 final String validated=points.toString();
+                final String token=pendingRouteToken==null?"":pendingRouteToken;
                 final String safeTitle=title==null?"Hedef":title.length()>140?
                         title.substring(0,140):title;
                 runOnUiThread(() -> {
                     try {
                         Intent intent=new Intent(MainActivity.this,NativeNavigationActivity.class);
                         intent.putExtra("route_waypoints",validated);
+                        if(!token.isEmpty()) intent.putExtra("route_token",token);
                         intent.putExtra("destination_lat",lat);
                         intent.putExtra("destination_lng",lon);
                         intent.putExtra("destination_title",safeTitle);
@@ -256,6 +261,24 @@ public class MainActivity extends Activity {
                 });
                 return true;
             } catch(Exception e){return false;}
+        }
+        // Same stops as openNativeRoute plus an optional Routes API token so
+        // Google Navigation SDK drives exactly the road previewed in the app.
+        @JavascriptInterface public boolean openNativeRouteToken(
+                String json,String title,boolean avoidTolls,boolean avoidHighways,String token){
+            if(token!=null && token.length()>12000) token="";
+            pendingRouteToken=token==null?"":token;
+            try { return openNativeRoute(json,title,avoidTolls,avoidHighways); }
+            finally { pendingRouteToken=""; }
+        }
+        @JavascriptInterface public String getWebChannel(){
+            return prefs.getString("web_channel","stable");
+        }
+        // Beta channel: tested development builds published at /beta/.
+        @JavascriptInterface public void setWebChannel(String channel){
+            final String next="beta".equals(channel)?"beta":"stable";
+            prefs.edit().putString("web_channel",next).apply();
+            runOnUiThread(() -> { if(webView!=null) webView.loadUrl(startUrl()); });
         }
         @JavascriptInterface public boolean openNativeTour(String json){
             try {
@@ -339,12 +362,24 @@ public class MainActivity extends Activity {
         webView=new WebView(this); setContentView(webView);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setGeolocationEnabled(true);
-        s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false); s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        // index.html is always fetched fresh (?v=timestamp); scripts and styles
+        // carry version query strings, so the HTTP cache is safe and makes
+        // start-up much faster than LOAD_NO_CACHE.
+        s.setDatabaseEnabled(true); s.setMediaPlaybackRequiresUserGesture(false); s.setSupportZoom(false); s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Edge-to-edge (Android 15+): tell the web UI how tall the status and
+        // navigation bars are, because env(safe-area-inset-*) is 0 in WebView.
+        webView.setOnApplyWindowInsetsListener((v, insets) -> {
+            safeTopPx=insets.getSystemWindowInsetTop();
+            safeBottomPx=insets.getSystemWindowInsetBottom();
+            pushSafeArea();
+            return insets;
+        });
         webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String url){
                 super.onPageFinished(view,url);
+                pushSafeArea();
                 deliverPendingOAuth();
             }
         });
@@ -400,8 +435,23 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_REQ);
         }
-        webView.loadUrl(URL + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis());
+        webView.loadUrl(startUrl());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
+    }
+
+    private String startUrl(){
+        String base="beta".equals(prefs.getString("web_channel","stable")) ? URL + "beta/" : URL;
+        return base + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis();
+    }
+
+    private void pushSafeArea(){
+        if(webView==null) return;
+        float density=getResources().getDisplayMetrics().density;
+        if(density<=0) density=1f;
+        String js=String.format(java.util.Locale.US,
+            "(function(r){r.style.setProperty('--gr-safe-top','%.1fpx');r.style.setProperty('--gr-safe-bottom','%.1fpx');r.classList.add('gr-native-insets')})(document.documentElement)",
+            safeTopPx/density, safeBottomPx/density);
+        webView.evaluateJavascript(js,null);
     }
 
     private void startLeanSensors(boolean resetMax){

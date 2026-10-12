@@ -77,9 +77,10 @@ function fit(){
   const panel=id("navigationPanel"),sheet=id("grTourChoices"),h=window.innerHeight;
   const top=panel?Math.max(20,panel.getBoundingClientRect().bottom+14):h*.3;
   const sheetTop=sheet&&sheet.classList.contains("active")?sheet.getBoundingClientRect().top:h*.7;
-  const bottom=Math.max(20,h-sheetTop+14);
-  if(top+bottom>h-120){map.fitBounds(bounds,24);return}
-  map.fitBounds(bounds,{top:top,bottom:bottom,left:24,right:24});
+  const bottom=Math.max(20,h-sheetTop+28);
+  if(top+bottom>h-120){map.fitBounds(bounds,40);return}
+  // Generous side margins: the whole loop plus some surroundings.
+  map.fitBounds(bounds,{top:top+16,bottom:bottom,left:44,right:44});
  });
 }
 function choose(i){

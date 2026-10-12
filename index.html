@@ -2167,7 +2167,8 @@ function playRemote(stream,id){
   audio.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0";
   document.body.appendChild(audio);
  }
- if(audio.srcObject!==stream){audio.srcObject=stream;startVoiceMeters()}
+ if(audio.srcObject!==stream){audio.srcObject=stream;startVoiceMeters();
+  if(window.AndroidBridge&&typeof AndroidBridge.prepareIntercom==="function")setTimeout(function(){try{AndroidBridge.prepareIntercom()}catch(e){}},400)}
  audio.muted=false;
  var playResult=audio.play();
  if(playResult&&playResult.catch)playResult.catch(function(e){console.warn("Remote voice playback blocked",e);voiceAudioHint()});
@@ -2182,6 +2183,7 @@ function voiceUI(){
  '<div style="font-size:12px;font-weight:850" id="micHint">Gruba katıl · mikrofon otomatik açılır</div>'+
  '<div class="voiceMeters"><div><span>Senin sesin</span><i><b id="meterLocal"></b></i></div><div><span>Gelen ses</span><i><b id="meterRemote"></b></i></div></div>'+
  '<button class="screenBtn dark" type="button" id="voiceAudioEnable"><span class="mi">volume_up</span> Sesi Aç / Test Et</button>'+
+ (window.AndroidBridge&&typeof AndroidBridge.setIntercomSpeaker==="function"?'<button class="screenBtn dark" type="button" id="voiceSpeaker"><span class="mi">speaker_phone</span> <span id="voiceSpeakerLabel">Hoparlör</span></button>':"")+
  '<div class="sub" id="voiceAudioHint">Karşı tarafı duymuyorsan Sesi Aç düğmesine dokun.</div>'+
  (ios?'<div class="sub">iPhone: Mikrofon açıkken ses kulak ahizesinden gelir (kısık duyulur). Kask Bluetooth\'unu bağla ya da telefonu kulağına götür. Kontrol Merkezi\'nden ses çıkışını seçebilirsin.</div>':"")+
  '</div><div class="screenCard"><b>Grup bağlantısı</b>'+
@@ -2200,6 +2202,12 @@ function setupVoice(){
  $("micBtn").onclick=toggleMic;
  $("voiceAudioEnable").onclick=function(){playVoiceTestTone();unlockRemoteAudio();var h=$("voiceAudioHint");if(h)h.textContent="Bip sesi duyduysan hoparlör / kask çıkışı çalışıyor.";};
  paintMic();if(voice.room)startVoiceMeters();
+ var spk=$("voiceSpeaker");
+ if(spk){
+  var paintSpeaker=function(){var on=localStorage.getItem("gazon_intercom_speaker")!=="0",l=$("voiceSpeakerLabel");if(l)l.textContent=on?"Ses: Hoparlör (değiştir)":"Ses: Ahize (değiştir)"};
+  spk.onclick=function(){var on=localStorage.getItem("gazon_intercom_speaker")==="0";localStorage.setItem("gazon_intercom_speaker",on?"1":"0");try{AndroidBridge.setIntercomSpeaker(on)}catch(e){}paintSpeaker()};
+  paintSpeaker();
+ }
  var leave=$("leaveVoice");if(leave)leave.onclick=stopVoice;
  if(voice.room){
   var room=$("roomCode");if(room)room.value=voice.room;

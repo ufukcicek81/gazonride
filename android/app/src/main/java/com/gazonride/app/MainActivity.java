@@ -29,6 +29,8 @@ import android.view.View;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.provider.Settings;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -314,6 +316,16 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void setRouteTokenNote(String note){
             pendingRouteNote=note==null?"":(note.length()>200?note.substring(0,200):note);
         }
+        // Intercom audio route. WebRTC puts Android into call mode, which
+        // plays on the EARPIECE when no headset is connected (riders heard
+        // nothing). Route to helmet/headset when present, else loudspeaker.
+        @JavascriptInterface public void prepareIntercom(){ runOnUiThread(() -> routeIntercomAudio(true)); }
+        @JavascriptInterface public void stopIntercom(){ runOnUiThread(() -> routeIntercomAudio(false)); }
+        @JavascriptInterface public void setIntercomSpeaker(boolean speaker){
+            prefs.edit().putBoolean("intercom_speaker",speaker).apply();
+            runOnUiThread(() -> routeIntercomAudio(true));
+        }
+        @JavascriptInterface public String getIntercomRoute(){ return intercomRoute; }
         @JavascriptInterface public String getWebChannel(){
             return prefs.getString("web_channel",getString(R.string.default_web_channel));
         }
@@ -525,6 +537,41 @@ public class MainActivity extends Activity {
             l.hasAltitude()?String.format(java.util.Locale.US,"%.1f",l.getAltitude()):"null",
             l.getTime(),JSONObject.quote(String.valueOf(l.getProvider())));
         webView.evaluateJavascript(js,null);
+    }
+
+    private volatile String intercomRoute = "";
+    private void routeIntercomAudio(boolean on){
+        AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
+        if(am==null) return;
+        try{
+            if(!on){
+                if(Build.VERSION.SDK_INT>=31) am.clearCommunicationDevice();
+                else { am.setSpeakerphoneOn(false); if(am.isBluetoothScoOn()){ am.stopBluetoothSco(); am.setBluetoothScoOn(false);} }
+                am.setMode(AudioManager.MODE_NORMAL);
+                intercomRoute="";
+                return;
+            }
+            boolean speaker=prefs.getBoolean("intercom_speaker",true);
+            am.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            if(Build.VERSION.SDK_INT>=31){
+                AudioDeviceInfo headset=null,spk=null,ear=null;
+                for(AudioDeviceInfo d:am.getAvailableCommunicationDevices()){
+                    int t=d.getType();
+                    if(t==AudioDeviceInfo.TYPE_BLUETOOTH_SCO||t==AudioDeviceInfo.TYPE_BLE_HEADSET||t==AudioDeviceInfo.TYPE_WIRED_HEADSET
+                            ||t==AudioDeviceInfo.TYPE_WIRED_HEADPHONES||t==AudioDeviceInfo.TYPE_USB_HEADSET){ if(headset==null) headset=d; }
+                    else if(t==AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) spk=d;
+                    else if(t==AudioDeviceInfo.TYPE_BUILTIN_EARPIECE) ear=d;
+                }
+                AudioDeviceInfo target=headset!=null?headset:(speaker?spk:ear);
+                if(target!=null) am.setCommunicationDevice(target);
+                intercomRoute=headset!=null?"headset":(speaker?"speaker":"earpiece");
+            }else{
+                if(am.isBluetoothScoAvailableOffCall()){ am.startBluetoothSco(); am.setBluetoothScoOn(true); }
+                boolean wired=am.isWiredHeadsetOn();
+                am.setSpeakerphoneOn(speaker&&!wired);
+                intercomRoute=wired?"headset":(speaker?"speaker":"earpiece");
+            }
+        }catch(Exception ignored){}
     }
 
     private String startUrl(){

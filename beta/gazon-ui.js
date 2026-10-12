@@ -95,7 +95,24 @@ function beta(){
  }).observe(screen,{childList:true,subtree:false,attributes:true,attributeFilter:["class"]});
 }
 
+// Profile screen for guests: explain what an account adds, one tap to sign up.
+function guestCard(){
+ var screen=$("screen");if(!screen)return;
+ new MutationObserver(function(){
+  var auth=window.GaZonAuth;
+  if(!auth||!auth.state||auth.state.user||!(auth.isGuest&&auth.isGuest()))return;
+  var title=screen.querySelector(".screenTitle");
+  if(!title||!/Profil/i.test(title.textContent)||$("grGuestCard"))return;
+  var card=document.createElement("div");card.className="screenCard";card.id="grGuestCard";
+  card.innerHTML='<b>Misafir olarak kullanıyorsun</b><div class="sub" style="margin:6px 0 10px">Sürüşlerin bu cihazda saklanıyor. Üye olursan sürüş geçmişin hesabına bağlanır, toplulukta paylaşım yapabilir ve gruplara katılabilirsin.</div>'+
+   '<button type="button" class="btn red" style="width:100%">Üye ol / Giriş yap</button>';
+  card.querySelector("button").onclick=function(){location.href="login.html?next="+encodeURIComponent(location.href)};
+  var head=screen.querySelector(".screenHead");
+  if(head&&head.nextSibling)screen.insertBefore(card,head.nextSibling);else screen.appendChild(card);
+ }).observe(screen,{childList:true,attributes:true,attributeFilter:["class"]});
+}
 onReady(function(){
+ guestCard();
  tabs();rideSheet();intercomButton();beta();
  new MutationObserver(syncActiveTab).observe(document.body,{attributes:true,attributeFilter:["class"]});
  syncActiveTab();

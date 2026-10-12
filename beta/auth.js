@@ -7,6 +7,10 @@ var resolved=false,resolveReady,ready=new Promise(function(r){resolveReady=r});
 var state={configured:configured,user:null,profile:null,role:"member"};
 
 function pathName(){return (location.pathname.split("/").pop()||"index.html").toLowerCase()}
+// Guest mode: the app is usable without an account (rides stay on this
+// device). Account-only actions still send the rider to login.html.
+function isGuest(){try{return localStorage.getItem("gazon_guest")==="1"}catch(e){return false}}
+function setGuest(on){try{if(on)localStorage.setItem("gazon_guest","1");else localStorage.removeItem("gazon_guest")}catch(e){}}
 function redirectLogin(){if(pathName()==="login.html")return;var next=encodeURIComponent(location.href);location.replace("login.html?next="+next)}
 function saveLocalProfile(p){
  if(!p)return;
@@ -44,7 +48,9 @@ async function applySession(session){
  if(state.user){try{await ensureProfile(state.user)}catch(e){console.warn("profile",e)}}
  if(!resolved){resolved=true;resolveReady(state)}
  var page=pathName();
- if(!state.user&&page!=="login.html")redirectLogin();
+ if(state.user)setGuest(false);
+ state.guest=!state.user&&isGuest();
+ if(!state.user&&page!=="login.html"&&!isGuest())redirectLogin();
  if(state.user&&page==="login.html"){
    var qs=new URLSearchParams(location.search);if(qs.get("recovery")!=="1"){var n=qs.get("next");location.replace(n||"index.html");}
  }
@@ -114,7 +120,7 @@ async function updatePassword(password){
  var r=await client.auth.updateUser({password:password});
  if(r.error)throw r.error;return true;
 }
-async function logout(){if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
+async function logout(){setGuest(false);if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
 async function saveProfile(name,bike){
  if(!state.user)throw new Error("Oturum bulunamadı.");
  var r=await client.from("profiles").update({name:name,bike:bike,updated_at:new Date().toISOString()}).eq("id",state.user.id).select("id,name,bike,avatar_url,motor_data").single();
@@ -133,5 +139,5 @@ else{
  client.auth.onAuthStateChange(function(event,session){setTimeout(function(){applySession(session)},0)});
  client.auth.getSession().then(function(r){applySession(r.data.session)}).catch(function(e){console.error(e);if(!resolved){resolved=true;resolveReady(state)}});
 }
-window.GaZonAuth={configured:configured,state:state,ready:ready,client:client,register:register,login:login,socialLogin:socialLogin,completeOAuthCallback:completeOAuthCallback,resetPassword:resetPassword,updatePassword:updatePassword,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
+window.GaZonAuth={isGuest:isGuest,setGuest:setGuest,configured:configured,state:state,ready:ready,client:client,register:register,login:login,socialLogin:socialLogin,completeOAuthCallback:completeOAuthCallback,resetPassword:resetPassword,updatePassword:updatePassword,logout:logout,saveProfile:saveProfile,claimFirstAdmin:claimFirstAdmin,openAdmin:openAdmin,requireAdmin:requireAdmin};
 })();

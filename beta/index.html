@@ -1029,6 +1029,7 @@ function showRideSummary(ride){
  '<div class="rideReportRow"><span>En yüksek yatış</span><b>'+maxLean.toFixed(1)+'°</b></div></div>'+
  '<div class="rideSummaryActions"><button class="screenBtn dark" id="rideSummaryReplay"><span class="mi" style="vertical-align:-5px">play_circle</span> Sürüşü Oynat</button><button class="screenBtn" id="rideSummaryShare"><span class="mi" style="vertical-align:-5px">share</span> Paylaş</button></div>';
  x.querySelector("#closeRideSummary").onclick=function(){setMode("discover");setDiscoverFilter("discover")};
+ try{var rep0=x.querySelector(".rideReport");if(window.GaZonJournal&&rep0)rep0.parentNode.insertBefore(GaZonJournal.moodPicker(ride),rep0)}catch(e){}
  x.querySelector("#rideSummaryReplay").onclick=function(){if(window.GaZonReplay)GaZonReplay.open(ride)};
  x.querySelector("#rideSummaryShare").onclick=function(){var t="GaZonRide sürüşüm · "+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"")+" · Max "+Math.round(Number(ride.max||0))+" km/sa";if(navigator.share)navigator.share({title:"GaZonRide Sürüş",text:t}).catch(function(){});else navigator.clipboard&&navigator.clipboard.writeText(t)};
  setTimeout(function(){
@@ -2352,8 +2353,8 @@ function showScreen(page){
  var x=$("screen");x.classList.add("active");
  if(page==="routes"){
    var rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");
-   x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Sürüş Geçmişim</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
-   (rs.length?rs.map(function(r,i){return '<div class="screenCard"><div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div><button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar\'da Aç</button><button class="screenBtn rideDeleteBtn" data-delete-ride="'+i+'"><span class="mi" style="vertical-align:-5px">delete</span> Bu Sürüşü Sil</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
+   x.innerHTML='<div class="screenHead"><div><div class="ey">ROTALAR</div><div class="screenTitle">Günlük</div></div><button class="mapBtn" id="closeScreen">✕</button></div>'+
+   (rs.length?rs.map(function(r,i){return '<div class="screenCard">'+(window.GaZonJournal?GaZonJournal.card(r):'<div style="display:flex;justify-content:space-between"><div><b>'+Number(r.km).toFixed(1)+' km</b><div class="sub">'+r.date+'</div></div><div><b>'+r.max+' km/sa</b><div class="sub">'+r.duration+'</div></div></div>')+'<button class="screenBtn dark" data-route="'+i+'">🗺️ Rotayı Haritada Göster</button><button class="screenBtn dark" data-google="'+i+'">📍 Google Haritalar\'da Aç</button><button class="screenBtn rideDeleteBtn" data-delete-ride="'+i+'"><span class="mi" style="vertical-align:-5px">delete</span> Bu Sürüşü Sil</button></div>';}).join(""):'<div class="screenCard"><b>Henüz rota yok</b><div class="sub">İlk sürüşünü başlat ve burada sakla.</div></div>');
    x.querySelector("#closeScreen").onclick=closeScreen;
    x.querySelectorAll("[data-google]").forEach(function(b){b.onclick=function(){
  var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")[Number(b.getAttribute("data-google"))];
@@ -2578,7 +2579,12 @@ function boot(){
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearNavSuggestions();this.blur();planNavigation();}});
  $("navDrive").addEventListener("click",function(){startPlannedNavigation(false)});
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
- var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",calibrateLeanSensor);
+ var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",function(){
+  if(window.GaZonJournal&&window.AndroidBridge&&typeof AndroidBridge.calibrateLean==="function")
+   GaZonJournal.leanWizard({start:startLeanSensor,calibrate:calibrateLeanSensor,
+    available:!(typeof AndroidBridge.hasLeanSensor==="function"&&!AndroidBridge.hasLeanSensor())});
+  else calibrateLeanSensor();
+ });
  startLeanSensor();
  $("navStop").addEventListener("click",stopNavigation);
  $("guidanceClose").addEventListener("click",stopNavigation);
@@ -2614,6 +2620,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-destinations.js?v=20261011-card-nav-start-v1"></script>
 <script src="replay.js?v=20261009-ui-share-fix1"></script>
 <script src="gazon-music.js?v=20261009-native-duck2"></script>
+<script src="gazon-journal.js?v=20261012-journal1"></script>
 <script src="gazon-ui.js?v=20261012-ui3"></script>
 </body>
 </html>

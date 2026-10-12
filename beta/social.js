@@ -254,6 +254,8 @@ function postForm(){
   var btn=this,ride=selected(),track=normalizeTrack(ride.track),files=Array.prototype.slice.call($("grPostPhotos").files||[]).slice(0,5);
   var title=$("grPostTitle").value.trim()||ride.destination||"Sürüş paylaşımı";
   var caption=$("grPostCaption").value.trim();
+  // "Günün hissi" chosen on the ride summary travels with the post.
+  if(window.GaZonJournal){var mood=GaZonJournal.moodLine(ride);if(mood&&caption.indexOf(mood)<0)caption=mood+(caption?"\n"+caption:"")}
   if(track.length<2)return alert("Seçtiğin sürüşte rota izi bulunmuyor.");
   if(!files.length)return alert("En az bir fotoğraf seç.");
   try{

@@ -125,3 +125,49 @@ var api={MOODS:MOODS,thumb:thumb,card:card,stats:stats,avgSpeed:avgSpeed,moodLin
 root.GaZonJournal=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
+
+/* iPhone / browser lean sensor (no Android app): DeviceMotion gravity,
+ * same "rotation about the bike axis" math as the Android app. iOS needs
+ * DeviceMotionEvent.requestPermission() from a tap, so start() must be
+ * called from a button handler. Feeds window.GaZonLean.onSensor(). */
+(function(root){
+"use strict";
+if(typeof window==="undefined")return;
+var on=false,ref=null,zeroSet=false,f=0,maxL=0,maxR=0,last=0;
+var ios=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function basis(g){
+ var n=Math.hypot(g[0],g[1],g[2])||1,x=g[0]/n,y=g[1]/n,z=g[2]/n;
+ var ax=-z*x,ay=-z*y,az=1-z*z,an=Math.hypot(ax,ay,az);
+ if(an<.15){ax=-y*x;ay=1-y*y;az=-y*z;an=Math.hypot(ax,ay,az)}
+ return [x,y,z,ax/an,ay/an,az/an];
+}
+function onMotion(e){
+ var a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
+ // "Up" in device coordinates. iOS reports the opposite sign to Android.
+ var s=ios?-1:1,g=[s*a.x,s*a.y,s*a.z];
+ if(!ref)ref=basis(g);
+ var r=ref,cx=r[1]*g[2]-r[2]*g[1],cy=r[2]*g[0]-r[0]*g[2],cz=r[0]*g[1]-r[1]*g[0];
+ var deg=Math.atan2(cx*r[3]+cy*r[4]+cz*r[5],r[0]*g[0]+r[1]*g[1]+r[2]*g[2])*180/Math.PI;
+ deg=Math.max(-90,Math.min(90,deg));
+ var d=deg-f;if(Math.abs(d)>22&&zeroSet)return; // vibration spike
+ zeroSet=true;f+=(Math.abs(d)>8?.10:.07)*d;if(Math.abs(f)<.7)f=0;
+ if(f<0)maxL=Math.max(maxL,-f);else maxR=Math.max(maxR,f);
+ var now=Date.now();if(now-last<90)return;last=now;
+ if(root.GaZonLean&&root.GaZonLean.onSensor)root.GaZonLean.onSensor(f,maxL,maxR);
+}
+var api={
+ available:function(){return "DeviceMotionEvent" in window},
+ start:function(){
+  if(on||!api.available())return Promise.resolve(on);
+  var ask=window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==="function"?DeviceMotionEvent.requestPermission():Promise.resolve("granted");
+  return Promise.resolve(ask).then(function(state){
+   if(state!=="granted")return false;
+   window.addEventListener("devicemotion",onMotion);on=true;return true;
+  },function(){return false});
+ },
+ calibrate:function(){ref=null;zeroSet=false;f=0;maxL=0;maxR=0},
+ stop:function(){window.removeEventListener("devicemotion",onMotion);on=false},
+ get active(){return on}
+};
+root.GaZonWebLean=api;
+})(typeof window!=="undefined"?window:globalThis);

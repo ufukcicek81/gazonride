@@ -50,6 +50,13 @@ jobs:
           npm install --no-save playwright@1.48.2
           npx playwright install --with-deps webkit
           node test/ui/ios-buttons.spec.js
+      - name: Upload iPhone screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-webkit-screens
+          path: test-output/
+          retention-days: 7
 
   android-build:
     runs-on: ubuntu-latest

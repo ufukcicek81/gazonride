@@ -84,10 +84,24 @@ function update(){
  launch.classList.toggle("active",session&&state.playing);
  launch.title=session?(state.title||"Müzik Merkezi"):"Müzik Merkezi";
 }
+// iPhone / browser: a web app cannot control Spotify or Apple Music, so
+// playback buttons and the Android permission card are replaced by honest
+// guidance instead of buttons that silently do nothing.
+function webOnly(panel){
+ if(supported()||!panel||panel.dataset.webOnly)return;
+ panel.dataset.webOnly="1";
+ ["grMusicPrev","grMusicToggle","grMusicNext"].forEach(function(x){var b=$(x);if(b)b.closest(".gr-music-playback").hidden=true});
+ var perm=$("grMusicPermission");if(perm)perm.hidden=true;
+ var duck=panel.querySelector(".gr-music-duck");if(duck)duck.hidden=true;
+ var foot=panel.querySelector(".gr-music-foot");
+ if(foot)foot.textContent="iPhone’da müziği kilit ekranından, Kontrol Merkezi’nden veya kask kumandasından yönet. Sesli yönlendirme konuşurken iOS müziği kendisi kısar.";
+ var artist=$("grMusicArtist");if(artist)artist.textContent="Spotify veya YouTube Music’i aç, müziği başlat ve geri dön";
+}
 function setOpen(on){
  expanded=!!on;
  var panel=$("grMusicPanel"),launch=$("grMusicLaunch");
  panel.hidden=!expanded;launch.setAttribute("aria-expanded",String(expanded));
+ webOnly(panel);
  if(expanded)update();
 }
 function openPlayer(provider){
@@ -95,6 +109,7 @@ function openPlayer(provider){
   safeCall("openMusicApp",provider);
   $("grMusicStatus").textContent="Şarkını seçip GaZonRide’a dön. Panel kaldığın yerden devam eder.";
  }else{
+  // Universal links open the installed app on iPhone, the website otherwise.
   var url=provider==="spotify"?"https://open.spotify.com/":"https://music.youtube.com/";
   window.open(url,"_blank","noopener,noreferrer");
  }

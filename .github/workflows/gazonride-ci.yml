@@ -36,6 +36,21 @@ jobs:
             node test/ui/layout.spec.js
           fi
 
+  ios-webkit:
+    # Safari engine on an emulated iPhone: every tab, every button.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: WebKit iPhone smoke test
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps webkit
+          node test/ui/ios-buttons.spec.js
+
   android-build:
     runs-on: ubuntu-latest
     timeout-minutes: 35

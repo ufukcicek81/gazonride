@@ -68,3 +68,33 @@
 .gr-replay-share-actions button{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 12px;background:#1b242d;color:#fff;border:1px solid #414b58;border-radius:14px;font-size:14px;font-weight:800;min-height:51px}
 .gr-replay-share-actions button:first-child{background:#ff5a1f;border-color:#ff5a1f}
 @media(max-width:430px){.gr-play3d{top:12px;right:12px;padding:11px 13px;font-size:13px}}
+
+/* Chase replay HUD (shown only while the 3D ride is playing). */
+.gr-replay-hud,.gr-replay-compass{display:none}
+.gr-replay-live .gr-replay-hud{
+ display:grid;grid-template-columns:repeat(3,1fr);position:absolute;z-index:30;
+ top:12px;left:12px;right:76px;max-width:340px;padding:8px 6px;
+ background:rgba(255,255,255,.94);color:#101318;border-radius:16px;
+ box-shadow:0 6px 22px rgba(0,0,0,.35);pointer-events:none;
+}
+.gr-replay-hud>div{text-align:center;line-height:1.05;border-left:1px solid #e1e4e8}
+.gr-replay-hud>div:first-child{border-left:0}
+.gr-replay-hud b{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.gr-replay-hud small{font-size:11px;font-weight:800;margin-left:2px;color:#4a525d}
+.gr-replay-hud span{display:block;font-size:10px;color:#6b737e;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.gr-replay-live .gr-replay-compass{
+ display:grid;place-items:center;position:absolute;z-index:30;top:12px;right:12px;
+ width:52px;height:52px;border-radius:50%;background:rgba(14,17,22,.9);border:2px solid #fff;
+ box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;transition:transform .12s linear;
+}
+.gr-replay-compass i{font-style:normal;font-weight:900;font-size:15px;color:#fff;position:relative;top:-6px}
+.gr-replay-compass::before{content:"";position:absolute;top:4px;left:50%;margin-left:-5px;border:5px solid transparent;border-bottom:9px solid #E8322E;border-top:0}
+.gr-replay-cam{
+ position:absolute;z-index:30;right:12px;bottom:calc(100% - 0px);display:none;
+}
+.gr-replay-live .gr-replay-cam{
+ display:inline-flex;align-items:center;gap:6px;top:74px;bottom:auto;min-height:48px;padding:0 14px;
+ border-radius:24px;border:1px solid rgba(255,255,255,.35);background:rgba(14,17,22,.88);color:#fff;
+ font-weight:800;font-size:13px;cursor:pointer;
+}
+@media(prefers-color-scheme:light){.gr-replay-live .gr-replay-cam{background:rgba(255,255,255,.94);color:#101318;border-color:#d5d9de}}

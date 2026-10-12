@@ -28,7 +28,7 @@ function clearLines(){lines.forEach(function(p){
  try{p.setMap(null)}catch(e){}
  if(p._gazonOutline)try{p._gazonOutline.setMap(null)}catch(e){}
 });lines=[]}
-function reset(){sequence++;options=[];selected=0;busy=false;clearLines();let el=id("grTourChoices");if(el){el.classList.remove("active");el.innerHTML=""}
+function reset(){sequence++;options=[];selected=0;busy=false;clearLines();showResults(false);let el=id("grTourChoices");if(el){el.classList.remove("active");el.innerHTML=""}
  let btn=id("grTourPlan");if(btn){btn.disabled=false;btn.innerHTML='<span class="mi">alt_route</span> Tur önerisi oluştur'}
 }
 function isTourMode(){return mode==="tour"}
@@ -57,11 +57,30 @@ function outline(d,i){
  line.addListener("click",function(){choose(i)});
  lines.push(line);
 }
+// Results view: the planner shrinks to one summary line so the map between
+// it and the choice cards shows the whole selected loop before SÜR.
+function showResults(on){
+ document.body.classList.toggle("gr-tour-has-options",!!on);
+ const sum=id("grTourSummary");if(!sum)return;
+ if(!on){sum.hidden=true;return}
+ const len=id("grTourLength"),style=id("grTourStyle");
+ sum.hidden=false;
+ sum.querySelector("b").textContent=(len?len.value:"")+" km · "+(style?style.options[style.selectedIndex].text:"")+" · "+options.length+" tur";
+}
+// Fit the SELECTED loop into the visible gap between top panel and sheet.
 function fit(){
- const map=config.getMap();if(!map||!options.length)return;
- const bounds=new google.maps.LatLngBounds();
- options.forEach(o=>o.points.forEach(p=>bounds.extend({lat:p.lat,lng:p.lon})));
- if(!bounds.isEmpty())map.fitBounds(bounds,{top:Math.min(310,window.innerHeight*.38),bottom:Math.min(255,window.innerHeight*.31),left:22,right:22});
+ const map=config.getMap(),o=options[selected];if(!map||!o)return;
+ requestAnimationFrame(function(){
+  const bounds=new google.maps.LatLngBounds();
+  o.points.forEach(p=>bounds.extend({lat:p.lat,lng:p.lon}));
+  if(bounds.isEmpty())return;
+  const panel=id("navigationPanel"),sheet=id("grTourChoices"),h=window.innerHeight;
+  const top=panel?Math.max(20,panel.getBoundingClientRect().bottom+14):h*.3;
+  const sheetTop=sheet&&sheet.classList.contains("active")?sheet.getBoundingClientRect().top:h*.7;
+  const bottom=Math.max(20,h-sheetTop+14);
+  if(top+bottom>h-120){map.fitBounds(bounds,24);return}
+  map.fitBounds(bounds,{top:top,bottom:bottom,left:24,right:24});
+ });
 }
 function choose(i){
  if(!options[i])return;selected=i;
@@ -73,6 +92,7 @@ function choose(i){
    strokeWeight:active?10:8,strokeOpacity:active?.95:.65,zIndex:zi-1});
  });
  renderOptions();
+ fit();
 }
 function externalUrl(o){
  if(!o)return "";
@@ -149,7 +169,7 @@ async function plan(){
   if(!result.options.length)throw Error(result.error==="router-unavailable"?
    "Google rota servisine ulaşılamadı. İnterneti kontrol edip tekrar dene.":
    "Bu bölgede hedef kilometreye uygun tur bulunamadı. Başka yön veya mesafe dene.");
-  options=result.options;clearLines();options.forEach(outline);choose(0);fit();
+  options=result.options;clearLines();options.forEach(outline);showResults(true);choose(0);
   const relaxed=options[0].relaxed;
   setMessage(options.length+" tur hazır · "+STYLE_NAMES[style]+" tercihine göre sıralandı."+
    (relaxed?" Bu bölgede tam halka sınırlı; uyarılı seçenekler gösteriliyor.":""));
@@ -165,6 +185,7 @@ function init(settings){
  if(b)b.onclick=()=>setMode("destination");
  if(t)t.onclick=()=>setMode("tour");
  let planButton=id("grTourPlan");if(planButton)planButton.onclick=plan;
+ const edit=id("grTourEdit");if(edit)edit.onclick=function(){document.body.classList.remove("gr-tour-has-options");const sum=id("grTourSummary");if(sum)sum.hidden=true};
  const box=id("grTourChoices");if(box&&box.parentElement!==document.body)document.body.appendChild(box);
  setMode("destination");
 }

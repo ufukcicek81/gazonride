@@ -55,4 +55,18 @@ assert.ok(good.areaRatio>.0035,"loop encloses meaningful geographical area");
 const sameRoadButWide=[home,north(10),Tour.offset(home,45,18),north(10),home];
 assert.equal(Tour.loopQuality(sameRoadButWide,90).ok,false,"road retracing is not hidden by a scenic waypoint");
 assert.equal(Tour.loopQuality([],150).ok,false,"empty road geometry is rejected");
-console.log("PASS: 12 diverse candidate polygons, distance goals, overlap rejection, closed loop acceptance, route steps");
+// A long loop with a small detour down a dead-end and straight back MUST
+// be rejected even if only ~3-5% of the total 90 km overlaps.
+const east11=Tour.offset(home,90,11),east22=Tour.offset(home,90,22);
+const north22=Tour.offset(home,0,22),northEast={lat:north22.lat,lon:east22.lon};
+const spurTip={lat:east11.lat+.015,lon:east11.lon};
+const deadEndLoop=[home,east11,spurTip,east11,east22,northEast,north22,home];
+const excursion=Tour.loopQuality(deadEndLoop,92);
+assert.ok(excursion.overlap<.19,"small spur has low TOTAL percentage of reused road");
+assert.ok(excursion.maxBacktrackKm>.9,"reversed roadside spur is detected");
+assert.equal(excursion.ok,false,"small dead-end excursion is not a valid scenic loop");
+const smoothLoop=[home,east22,northEast,north22,home];
+const smooth=Tour.loopQuality(smoothLoop,90);
+assert.equal(smooth.ok,true,"clean polygon loop must be allowed");
+assert.ok(smooth.maxBacktrackKm<.45,"clean route has no repeated backwards road");
+console.log("PASS: 12 candidates, distance goals, reject tiny out-and-back spurs, keep clean loops and navigation steps");

@@ -58,3 +58,10 @@ body.gr-travel-active .discoverTabs{display:flex!important}
 .gr-travel-detail-buttons button{border:1px solid var(--line);border-radius:12px;color:var(--text);background:var(--card2);padding:13px 9px;min-width:0;display:flex;justify-content:center;align-items:center;gap:5px;font-size:12px;font-weight:800}
 .gr-travel-detail-buttons button:first-child{background:var(--accent);color:#fff;border-color:var(--accent)}
 @media(max-width:390px){.gr-travel-items{gap:7px}.gr-travel-item{padding:10px}.gr-travel-item>b{font-size:12px}.gr-travel-detail-buttons button{font-size:11px}}
+/* Card photo (Wikipedia lead image) and location check badge. */
+.gr-travel-item.has-photo{padding-top:0;overflow:hidden}
+.gr-travel-item-photo{margin:0 -12px;aspect-ratio:16/9;background:var(--card2,#1a1f29);overflow:hidden}
+.gr-travel-item-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.gr-travel-located{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#16A34A;margin-top:-4px}
+.gr-travel-located .mi{font-size:15px}
+@media(max-width:390px){.gr-travel-item-photo{margin:0 -10px}}

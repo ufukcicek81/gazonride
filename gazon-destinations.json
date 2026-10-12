@@ -93,7 +93,8 @@
       "title": "Aladağ Küp Şelalelerini gör",
       "category": "Doğa",
       "search": "Aladağ Küp Şelalelerini gör Adana Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Aladağ Küp Şelaleleri"
     },
     {
       "id": 2,
@@ -102,7 +103,8 @@
       "title": "Anavarza Antik Kentini gez",
       "category": "Tarih",
       "search": "Anavarza Antik Kentini gez Adana Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Anavarza Antik Kenti"
     },
     {
       "id": 3,
@@ -111,7 +113,8 @@
       "title": "Nemrut Dağı'nı ziyaret et",
       "category": "Doğa",
       "search": "Nemrut Dağı'nı ziyaret et Adıyaman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Nemrut Dağı"
     },
     {
       "id": 4,
@@ -120,7 +123,8 @@
       "title": "Cendere Köprüsünü gör",
       "category": "Tarih",
       "search": "Cendere Köprüsünü gör Adıyaman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cendere Köprüsü"
     },
     {
       "id": 5,
@@ -129,7 +133,8 @@
       "title": "Afyonkarahisar Kalesine çık",
       "category": "Tarih",
       "search": "Afyonkarahisar Kalesine çık Afyonkarahisar Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Afyonkarahisar Kalesi"
     },
     {
       "id": 6,
@@ -138,7 +143,8 @@
       "title": "İscehisar Peri Bacalarını gör",
       "category": "Keşif",
       "search": "İscehisar Peri Bacalarını gör Afyonkarahisar Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "İscehisar Peri Bacaları"
     },
     {
       "id": 7,
@@ -147,7 +153,8 @@
       "title": "İshak Paşa Sarayı'nı gez",
       "category": "Tarih",
       "search": "İshak Paşa Sarayı'nı gez Ağrı Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "İshak Paşa Sarayı"
     },
     {
       "id": 8,
@@ -156,7 +163,8 @@
       "title": "Doğubayazıt Urartu Kalesini gör",
       "category": "Tarih",
       "search": "Doğubayazıt Urartu Kalesini gör Ağrı Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Doğubayazıt Kalesi"
     },
     {
       "id": 9,
@@ -165,7 +173,8 @@
       "title": "Ihlara Vadisi'nde yürü",
       "category": "Doğa",
       "search": "Ihlara Vadisi'nde yürü Aksaray Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ihlara Vadisi"
     },
     {
       "id": 10,
@@ -174,7 +183,8 @@
       "title": "Hasan Dağı manzarasını izle",
       "category": "Doğa",
       "search": "Hasan Dağı manzarasını izle Aksaray Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Hasan Dağı"
     },
     {
       "id": 11,
@@ -183,7 +193,8 @@
       "title": "Kral Kaya Mezarlarını gör",
       "category": "Tarih",
       "search": "Kral Kaya Mezarlarını gör Amasya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kral Kaya Mezarları"
     },
     {
       "id": 12,
@@ -192,7 +203,8 @@
       "title": "Yalıboyu evlerinin önünde yürü",
       "category": "Keşif",
       "search": "Yalıboyu evlerinin önünde yürü Amasya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yalıboyu Evleri"
     },
     {
       "id": 13,
@@ -201,7 +213,8 @@
       "title": "Anıtkabir'i ziyaret et",
       "category": "Tarih",
       "search": "Anıtkabir'i ziyaret et Ankara Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Anıtkabir"
     },
     {
       "id": 14,
@@ -210,7 +223,8 @@
       "title": "Anadolu Medeniyetleri Müzesini gez",
       "category": "Tarih",
       "search": "Anadolu Medeniyetleri Müzesini gez Ankara Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Anadolu Medeniyetleri Müzesi"
     },
     {
       "id": 15,
@@ -219,7 +233,8 @@
       "title": "Kaputaş Plajını gör",
       "category": "Deniz",
       "search": "Kaputaş Plajını gör Antalya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kaputaş Plajı"
     },
     {
       "id": 16,
@@ -228,7 +243,8 @@
       "title": "Termessos Antik Kenti'ni gez",
       "category": "Tarih",
       "search": "Termessos Antik Kenti'ni gez Antalya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Termessos Antik Kenti"
     },
     {
       "id": 17,
@@ -237,7 +253,8 @@
       "title": "Çıldır Gölü'nü gör",
       "category": "Doğa",
       "search": "Çıldır Gölü'nü gör Ardahan Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Çıldır Gölü"
     },
     {
       "id": 18,
@@ -246,7 +263,8 @@
       "title": "Şeytan Kalesine çık",
       "category": "Tarih",
       "search": "Şeytan Kalesine çık Ardahan Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Şeytan Kalesi"
     },
     {
       "id": 19,
@@ -255,7 +273,8 @@
       "title": "Mençuna Şelalesine git",
       "category": "Doğa",
       "search": "Mençuna Şelalesine git Artvin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Mençuna Şelalesi"
     },
     {
       "id": 20,
@@ -264,7 +283,8 @@
       "title": "Borçka Karagöl'ü gör",
       "category": "Doğa",
       "search": "Borçka Karagöl'ü gör Artvin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Borçka Karagöl"
     },
     {
       "id": 21,
@@ -273,7 +293,8 @@
       "title": "Afrodisias Antik Kenti'ni gez",
       "category": "Tarih",
       "search": "Afrodisias Antik Kenti'ni gez Aydın Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Afrodisias Antik Kenti"
     },
     {
       "id": 22,
@@ -282,7 +303,8 @@
       "title": "Priene Antik Kenti'ni ziyaret et",
       "category": "Tarih",
       "search": "Priene Antik Kenti'ni ziyaret et Aydın Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Priene Antik Kenti"
     },
     {
       "id": 23,
@@ -291,7 +313,8 @@
       "title": "Cunda sokaklarında dolaş",
       "category": "Keşif",
       "search": "Cunda sokaklarında dolaş Balıkesir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cunda Adası"
     },
     {
       "id": 24,
@@ -300,7 +323,8 @@
       "title": "Kapıdağ Yarımadasında sürüş yap",
       "category": "Doğa",
       "search": "Kapıdağ Yarımadasında sürüş yap Balıkesir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kapıdağ Yarımadası"
     },
     {
       "id": 25,
@@ -309,7 +333,8 @@
       "title": "Amasra Kalesini gez",
       "category": "Tarih",
       "search": "Amasra Kalesini gez Bartın Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Amasra Kalesi"
     },
     {
       "id": 26,
@@ -318,7 +343,8 @@
       "title": "Güzelcehisar Bazalt Sütunlarını gör",
       "category": "Keşif",
       "search": "Güzelcehisar Bazalt Sütunlarını gör Bartın Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Güzelcehisar Bazalt Sütunları"
     },
     {
       "id": 27,
@@ -327,7 +353,8 @@
       "title": "Hasankeyf'i ziyaret et",
       "category": "Tarih",
       "search": "Hasankeyf'i ziyaret et Batman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Hasankeyf"
     },
     {
       "id": 28,
@@ -336,7 +363,8 @@
       "title": "Malabadi Köprüsünde yürü",
       "category": "Tarih",
       "search": "Malabadi Köprüsünde yürü Batman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Malabadi Köprüsü"
     },
     {
       "id": 29,
@@ -345,7 +373,8 @@
       "title": "D915 Soğanlı Geçidi yolunu gör",
       "category": "Keşif",
       "search": "D915 Soğanlı Geçidi yolunu gör Bayburt Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Soğanlı Geçidi"
     },
     {
       "id": 30,
@@ -354,7 +383,8 @@
       "title": "Çımağıl Mağarasını gez",
       "category": "Doğa",
       "search": "Çımağıl Mağarasını gez Bayburt Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Çımağıl Mağarası"
     },
     {
       "id": 31,
@@ -363,7 +393,8 @@
       "title": "Şeyh Edebali Türbesini ziyaret et",
       "category": "Tarih",
       "search": "Şeyh Edebali Türbesini ziyaret et Bilecik Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Şeyh Edebali Türbesi"
     },
     {
       "id": 32,
@@ -372,7 +403,8 @@
       "title": "Harmankaya Kanyonunu gör",
       "category": "Doğa",
       "search": "Harmankaya Kanyonunu gör Bilecik Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Harmankaya Kanyonu"
     },
     {
       "id": 33,
@@ -381,7 +413,8 @@
       "title": "Yüzen Ada'yı gör",
       "category": "Doğa",
       "search": "Yüzen Adalar Tabiat Anıtı Hazarşah Solhan Bingöl",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yüzen Ada"
     },
     {
       "id": 34,
@@ -390,7 +423,8 @@
       "title": "Çir Şelalesine git",
       "category": "Doğa",
       "search": "Çir Şelalesine git Bingöl Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Çir Şelalesi"
     },
     {
       "id": 35,
@@ -399,7 +433,8 @@
       "title": "Nemrut Krater Gölünü gör",
       "category": "Doğa",
       "search": "Nemrut Krater Gölünü gör Bitlis Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Nemrut Krater Gölü"
     },
     {
       "id": 36,
@@ -408,7 +443,8 @@
       "title": "Ahlat Selçuklu Mezarlığını gez",
       "category": "Tarih",
       "search": "Ahlat Selçuklu Mezarlığını gez Bitlis Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ahlat Selçuklu Mezarlığı"
     },
     {
       "id": 37,
@@ -417,7 +453,8 @@
       "title": "Yedigöller Milli Parkına git",
       "category": "Doğa",
       "search": "Yedigöller Milli Parkına git Bolu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yedigöller Milli Parkı"
     },
     {
       "id": 38,
@@ -426,7 +463,8 @@
       "title": "Abant Gölünün çevresini dolaş",
       "category": "Doğa",
       "search": "Abant Gölünün çevresini dolaş Bolu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Abant Gölü"
     },
     {
       "id": 39,
@@ -435,7 +473,8 @@
       "title": "Salda Gölünü gör",
       "category": "Doğa",
       "search": "Salda Gölünü gör Burdur Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Salda Gölü"
     },
     {
       "id": 40,
@@ -444,7 +483,8 @@
       "title": "Sagalassos Antik Kentini gez",
       "category": "Tarih",
       "search": "Sagalassos Antik Kentini gez Burdur Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sagalassos Antik Kenti"
     },
     {
       "id": 41,
@@ -453,7 +493,8 @@
       "title": "Uludağ'a çık",
       "category": "Doğa",
       "search": "Uludağ'a çık Bursa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Uludağ"
     },
     {
       "id": 42,
@@ -462,7 +503,8 @@
       "title": "Cumalıkızık sokaklarında dolaş",
       "category": "Keşif",
       "search": "Cumalıkızık sokaklarında dolaş Bursa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cumalıkızık"
     },
     {
       "id": 43,
@@ -471,7 +513,8 @@
       "title": "Troya Antik Kenti'ni gez",
       "category": "Tarih",
       "search": "Troya Antik Kenti'ni gez Çanakkale Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Troya"
     },
     {
       "id": 44,
@@ -480,7 +523,8 @@
       "title": "Gelibolu Tarihi Yarımadasını ziyaret et",
       "category": "Tarih",
       "search": "Gelibolu Tarihi Yarımadasını ziyaret et Çanakkale Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Gelibolu Tarihi Yarımadası"
     },
     {
       "id": 45,
@@ -489,7 +533,8 @@
       "title": "Tuz Mağarasını gez",
       "category": "Doğa",
       "search": "Tuz Mağarasını gez Çankırı Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Tuz Mağarası"
     },
     {
       "id": 46,
@@ -498,7 +543,8 @@
       "title": "Ilgaz Dağlarında yürüyüş yap",
       "category": "Doğa",
       "search": "Ilgaz Dağlarında yürüyüş yap Çankırı Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ilgaz Dağı"
     },
     {
       "id": 47,
@@ -507,7 +553,8 @@
       "title": "Hattuşa Antik Kentini gez",
       "category": "Tarih",
       "search": "Hattuşa Antik Kentini gez Çorum Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Hattuşa Antik Kenti"
     },
     {
       "id": 48,
@@ -516,7 +563,8 @@
       "title": "İncesu Kanyonunu gör",
       "category": "Doğa",
       "search": "İncesu Kanyonunu gör Çorum Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "İncesu Kanyonu"
     },
     {
       "id": 49,
@@ -525,7 +573,8 @@
       "title": "Pamukkale Travertenlerini ziyaret et",
       "category": "Doğa",
       "search": "Pamukkale Travertenlerini ziyaret et Denizli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Pamukkale"
     },
     {
       "id": 50,
@@ -534,7 +583,8 @@
       "title": "Hierapolis Antik Kentini gez",
       "category": "Tarih",
       "search": "Hierapolis Antik Kentini gez Denizli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Hierapolis Antik Kenti"
     },
     {
       "id": 51,
@@ -543,7 +593,8 @@
       "title": "Diyarbakır Surlarını gör",
       "category": "Tarih",
       "search": "Diyarbakır Surlarını gör Diyarbakır Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Diyarbakır Surları"
     },
     {
       "id": 52,
@@ -552,7 +603,8 @@
       "title": "On Gözlü Köprüyü ziyaret et",
       "category": "Tarih",
       "search": "On Gözlü Köprüyü ziyaret et Diyarbakır Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "On Gözlü Köprü"
     },
     {
       "id": 53,
@@ -561,7 +613,8 @@
       "title": "Efteni Gölü'nde kuşları izle",
       "category": "Doğa",
       "search": "Efteni Gölü'nde kuşları izle Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Efteni Gölü"
     },
     {
       "id": 54,
@@ -570,7 +623,8 @@
       "title": "Fakıllı Mağarasını gör",
       "category": "Doğa",
       "search": "Fakıllı Mağarasını gör Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Fakıllı Mağarası"
     },
     {
       "id": 55,
@@ -579,7 +633,8 @@
       "title": "Güzeldere Şelalesine git",
       "category": "Doğa",
       "search": "Güzeldere Şelalesine git Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Güzeldere Şelalesi"
     },
     {
       "id": 56,
@@ -588,7 +643,8 @@
       "title": "Harmankaya Şelalesini gör",
       "category": "Doğa",
       "search": "Harmankaya Şelalesi Harmankaya Köyü Cumayeri Düzce",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Harmankaya Şelalesi"
     },
     {
       "id": 57,
@@ -597,7 +653,8 @@
       "title": "Kardüz Yaylasında yürü",
       "category": "Doğa",
       "search": "Kardüz Yaylasında yürü Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kardüz Yaylası"
     },
     {
       "id": 58,
@@ -606,7 +663,8 @@
       "title": "Kırpe Kanyonunu gör",
       "category": "Doğa",
       "search": "Kırpe Kanyonunu gör Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kırpe Kanyonu"
     },
     {
       "id": 59,
@@ -615,7 +673,8 @@
       "title": "Konuralp Müzesini ziyaret et",
       "category": "Tarih",
       "search": "Konuralp Müzesini ziyaret et Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Konuralp Müzesi"
     },
     {
       "id": 60,
@@ -624,7 +683,8 @@
       "title": "Mamatlar Yaylasındaki yaşlı meşe ağacını gör",
       "category": "Doğa",
       "search": "Mamatlar Yaylasındaki yaşlı meşe ağacını gör Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Mamatlar Yaylası"
     },
     {
       "id": 61,
@@ -633,7 +693,8 @@
       "title": "Melen Çayında rafting yap",
       "category": "Doğa",
       "search": "Melen Çayında rafting yap Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Melen Çayı"
     },
     {
       "id": 62,
@@ -642,7 +703,8 @@
       "title": "Pürenli Yaylasına çık",
       "category": "Doğa",
       "search": "Pürenli Yaylasına çık Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Pürenli Yaylası"
     },
     {
       "id": 63,
@@ -651,7 +713,8 @@
       "title": "Saklıkent Şelalesini gör",
       "category": "Doğa",
       "search": "Saklıkent Şelalesi Yağcılar Köyü Yığılca Düzce",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Saklıkent Şelalesi"
     },
     {
       "id": 64,
@@ -660,7 +723,8 @@
       "title": "Torkul Gölü ve Yaylasını gez",
       "category": "Doğa",
       "search": "Torkul Gölü ve Yaylasını gez Düzce Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Torkul Gölü"
     },
     {
       "id": 65,
@@ -669,7 +733,8 @@
       "title": "Yılançatı Tabiat Parkına git",
       "category": "Doğa",
       "search": "Yılançatı Kanyonu Tabiat Parkı Düzce",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yılançatı Tabiat Parkı"
     },
     {
       "id": 66,
@@ -678,7 +743,8 @@
       "title": "Selimiye Camisini ziyaret et",
       "category": "Tarih",
       "search": "Selimiye Camisini ziyaret et Edirne Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Selimiye Camii"
     },
     {
       "id": 67,
@@ -687,7 +753,8 @@
       "title": "Uzunköprü üzerinde yürü",
       "category": "Tarih",
       "search": "Uzunköprü üzerinde yürü Edirne Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Uzunköprü Köprüsü"
     },
     {
       "id": 68,
@@ -696,7 +763,8 @@
       "title": "Harput Kalesini gez",
       "category": "Tarih",
       "search": "Harput Kalesini gez Elazığ Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Harput Kalesi"
     },
     {
       "id": 69,
@@ -705,7 +773,8 @@
       "title": "Buzluk Mağarasını gör",
       "category": "Doğa",
       "search": "Buzluk Mağarasını gör Elazığ Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Buzluk Mağarası"
     },
     {
       "id": 70,
@@ -714,7 +783,8 @@
       "title": "Kemaliye Karanlık Kanyonunu gör",
       "category": "Doğa",
       "search": "Kemaliye Karanlık Kanyonunu gör Erzincan Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kemaliye Karanlık Kanyonu"
     },
     {
       "id": 71,
@@ -723,7 +793,8 @@
       "title": "Girlevik Şelalesine git",
       "category": "Doğa",
       "search": "Girlevik Şelalesine git Erzincan Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Girlevik Şelalesi"
     },
     {
       "id": 72,
@@ -732,7 +803,8 @@
       "title": "Tortum Şelalesini gör",
       "category": "Doğa",
       "search": "Tortum Şelalesini gör Erzurum Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Tortum Şelalesi"
     },
     {
       "id": 73,
@@ -741,7 +813,8 @@
       "title": "Narman Peri Bacalarını ziyaret et",
       "category": "Keşif",
       "search": "Narman Peri Bacalarını ziyaret et Erzurum Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Narman Peri Bacaları"
     },
     {
       "id": 74,
@@ -750,7 +823,8 @@
       "title": "Odunpazarı sokaklarında dolaş",
       "category": "Keşif",
       "search": "Odunpazarı sokaklarında dolaş Eskişehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Odunpazarı"
     },
     {
       "id": 75,
@@ -759,7 +833,8 @@
       "title": "Porsuk Çayında mola ver",
       "category": "Keşif",
       "search": "Porsuk Çayında mola ver Eskişehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Porsuk Çayı"
     },
     {
       "id": 76,
@@ -768,7 +843,8 @@
       "title": "Zeugma Mozaik Müzesini gez",
       "category": "Tarih",
       "search": "Zeugma Mozaik Müzesini gez Gaziantep Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Zeugma Mozaik Müzesi"
     },
     {
       "id": 77,
@@ -777,7 +853,8 @@
       "title": "Yesemek Açık Hava Müzesini gör",
       "category": "Tarih",
       "search": "Yesemek Açık Hava Müzesini gör Gaziantep Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yesemek Açık Hava Müzesi"
     },
     {
       "id": 78,
@@ -786,7 +863,8 @@
       "title": "Mavi Göl'ü ziyaret et",
       "category": "Doğa",
       "search": "Mavi Göl'ü ziyaret et Giresun Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Mavi Göl"
     },
     {
       "id": 79,
@@ -795,7 +873,8 @@
       "title": "Kümbet Yaylasına çık",
       "category": "Doğa",
       "search": "Kümbet Yaylasına çık Giresun Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kümbet Yaylası"
     },
     {
       "id": 80,
@@ -804,7 +883,8 @@
       "title": "Karaca Mağarasını gez",
       "category": "Doğa",
       "search": "Karaca Mağarasını gez Gümüşhane Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Karaca Mağarası"
     },
     {
       "id": 81,
@@ -813,7 +893,8 @@
       "title": "Santa Harabelerini gör",
       "category": "Tarih",
       "search": "Santa Harabelerini gör Gümüşhane Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Santa Harabeleri"
     },
     {
       "id": 82,
@@ -822,7 +903,8 @@
       "title": "Cilo Buzullarının manzarasını izle",
       "category": "Keşif",
       "search": "Cilo Buzullarının manzarasını izle Hakkari Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cilo Dağı"
     },
     {
       "id": 83,
@@ -831,7 +913,8 @@
       "title": "Berçelan Yaylasına git",
       "category": "Doğa",
       "search": "Berçelan Yaylasına git Hakkari Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Berçelan Yaylası"
     },
     {
       "id": 84,
@@ -840,7 +923,8 @@
       "title": "Saint Pierre Kilisesini gör",
       "category": "Tarih",
       "search": "Saint Pierre Kilisesini gör Hatay Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Saint Pierre Kilisesi"
     },
     {
       "id": 85,
@@ -849,7 +933,8 @@
       "title": "Titus Tünelinde yürü",
       "category": "Keşif",
       "search": "Titus Tünelinde yürü Hatay Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Titus Tüneli"
     },
     {
       "id": 86,
@@ -858,7 +943,8 @@
       "title": "Tuzluca Tuz Mağaralarını gez",
       "category": "Doğa",
       "search": "Tuzluca Tuz Mağaralarını gez Iğdır Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Tuzluca Tuz Mağaraları"
     },
     {
       "id": 87,
@@ -867,7 +953,8 @@
       "title": "Meteor Çukurunu gör",
       "category": "Keşif",
       "search": "Meteor Çukurunu gör Iğdır Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Meteor Çukuru"
     },
     {
       "id": 88,
@@ -876,7 +963,8 @@
       "title": "Eğirdir Gölü'nü gör",
       "category": "Doğa",
       "search": "Eğirdir Gölü'nü gör Isparta Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Eğirdir Gölü"
     },
     {
       "id": 89,
@@ -885,7 +973,8 @@
       "title": "Davraz Dağına çık",
       "category": "Doğa",
       "search": "Davraz Dağına çık Isparta Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Davraz Dağı"
     },
     {
       "id": 90,
@@ -894,7 +983,8 @@
       "title": "Ayasofya'yı gör",
       "category": "Keşif",
       "search": "Ayasofya'yı gör İstanbul Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ayasofya"
     },
     {
       "id": 91,
@@ -903,7 +993,8 @@
       "title": "Galata Kulesine çık",
       "category": "Keşif",
       "search": "Galata Kulesine çık İstanbul Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Galata Kulesi"
     },
     {
       "id": 92,
@@ -912,7 +1003,8 @@
       "title": "Efes Antik Kentini gez",
       "category": "Tarih",
       "search": "Efes Antik Kentini gez İzmir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Efes"
     },
     {
       "id": 93,
@@ -921,7 +1013,8 @@
       "title": "Bergama Akropolünü gör",
       "category": "Tarih",
       "search": "Bergama Akropolünü gör İzmir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Bergama Akropolü"
     },
     {
       "id": 94,
@@ -930,7 +1023,8 @@
       "title": "Yedikuyular yaylalarında gez",
       "category": "Doğa",
       "search": "Yedikuyular yaylalarında gez Kahramanmaraş Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yedikuyular"
     },
     {
       "id": 95,
@@ -939,7 +1033,8 @@
       "title": "Döngel Mağaralarını gör",
       "category": "Doğa",
       "search": "Döngel Mağaralarını gör Kahramanmaraş Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Döngel Mağaraları"
     },
     {
       "id": 96,
@@ -948,7 +1043,8 @@
       "title": "Safranbolu evlerini gez",
       "category": "Keşif",
       "search": "Safranbolu evlerini gez Karabük Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Safranbolu"
     },
     {
       "id": 97,
@@ -957,7 +1053,8 @@
       "title": "Tokatlı Kanyonuna git",
       "category": "Doğa",
       "search": "Tokatlı Kanyonuna git Karabük Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Tokatlı Kanyonu"
     },
     {
       "id": 98,
@@ -966,7 +1063,8 @@
       "title": "Binbir Kilise kalıntılarını gör",
       "category": "Tarih",
       "search": "Binbir Kilise kalıntılarını gör Karaman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Binbir Kilise"
     },
     {
       "id": 99,
@@ -975,7 +1073,8 @@
       "title": "Manazan Mağaralarını gez",
       "category": "Doğa",
       "search": "Manazan Mağaralarını gez Karaman Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Manazan Mağaraları"
     },
     {
       "id": 100,
@@ -984,7 +1083,8 @@
       "title": "Ani Ören Yeri'ni ziyaret et",
       "category": "Tarih",
       "search": "Ani Ören Yeri'ni ziyaret et Kars Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ani Ören Yeri"
     },
     {
       "id": 101,
@@ -993,7 +1093,8 @@
       "title": "Kars Kalesine çık",
       "category": "Tarih",
       "search": "Kars Kalesine çık Kars Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kars Kalesi"
     },
     {
       "id": 102,
@@ -1002,7 +1103,8 @@
       "title": "Valla Kanyonunu gör",
       "category": "Doğa",
       "search": "Valla Kanyonunu gör Kastamonu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Valla Kanyonu"
     },
     {
       "id": 103,
@@ -1011,7 +1113,8 @@
       "title": "Ilgaz Dağlarına çık",
       "category": "Doğa",
       "search": "Ilgaz Dağlarına çık Kastamonu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ilgaz Dağları"
     },
     {
       "id": 104,
@@ -1020,7 +1123,8 @@
       "title": "Erciyes Dağı manzarasını gör",
       "category": "Doğa",
       "search": "Erciyes Dağı manzarasını gör Kayseri Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Erciyes Dağı"
     },
     {
       "id": 105,
@@ -1029,7 +1133,8 @@
       "title": "Kapuzbaşı Şelalelerine git",
       "category": "Doğa",
       "search": "Kapuzbaşı Şelalelerine git Kayseri Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kapuzbaşı Şelaleleri"
     },
     {
       "id": 106,
@@ -1038,7 +1143,8 @@
       "title": "Çeşnigir Köprüsünü gör",
       "category": "Tarih",
       "search": "Çeşnigir Köprüsünü gör Kırıkkale Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Çeşnigir Köprüsü"
     },
     {
       "id": 107,
@@ -1047,7 +1153,8 @@
       "title": "Karaahmetli Tabiat Parkını gez",
       "category": "Doğa",
       "search": "Karaahmetli Tabiat Parkını gez Kırıkkale Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Karaahmetli Tabiat Parkı"
     },
     {
       "id": 108,
@@ -1056,7 +1163,8 @@
       "title": "İğneada Longoz Ormanlarına git",
       "category": "Doğa",
       "search": "İğneada Longoz Ormanlarına git Kırklareli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "İğneada Longoz Ormanları"
     },
     {
       "id": 109,
@@ -1065,7 +1173,8 @@
       "title": "Dupnisa Mağarasını gez",
       "category": "Doğa",
       "search": "Dupnisa Mağarasını gez Kırklareli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Dupnisa Mağarası"
     },
     {
       "id": 110,
@@ -1074,7 +1183,8 @@
       "title": "Cacabey Medresesini gez",
       "category": "Tarih",
       "search": "Cacabey Medresesini gez Kırşehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cacabey Medresesi"
     },
     {
       "id": 111,
@@ -1083,7 +1193,8 @@
       "title": "Aşık Paşa Türbesini gör",
       "category": "Tarih",
       "search": "Aşık Paşa Türbesini gör Kırşehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Aşık Paşa Türbesi"
     },
     {
       "id": 112,
@@ -1092,7 +1203,8 @@
       "title": "Ravanda Kalesini gez",
       "category": "Tarih",
       "search": "Ravanda Kalesini gez Kilis Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ravanda Kalesi"
     },
     {
       "id": 113,
@@ -1101,7 +1213,8 @@
       "title": "Oylum Höyüğü'nü gör",
       "category": "Keşif",
       "search": "Oylum Höyüğü'nü gör Kilis Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Oylum Höyük"
     },
     {
       "id": 114,
@@ -1110,7 +1223,8 @@
       "title": "Ormanya Tabiat Parkına git",
       "category": "Doğa",
       "search": "Ormanya Tabiat Parkına git Kocaeli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ormanya Tabiat Parkı"
     },
     {
       "id": 115,
@@ -1119,7 +1233,8 @@
       "title": "Ballıkayalar Kanyonunu gör",
       "category": "Doğa",
       "search": "Ballıkayalar Kanyonunu gör Kocaeli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ballıkayalar Kanyonu"
     },
     {
       "id": 116,
@@ -1128,7 +1243,8 @@
       "title": "Mevlana Müzesini ziyaret et",
       "category": "Tarih",
       "search": "Mevlana Müzesini ziyaret et Konya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Mevlana Müzesi"
     },
     {
       "id": 117,
@@ -1137,7 +1253,8 @@
       "title": "Sille sokaklarında dolaş",
       "category": "Keşif",
       "search": "Sille sokaklarında dolaş Konya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sille"
     },
     {
       "id": 118,
@@ -1146,7 +1263,8 @@
       "title": "Aizanoi Antik Kentini gez",
       "category": "Tarih",
       "search": "Aizanoi Antik Kentini gez Kütahya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Aizanoi Antik Kenti"
     },
     {
       "id": 119,
@@ -1155,7 +1273,8 @@
       "title": "Frig Vadisini gör",
       "category": "Doğa",
       "search": "Frig Vadisini gör Kütahya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Frig Vadisi"
     },
     {
       "id": 120,
@@ -1164,7 +1283,8 @@
       "title": "Arslantepe Höyüğünü ziyaret et",
       "category": "Tarih",
       "search": "Arslantepe Höyüğünü ziyaret et Malatya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Arslantepe Höyüğü"
     },
     {
       "id": 121,
@@ -1173,7 +1293,8 @@
       "title": "Levent Vadisi seyir terasına çık",
       "category": "Doğa",
       "search": "Levent Vadisi seyir terasına çık Malatya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Levent Vadisi"
     },
     {
       "id": 122,
@@ -1182,7 +1303,8 @@
       "title": "Sardes Antik Kentini gez",
       "category": "Tarih",
       "search": "Sardes Antik Kentini gez Manisa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sardes Antik Kenti"
     },
     {
       "id": 123,
@@ -1191,7 +1313,8 @@
       "title": "Spil Dağına çık",
       "category": "Doğa",
       "search": "Spil Dağına çık Manisa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Spil Dağı"
     },
     {
       "id": 124,
@@ -1200,7 +1323,8 @@
       "title": "Deyrulzafaran Manastırını gör",
       "category": "Tarih",
       "search": "Deyrulzafaran Manastırını gör Mardin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Deyrulzafaran Manastırı"
     },
     {
       "id": 125,
@@ -1209,7 +1333,8 @@
       "title": "Dara Antik Kenti'ni gez",
       "category": "Tarih",
       "search": "Dara Antik Kenti'ni gez Mardin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Dara Antik Kenti"
     },
     {
       "id": 126,
@@ -1218,7 +1343,8 @@
       "title": "Kızkalesi'ni gör",
       "category": "Tarih",
       "search": "Kızkalesi'ni gör Mersin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kızkalesi"
     },
     {
       "id": 127,
@@ -1227,7 +1353,8 @@
       "title": "Cennet Cehennem Obruklarını gez",
       "category": "Keşif",
       "search": "Cennet Cehennem Obruklarını gez Mersin Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cennet Cehennem Obrukları"
     },
     {
       "id": 128,
@@ -1236,7 +1363,8 @@
       "title": "Saklıkent Kanyonunda yürü",
       "category": "Doğa",
       "search": "Saklıkent Kanyonunda yürü Muğla Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Saklıkent Kanyonu"
     },
     {
       "id": 129,
@@ -1245,7 +1373,8 @@
       "title": "Dalyan kaya mezarlarını gör",
       "category": "Tarih",
       "search": "Dalyan kaya mezarlarını gör Muğla Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kaunos Kaya Mezarları"
     },
     {
       "id": 130,
@@ -1254,7 +1383,8 @@
       "title": "Malazgirt tarihi alanlarını gez",
       "category": "Keşif",
       "search": "Malazgirt tarihi alanlarını gez Muş Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Malazgirt"
     },
     {
       "id": 131,
@@ -1263,7 +1393,8 @@
       "title": "Murat Köprüsünü gör",
       "category": "Tarih",
       "search": "Murat Köprüsünü gör Muş Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Murat Köprüsü"
     },
     {
       "id": 132,
@@ -1272,7 +1403,8 @@
       "title": "Göreme Açık Hava Müzesini gez",
       "category": "Tarih",
       "search": "Göreme Açık Hava Müzesini gez Nevşehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Göreme Açık Hava Müzesi"
     },
     {
       "id": 133,
@@ -1281,7 +1413,8 @@
       "title": "Derinkuyu Yeraltı Şehrine in",
       "category": "Keşif",
       "search": "Derinkuyu Yeraltı Şehrine in Nevşehir Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Derinkuyu Yeraltı Şehri"
     },
     {
       "id": 134,
@@ -1290,7 +1423,8 @@
       "title": "Gümüşler Manastırını gez",
       "category": "Tarih",
       "search": "Gümüşler Manastırını gez Niğde Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Gümüşler Manastırı"
     },
     {
       "id": 135,
@@ -1299,7 +1433,8 @@
       "title": "Aladağlar Milli Parkını gör",
       "category": "Doğa",
       "search": "Aladağlar Milli Parkını gör Niğde Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Aladağlar Milli Parkı"
     },
     {
       "id": 136,
@@ -1308,7 +1443,8 @@
       "title": "Boztepe'den manzarayı izle",
       "category": "Keşif",
       "search": "Boztepe'den manzarayı izle Ordu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Boztepe"
     },
     {
       "id": 137,
@@ -1317,7 +1453,8 @@
       "title": "Ulugöl Tabiat Parkını gör",
       "category": "Doğa",
       "search": "Ulugöl Tabiat Parkını gör Ordu Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ulugöl Tabiat Parkı"
     },
     {
       "id": 138,
@@ -1326,7 +1463,8 @@
       "title": "Karatepe-Aslantaş Açık Hava Müzesini gez",
       "category": "Tarih",
       "search": "Karatepe-Aslantaş Açık Hava Müzesini gez Osmaniye Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Karatepe-Aslantaş Açık Hava Müzesi"
     },
     {
       "id": 139,
@@ -1335,7 +1473,8 @@
       "title": "Kastabala Antik Kenti'ni gör",
       "category": "Tarih",
       "search": "Kastabala Antik Kenti'ni gör Osmaniye Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kastabala Antik Kenti"
     },
     {
       "id": 140,
@@ -1344,7 +1483,8 @@
       "title": "Ayder Yaylasına çık",
       "category": "Doğa",
       "search": "Ayder Yaylasına çık Rize Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ayder Yaylası"
     },
     {
       "id": 141,
@@ -1353,7 +1493,8 @@
       "title": "Zilkale'yi gör",
       "category": "Tarih",
       "search": "Zilkale'yi gör Rize Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Zilkale"
     },
     {
       "id": 142,
@@ -1362,7 +1503,8 @@
       "title": "Acarlar Longozunu gez",
       "category": "Keşif",
       "search": "Acarlar Longozunu gez Sakarya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Acarlar Longozu"
     },
     {
       "id": 143,
@@ -1371,7 +1513,8 @@
       "title": "Sapanca Gölü'nü dolaş",
       "category": "Doğa",
       "search": "Sapanca Gölü'nü dolaş Sakarya Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sapanca Gölü"
     },
     {
       "id": 144,
@@ -1380,7 +1523,8 @@
       "title": "Bandırma Vapuru Müzesini gez",
       "category": "Tarih",
       "search": "Bandırma Vapuru Müzesini gez Samsun Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Bandırma Vapuru Müzesi"
     },
     {
       "id": 145,
@@ -1389,7 +1533,8 @@
       "title": "Amisos Tepesine çık",
       "category": "Keşif",
       "search": "Amisos Tepesine çık Samsun Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Amisos Tepesi"
     },
     {
       "id": 146,
@@ -1398,7 +1543,8 @@
       "title": "Botan Vadisini gör",
       "category": "Doğa",
       "search": "Botan Vadisini gör Siirt Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Botan Vadisi"
     },
     {
       "id": 147,
@@ -1407,7 +1553,8 @@
       "title": "Tillo'da manzarayı izle",
       "category": "Keşif",
       "search": "Tillo'da manzarayı izle Siirt Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Tillo"
     },
     {
       "id": 148,
@@ -1416,7 +1563,8 @@
       "title": "Hamsilos Koyu'nu gör",
       "category": "Deniz",
       "search": "Hamsilos Koyu'nu gör Sinop Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Hamsilos Koyu"
     },
     {
       "id": 149,
@@ -1425,7 +1573,8 @@
       "title": "Erfelek Şelalelerini ziyaret et",
       "category": "Doğa",
       "search": "Erfelek Şelalelerini ziyaret et Sinop Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Erfelek Şelaleleri"
     },
     {
       "id": 150,
@@ -1434,7 +1583,8 @@
       "title": "Divriği Ulu Camii'ni ziyaret et",
       "category": "Tarih",
       "search": "Divriği Ulu Camii'ni ziyaret et Sivas Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Divriği Ulu Camii"
     },
     {
       "id": 151,
@@ -1443,7 +1593,8 @@
       "title": "Gökpınar Gölüne git",
       "category": "Doğa",
       "search": "Gökpınar Gölüne git Sivas Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Gökpınar Gölü"
     },
     {
       "id": 152,
@@ -1452,7 +1603,8 @@
       "title": "Göbeklitepe'yi gez",
       "category": "Tarih",
       "search": "Göbeklitepe'yi gez Şanlıurfa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Göbeklitepe"
     },
     {
       "id": 153,
@@ -1461,7 +1613,8 @@
       "title": "Balıklıgöl'ü gör",
       "category": "Doğa",
       "search": "Balıklıgöl'ü gör Şanlıurfa Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Balıklıgöl"
     },
     {
       "id": 154,
@@ -1470,7 +1623,8 @@
       "title": "Kasrik Boğazını gör",
       "category": "Keşif",
       "search": "Kasrik Boğazını gör Şırnak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kasrik Boğazı"
     },
     {
       "id": 155,
@@ -1479,7 +1633,8 @@
       "title": "Cudi Dağı manzarasını izle",
       "category": "Doğa",
       "search": "Cudi Dağı manzarasını izle Şırnak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cudi Dağı"
     },
     {
       "id": 156,
@@ -1488,7 +1643,8 @@
       "title": "Uçmakdere yolunda manzarayı izle",
       "category": "Keşif",
       "search": "Uçmakdere yolunda manzarayı izle Tekirdağ Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Uçmakdere"
     },
     {
       "id": 157,
@@ -1497,7 +1653,8 @@
       "title": "Şarköy sahilinde mola ver",
       "category": "Deniz",
       "search": "Şarköy sahilinde mola ver Tekirdağ Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Şarköy"
     },
     {
       "id": 158,
@@ -1506,7 +1663,8 @@
       "title": "Ballıca Mağarasını gez",
       "category": "Doğa",
       "search": "Ballıca Mağarasını gez Tokat Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ballıca Mağarası"
     },
     {
       "id": 159,
@@ -1515,7 +1673,8 @@
       "title": "Kaz Gölü'nü gör",
       "category": "Doğa",
       "search": "Kaz Gölü'nü gör Tokat Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Kaz Gölü"
     },
     {
       "id": 160,
@@ -1524,7 +1683,8 @@
       "title": "Sümela Manastırını ziyaret et",
       "category": "Tarih",
       "search": "Sümela Manastırını ziyaret et Trabzon Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sümela Manastırı"
     },
     {
       "id": 161,
@@ -1533,7 +1693,8 @@
       "title": "Uzungöl çevresinde yürü",
       "category": "Doğa",
       "search": "Uzungöl çevresinde yürü Trabzon Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Uzungöl"
     },
     {
       "id": 162,
@@ -1542,7 +1703,8 @@
       "title": "Munzur Vadisini gör",
       "category": "Doğa",
       "search": "Munzur Vadisini gör Tunceli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Munzur Vadisi"
     },
     {
       "id": 163,
@@ -1551,7 +1713,8 @@
       "title": "Ovacık çevresinde gez",
       "category": "Keşif",
       "search": "Ovacık çevresinde gez Tunceli Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ovacık"
     },
     {
       "id": 164,
@@ -1560,7 +1723,8 @@
       "title": "Ulubey Kanyonunu gör",
       "category": "Doğa",
       "search": "Ulubey Kanyonunu gör Uşak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Ulubey Kanyonu"
     },
     {
       "id": 165,
@@ -1569,7 +1733,8 @@
       "title": "Blaundos Antik Kentini gez",
       "category": "Tarih",
       "search": "Blaundos Antik Kentini gez Uşak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Blaundos Antik Kenti"
     },
     {
       "id": 166,
@@ -1578,7 +1743,8 @@
       "title": "Akdamar Adası'na git",
       "category": "Doğa",
       "search": "Akdamar Adası'na git Van Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Akdamar Adası"
     },
     {
       "id": 167,
@@ -1587,7 +1753,8 @@
       "title": "Van Kalesine çık",
       "category": "Tarih",
       "search": "Van Kalesine çık Van Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Van Kalesi"
     },
     {
       "id": 168,
@@ -1596,7 +1763,8 @@
       "title": "Sudüşen Şelalesini gör",
       "category": "Doğa",
       "search": "Sudüşen Şelalesini gör Yalova Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sudüşen Şelalesi"
     },
     {
       "id": 169,
@@ -1605,7 +1773,8 @@
       "title": "Termal kaplıca bölgesini gez",
       "category": "Keşif",
       "search": "Termal kaplıca bölgesini gez Yalova Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Termal"
     },
     {
       "id": 170,
@@ -1614,7 +1783,8 @@
       "title": "Yozgat Çamlığı Milli Parkını gez",
       "category": "Keşif",
       "search": "Yozgat Çamlığı Milli Parkını gez Yozgat Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Yozgat Çamlığı Milli Parkı"
     },
     {
       "id": 171,
@@ -1623,7 +1793,8 @@
       "title": "Sarıkaya Roma Hamamını gör",
       "category": "Tarih",
       "search": "Sarıkaya Roma Hamamını gör Yozgat Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Sarıkaya Roma Hamamı"
     },
     {
       "id": 172,
@@ -1632,7 +1803,8 @@
       "title": "Gökgöl Mağarasını gez",
       "category": "Doğa",
       "search": "Gökgöl Mağarasını gez Zonguldak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Gökgöl Mağarası"
     },
     {
       "id": 173,
@@ -1641,7 +1813,8 @@
       "title": "Cehennemağzı Mağaralarını gör",
       "category": "Doğa",
       "search": "Cehennemağzı Mağaralarını gör Zonguldak Türkiye",
-      "editorial": "GaZonRide başlangıç seçkisi"
+      "editorial": "GaZonRide başlangıç seçkisi",
+      "place": "Cehennemağzı Mağaraları"
     }
   ]
 }

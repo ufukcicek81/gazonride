@@ -37,8 +37,9 @@ function draw(){
  $("grTravelNext").disabled=page>=totalPages-1;
  $("grTravelItems").innerHTML=items.length?items.map(function(x){
   var checked=!!v[x.id];
-  return '<article class="gr-travel-item"><div class="gr-travel-item-top"><span class="gr-travel-number">#'+x.id+'</span><span class="gr-travel-city">'+esc(x.city)+'</span><span class="gr-travel-category">'+esc(x.category)+'</span></div>'+
-   '<b>'+esc(x.title)+'</b><div class="gr-travel-item-actions"><button type="button" data-travel-details="'+x.id+'"><span class="mi">photo_library</span> Fotoğraf ve Detay</button>'+
+  var located=x.check==="verified"||x.check==="geocoded";
+  return '<article class="gr-travel-item'+(x.image?' has-photo':'')+'">'+(x.image?'<div class="gr-travel-item-photo"><img loading="lazy" decoding="async" src="'+esc(x.image)+'" alt="'+esc(x.place||x.title)+'" onerror="this.parentNode.remove()"></div>':'')+'<div class="gr-travel-item-top"><span class="gr-travel-number">#'+x.id+'</span><span class="gr-travel-city">'+esc(x.city)+'</span><span class="gr-travel-category">'+esc(x.category)+'</span></div>'+
+   '<b>'+esc(x.title)+'</b>'+(located?'<small class="gr-travel-located"><span class="mi">verified</span> Konum doğrulandı</small>':'')+'<div class="gr-travel-item-actions"><button type="button" data-travel-details="'+x.id+'"><span class="mi">photo_library</span> Fotoğraf ve Detay</button>'+
    '<button type="button" data-travel-check="'+x.id+'" class="'+(checked?"done":"")+'">'+(checked?"✓ Gittim":"○ Gittim")+'</button></div></article>'
  }).join(""):'<div class="gr-travel-empty">Bu filtrede etkinlik bulunamadı.</div>';
  $("grTravelItems").querySelectorAll("[data-travel-details]").forEach(function(b){b.onclick=function(){openDetails(Number(b.dataset.travelDetails))}});
@@ -66,7 +67,7 @@ function paintDetailsPhotos(images){
  function paint(){
   var x=images[current];
   box.innerHTML='<img src="'+esc(x.src)+'" alt="'+esc(x.label)+'" loading="lazy">'+(x.credit?'<a href="'+esc(x.credit)+'" target="_blank" rel="noopener noreferrer" class="gr-travel-credit">Fotoğraf kaynağı ve lisans</a>':'');
-  count.textContent=(current+1)+" / "+images.length+" Wikimedia arama sonucu · Konum fotoğrafı doğrulanmadı";
+  count.textContent=(current+1)+" / "+images.length+(x.lead?" · Wikipedia fotoğrafı":" · Wikimedia arama sonucu");
   thumbs.querySelectorAll("button").forEach(function(b,i){b.classList.toggle("active",i===current)})
  }
  thumbs.innerHTML=images.map(function(x,i){return '<button type="button" data-travel-photo="'+i+'"><img loading="lazy" src="'+esc(x.src)+'" alt="'+esc(x.label)+'"></button>'}).join("");
@@ -84,7 +85,7 @@ function openDetails(id){
  dialog.innerHTML='<div class="gr-travel-detail-sheet"><div class="gr-travel-detail-head"><div><small>'+esc(x.city)+' · '+esc(x.category)+'</small><b>'+esc(x.title)+'</b></div><button id="grTravelClose" aria-label="Kapat"><span class="mi">close</span></button></div>'+
   '<div id="grTravelPhoto" class="gr-travel-photo"><div class="gr-travel-empty">Wikimedia arama sonuçları yükleniyor; fotoğrafın bu yere ait olduğu henüz doğrulanmadı…</div></div><div id="grTravelPhotoCount" class="gr-travel-photo-count"></div><div id="grTravelThumbs" class="gr-travel-thumbs"></div>'+
   '<div class="gr-travel-detail-copy"><h3>Neler görebilirsin?</h3><p>'+esc(genericDescription(x))+'</p>'+
-  '<p class="gr-travel-warning">Öneri kartlarının görselleri ve konumları tek tek doğrulanmamıştır. Navigasyona başlamadan önce hedef yerin adını, ilçesini ve araçla erişilebilen son noktayı kontrol et. Ziyaret koşulları değişebilir.</p></div>'+
+  '<p class="gr-travel-warning">'+(x.check==="verified"||x.check==="geocoded"?'Konum doğrulandı: koordinat '+esc(x.city)+' il sınırları içinde (OpenStreetMap). Yine de araçla erişilebilen son noktayı ve ziyaret koşullarını kontrol et.':'Bu yerin konumu henüz doğrulanmadı; navigasyon yeri isimle arar. Başlamadan önce hedefi kontrol et.')+'</p></div>'+
   '<div class="gr-travel-detail-buttons"><button id="grTravelMap"><span class="mi">navigation</span> Navigasyonda Ara</button><button id="grTravelVisited" class="'+(visited()[x.id]?"done":"")+'">'+(visited()[x.id]?"✓ Ziyaret ettim":"○ Gittim Olarak İşaretle")+'</button></div></div>';
  document.body.appendChild(dialog);document.body.style.overflow="hidden";
  $("grTravelClose").onclick=closeDetails;
@@ -92,16 +93,23 @@ function openDetails(id){
  $("grTravelVisited").onclick=function(){updateVisited(x.id,!visited()[x.id]);draw();this.textContent=visited()[x.id]?"✓ Ziyaret ettim":"○ Gittim Olarak İşaretle";this.classList.toggle("done",!!visited()[x.id])};
  $("grTravelMap").onclick=function(){
   closeDetails();
-  var destination=x.search||x.title+", "+x.city;
+  var destination=(x.place||x.title)+", "+x.city;
   if(window.GaZonNavigation&&typeof window.GaZonNavigation.launchCardDestination==="function"){
-   window.GaZonNavigation.launchCardDestination({destination:destination,title:x.title+" · "+x.city});
+   var card={destination:destination,title:(x.place||x.title)+" · "+x.city};
+   // Province-checked coordinates go straight to routing (no name search).
+   if(x.lat!=null&&x.lng!=null){card.lat=x.lat;card.lon=x.lng}
+   window.GaZonNavigation.launchCardDestination(card);
    return
   }
   var tab=document.querySelector('.navBtn[data-page="navigation"]');if(tab)tab.click();
-  var input=$("navDestination");if(input){input.value=destination;input.dispatchEvent(new Event("input",{bubbles:true}));}
+  var input=$("navDestination");if(input){input.value=x.lat!=null?x.lat+","+x.lng:destination;input.dispatchEvent(new Event("input",{bubbles:true}));}
   var go=$("navGo");if(go)go.click()
  };
- travelMedia(x.search).then(function(images){if($("grTravelDetail")===dialog)paintDetailsPhotos(images)})
+ var lead=x.image?[{src:x.image,credit:x.imageCredit||x.wiki||"",label:x.wikiTitle||x.place||x.title,lead:true}]:[];
+ travelMedia((x.place||x.title)+" "+x.city).then(function(images){
+  images=lead.concat(images.filter(function(i){return !lead.length||i.src!==lead[0].src})).slice(0,6);
+  if($("grTravelDetail")===dialog)paintDetailsPhotos(images)
+ })
 }
 function openCatalogue(){
  var nav=document.querySelector('.navBtn[data-page="discover"]');
@@ -167,7 +175,7 @@ function remoteCatalogue(){
  return attempt(0).then(function(catalog){try{localStorage.setItem(cacheKey,JSON.stringify(catalog))}catch(e){}return catalog})
 }
 function loadCatalogue(){
- return fetch("gazon-destinations.json?v=20261009-81il",{cache:"no-cache"})
+ return fetch("gazon-destinations.json?v=20261012-photos",{cache:"no-cache"})
  .then(function(r){if(!r.ok)throw Error("Statik liste bulunamadı");return r.json()})
  .then(function(c){if(!c.items||c.items.length<81||!Array.isArray(c.cities)||c.cities.length!==81)throw Error("Statik katalog eksik");return c})
  .catch(remoteCatalogue)

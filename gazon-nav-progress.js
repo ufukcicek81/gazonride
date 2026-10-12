@@ -31,11 +31,12 @@
  function Engine(){
   var points=[],cumulative=[],measured=0,routeMeters=0,plannedSeconds=0,steps=[],turnDistances=[];
   var progress=0,previousTime=0,hasProgress=false,lastGPS=0,lastOff=Infinity,valid=false,resetCount=0;
-  function closest(point,restrict){
+  function closest(point,restrict,maxAlong){
    if(!point||points.length<2)return null;
    var best=null,score=Infinity;
    for(var i=0;i<points.length-1;i++){
     var m=pointSegment(point,points[i],points[i+1]),along=cumulative[i]+m.t*(cumulative[i+1]-cumulative[i]);
+    if(Number.isFinite(maxAlong)&&along>maxAlong)continue;
     var penalty=0;
     // When the road crosses itself, prefer the nearby segment in ride order.
     if(hasProgress&&restrict){
@@ -61,19 +62,21 @@
    routeMeters=finite(km)!=null&&Number(km)>0?Number(km)*1000:measured;
    plannedSeconds=Math.max(0,finite(sec)||0);
    steps=Array.isArray(navSteps)?navSteps:[];
+   // Match maneuver order by cumulative Google step distance, not by
+   // geographic proximity alone. On a closed loop the final turn finishes
+   // at the START coordinate; nearest-point matching would put that last
+   // maneuver at meter zero and falsely announce arrival on departure.
    turnDistances=[];
-   var stepsDistance=steps.reduce(function(sum,s){return sum+Math.max(0,finite(s.distance)||0)},0),running=0,last=0;
+   var stepsDistance=steps.reduce(function(sum,st){
+    return sum+Math.max(0,finite(st.distance)||0)
+   },0),running=0,last=0;
    for(var j=0;j<steps.length;j++){
-    var st=steps[j];
-    running+=Math.max(0,finite(st.distance)||0);
-    var fallback=stepsDistance>0?measured*(running/stepsDistance):measured*(j+1)/Math.max(1,steps.length);
-    var chosen=fallback,ep=pnt(st.end);
-    if(ep&&points.length>1){
-     var result=closest(ep,false);
-     if(result&&result.offMeters<110&&result.alongMeters>=last-20)chosen=result.alongMeters
-    }
-    chosen=Math.max(last,Math.min(measured,chosen));
-    turnDistances.push(chosen);last=chosen
+    running+=Math.max(0,finite(steps[j].distance)||0);
+    var at=stepsDistance>0?
+     measured*(running/stepsDistance):
+     measured*(j+1)/Math.max(1,steps.length);
+    at=Math.max(last,Math.min(measured,at));
+    turnDistances.push(at);last=at;
    }
    progress=0;lastGPS=0;lastOff=Infinity;previousTime=0;hasProgress=false;valid=false;resetCount++;
    return state()
@@ -84,7 +87,12 @@
    if(stamp<1e12)stamp=Date.now(); // GPS timestamp normally Unix epoch milliseconds
    var acc=finite(accuracy);
    if(!p)return state();
-   var near=closest(p,true);
+   // A closed tour returns to its start. At departure the last road segment
+   // may be closer to GPS than the first because of map snapping; unrestricted
+   // projection would jump directly to 100% completion and show 0 km/0 min.
+   // Lock the FIRST GPS fix to the initial ~220 m of the chosen road.
+   var prefix=Math.min(220,Math.max(90,measured*.015));
+   var near=hasProgress?closest(p,true):closest(p,false,prefix);
    if(!near)return state();
    lastOff=near.offMeters;lastGPS=stamp;
    // Do not advance the drive along an unrelated road or unreliable GPS fix.
@@ -92,6 +100,7 @@
     valid=false;return state()
    }
    var next=near.alongMeters;
+   if(!hasProgress)next=Math.min(next,90);
    if(hasProgress){
     var elapsed=Math.max(0,(stamp-previousTime)/1000),limit=Math.max(90,elapsed*65);
     next=Math.min(next,progress+limit);

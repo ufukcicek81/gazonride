@@ -180,3 +180,37 @@ html body.mode-navigation.gr-tour-mode:not(.guidance-active) .gr-tour-choices.ac
 /* Scrolling pages (Keşfet, overlays): content starts below the status bar. */
 html body.mode-discover .app,html body.mode-overlay .app,html body.mode-home .app{padding-top:var(--gr-safe-top)!important}
 html body.mode-discover .bottom~*,html body.mode-discover .history{scroll-margin-top:var(--gr-safe-top)}
+
+/* ---------- Günlük (journal) + Günün hissi + lean wizard ---------- */
+.gr-j-card{display:grid;gap:4px;margin-bottom:10px}
+.gr-j-thumb{width:100%;height:150px;border-radius:var(--gr-r-sm);background:linear-gradient(135deg,#1d3a2e,#20304a);display:block}
+html.theme-light .gr-j-thumb{background:linear-gradient(135deg,#dff1e4,#dbe8f7)}
+.gr-j-title{font-size:18px;font-weight:900;margin-top:6px}
+.gr-j-date{font-size:13px;color:var(--gr-muted)}
+.gr-j-stats{font-size:15px;font-weight:700}
+.gr-j-mood{font-size:14px;color:var(--gr-accent);font-weight:700}
+.gr-j-moods{margin:14px 0}
+.gr-j-moods h3{font-size:13px;letter-spacing:.8px;color:var(--gr-muted);margin:0 0 8px}
+.gr-j-chips{display:flex;flex-wrap:wrap;gap:8px}
+.gr-j-chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);font-weight:700;font-size:14px}
+.gr-j-chip.on{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff}
+.gr-j-wizard{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.gr-j-wiz-card{width:min(540px,100%);box-sizing:border-box;background:var(--gr-bg);color:var(--gr-text);border-radius:var(--gr-r-lg) var(--gr-r-lg) 0 0;
+ padding:20px 18px calc(18px + var(--gr-safe-bottom));display:grid;gap:12px;animation:grRise .25s var(--gr-ease)}
+.gr-j-wiz-head{display:flex;justify-content:space-between;align-items:center}
+.gr-j-wiz-head b{font-size:24px}
+.gr-j-x{width:var(--gr-touch);height:var(--gr-touch);border-radius:50%;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);font-size:20px}
+.gr-j-wiz-card p{margin:0;color:var(--gr-muted);font-size:15px}
+.gr-j-steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:16px}
+.gr-j-stab{background:var(--gr-surface);border:1px solid var(--gr-line);border-radius:var(--gr-r);padding:14px;display:grid;gap:8px;text-align:center}
+.gr-j-stab-row{display:flex;justify-content:center;align-items:center;gap:10px;font-size:22px}
+.gr-j-stab-row i{width:14px;height:14px;border-radius:50%;background:var(--gr-warn)}
+.gr-j-stab.ok .gr-j-stab-row i{background:var(--gr-ok)}
+.gr-j-stab.ok .gr-j-stab-row b{color:var(--gr-ok)}
+.gr-j-bar{height:6px;border-radius:3px;background:var(--gr-surface-2);overflow:hidden}
+.gr-j-bar span{display:block;height:100%;width:10%;background:var(--gr-warn);transition:width .25s}
+.gr-j-stab.ok .gr-j-bar span{background:var(--gr-ok)}
+.gr-j-stab small{color:var(--gr-muted);font-size:13px}
+.gr-j-go{min-height:var(--gr-touch-lg);border:0;border-radius:20px;background:var(--gr-accent);color:#fff;font-size:18px;font-weight:900}
+.gr-j-go:disabled{opacity:.45}
+.gr-j-skip{min-height:48px;border:0;background:transparent;color:var(--gr-accent);font-size:16px;font-weight:700}

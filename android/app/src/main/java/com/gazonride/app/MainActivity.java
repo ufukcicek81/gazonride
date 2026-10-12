@@ -87,6 +87,19 @@ public class MainActivity extends Activity {
     private Sensor rotationSensor;
     private Sensor accelerometerSensor;
     private float leanZeroDeg = Float.NaN;
+    // {upX,upY,upZ, axisX,axisY,axisZ}: upright gravity and bike long axis
+    // (screen normal made horizontal) captured at calibration.
+    private float[] leanRef = null;
+    private static float[] leanBasis(float gx, float gy, float gz){
+        float n = (float)Math.sqrt(gx*gx+gy*gy+gz*gz); if (n < 1e-6f) n = 1f;
+        gx/=n; gy/=n; gz/=n;
+        // Screen normal (0,0,1) minus its vertical part; if the phone lies
+        // flat, use the phone's long axis instead.
+        float ax = -gz*gx, ay = -gz*gy, az = 1f - gz*gz;
+        float an = (float)Math.sqrt(ax*ax+ay*ay+az*az);
+        if (an < .15f) { ax = -gy*gx; ay = 1f - gy*gy; az = -gy*gz; an = (float)Math.sqrt(ax*ax+ay*ay+az*az); }
+        return new float[]{gx, gy, gz, ax/an, ay/an, az/an};
+    }
     private float leanFilteredDeg = 0f;
     private float leanMaxLeftDeg = 0f;
     private float leanMaxRightDeg = 0f;
@@ -100,17 +113,25 @@ public class MainActivity extends Activity {
             try {
                 if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR || event.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
                     float[] rotation = new float[9];
-                    float[] orientation = new float[3];
                     SensorManager.getRotationMatrixFromVector(rotation, event.values);
-                    SensorManager.getOrientation(rotation, orientation);
-                    rawDeg = (float)Math.toDegrees(orientation[2]);
+                    // "Up" expressed in phone coordinates (third row of R).
+                    float gx = rotation[6], gy = rotation[7], gz = rotation[8];
+                    // Lean = rotation of gravity around the bike's long axis.
+                    // Measured against the calibrated upright pose, so it works
+                    // for portrait AND landscape mounts and any tilt of the mount
+                    // (the old roll angle was unstable for an upright phone).
+                    if (leanRef == null) leanRef = leanBasis(gx, gy, gz);
+                    float[] r = leanRef;
+                    float cx = r[1]*gz - r[2]*gy, cy = r[2]*gx - r[0]*gz, cz = r[0]*gy - r[1]*gx;
+                    float sin = cx*r[3] + cy*r[4] + cz*r[5];
+                    float cos = r[0]*gx + r[1]*gy + r[2]*gz;
+                    rawDeg = (float) Math.toDegrees(Math.atan2(sin, cos));
                 } else {
                     return;
                 }
             } catch(Exception e) {
                 return;
             }
-
             if (Float.isNaN(leanZeroDeg)) leanZeroDeg = rawDeg;
             float lean = rawDeg - leanZeroDeg;
             while (lean > 180f) lean -= 360f;
@@ -183,6 +204,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void calibrateLean(){
             runOnUiThread(() -> {
                 leanZeroDeg = Float.NaN;
+                leanRef = null;
                 leanFilteredDeg = 0f;
                 leanMaxLeftDeg = 0f;
                 leanMaxRightDeg = 0f;

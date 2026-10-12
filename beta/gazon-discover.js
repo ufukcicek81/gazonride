@@ -15,11 +15,9 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){retur
 function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
 
 function rideTile(r,i,wide){
- var j=J(),thumb=j?j.thumb(r.track,wide?640:300,wide?220:150):"";
- var stats=j?j.stats(r):Number(r.km||0).toFixed(1)+" km";
- return '<button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç: '+esc(r.destination||"Serbest sürüş")+'">'+
-  '<div class="gr-myride-map">'+(thumb||'<span class="mi">route</span>')+'<span class="gr-myride-play"><span class="mi">3d_rotation</span> 3D Tekrar</span></div>'+
-  '<b>'+esc(r.destination||"Serbest sürüş")+'</b><small>'+esc(r.date||"")+'</small><span class="gr-myride-stats">'+stats+'</span></button>';
+ var j=J(),badge='<span class="gr-myride-play"><span class="mi">3d_rotation</span> 3D Tekrar</span>';
+ var body=j&&j.rideCard?j.rideCard(r,{w:640,h:wide?320:300,badge:badge}):esc(r.destination||"Sürüş")+" · "+Number(r.km||0).toFixed(1)+" km";
+ return '<button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç">'+body+'</button>';
 }
 function bind(box){
  box.querySelectorAll("[data-myride]").forEach(function(b){b.onclick=function(){

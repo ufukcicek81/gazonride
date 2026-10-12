@@ -2,13 +2,68 @@
 const http = require("http");
 const WebSocket = require("ws");
 
-const server = http.createServer((req, res) => {
-  if (req.url !== "/") {
+// ---------------------------------------------------------------------------
+// ICE servers for riders on mobile networks. Peer-to-peer audio often fails
+// behind carrier NAT (4G/5G) without a TURN relay. Credentials are created
+// here, short-lived, from environment variables only (never in the repo):
+//   Cloudflare Calls TURN:  CF_TURN_KEY_ID + CF_TURN_API_TOKEN
+//   Metered.ca:             METERED_DOMAIN + METERED_API_KEY
+//   Any TURN server:        TURN_URLS (comma list) + TURN_USERNAME + TURN_CREDENTIAL
+// ---------------------------------------------------------------------------
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "https://ufukcicek81.github.io")
+  .split(",").map((x) => x.trim()).filter(Boolean);
+const STUN = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
+let iceCache = { at: 0, servers: null };
+async function turnServers() {
+  if (iceCache.servers && Date.now() - iceCache.at < 30 * 60 * 1000) return iceCache.servers;
+  let servers = [];
+  try {
+    if (process.env.CF_TURN_KEY_ID && process.env.CF_TURN_API_TOKEN) {
+      const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${process.env.CF_TURN_KEY_ID}/credentials/generate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.CF_TURN_API_TOKEN}`, "content-type": "application/json" },
+        body: JSON.stringify({ ttl: 6 * 3600 })
+      });
+      const j = await r.json();
+      const ice = j && j.iceServers;
+      servers = Array.isArray(ice) ? ice : ice ? [ice] : [];
+    } else if (process.env.METERED_DOMAIN && process.env.METERED_API_KEY) {
+      const r = await fetch(`https://${process.env.METERED_DOMAIN}/api/v1/turn/credentials?apiKey=${encodeURIComponent(process.env.METERED_API_KEY)}`);
+      const j = await r.json();
+      servers = Array.isArray(j) ? j : [];
+    } else if (process.env.TURN_URLS && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+      servers = [{ urls: process.env.TURN_URLS.split(",").map((x) => x.trim()), username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL }];
+    }
+  } catch (err) {
+    console.warn("TURN credentials unavailable", err.message);
+  }
+  servers = servers.filter((x) => x && x.urls);
+  iceCache = { at: Date.now(), servers };
+  return servers;
+}
+function cors(req, res) {
+  const origin = req.headers.origin || "";
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("vary", "origin");
+  }
+}
+const server = http.createServer(async (req, res) => {
+  cors(req, res);
+  const url = (req.url || "/").split("?")[0];
+  if (url === "/ice") {
+    // Only the app's own pages get relay credentials.
+    if (!ALLOWED_ORIGINS.includes(req.headers.origin || "")) { res.writeHead(403); return res.end(); }
+    const turn = await turnServers();
+    res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+    return res.end(JSON.stringify({ iceServers: STUN.concat(turn), turn: turn.length > 0 }));
+  }
+  if (url !== "/") {
     res.writeHead(404);
     return res.end();
   }
   res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-  res.end(JSON.stringify({ ok: true, service: "gazonride-voice", protocol: 2 }));
+  res.end(JSON.stringify({ ok: true, service: "gazonride-voice", protocol: 2, turn: !!(process.env.CF_TURN_KEY_ID || process.env.METERED_API_KEY || process.env.TURN_URLS) }));
 });
 const wss = new WebSocket.Server({ server, maxPayload: 96 * 1024 });
 const rooms = new Map();

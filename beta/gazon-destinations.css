@@ -1,0 +1,60 @@
+
+/* Turkey 81 provinces / destination list UI */
+.gr-travel-catalogue{display:none;padding:5px 0 22px;min-width:0}
+body.gr-travel-active.mode-discover #grTravelCatalogue{display:block!important}
+body.gr-travel-active.mode-discover #discoverSection>.quickRow,
+body.gr-travel-active.mode-discover #discoverSection>.discoverSearch,
+body.gr-travel-active.mode-discover #discoverSection>#grSocial,
+body.gr-travel-active.mode-discover #discoverSection>.communityTop,
+body.gr-travel-active.mode-discover #discoverSection>.routesBlock,
+body.gr-travel-active.mode-discover #discoverSection>.placesBlock,
+body.gr-travel-active.mode-discover #discoverSection>.communityBlock{display:none!important}
+body.gr-travel-active .discoverTabs{display:flex!important}
+.gr-travel-head{padding:4px 1px 14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.gr-travel-head b{font-size:20px;display:block}
+.gr-travel-head small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.gr-travel-searchbar{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:7px}
+.gr-travel-searchbar input,.gr-travel-searchbar select{max-width:100%;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);padding:12px 10px;font-size:12px;outline:0}
+.gr-travel-filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:12px 0}
+.gr-travel-filters button{white-space:nowrap;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:11px;font-weight:800}
+.gr-travel-filters button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gr-travel-count{font-size:11px;color:var(--muted);margin:11px 0}
+.gr-travel-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gr-travel-item{min-width:0;border:1px solid var(--line);border-radius:15px;background:var(--card);padding:12px;display:flex;flex-direction:column;gap:10px}
+.gr-travel-item-top{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.gr-travel-number,.gr-travel-category,.gr-travel-city{font-size:9px;padding:5px 6px;border-radius:8px;background:var(--soft);border:1px solid var(--line);color:var(--muted);font-weight:800}
+.gr-travel-city{color:var(--accent)}
+.gr-travel-item>b{font-size:13px;line-height:1.45;min-height:52px;overflow-wrap:anywhere}
+.gr-travel-item-actions{display:grid;grid-template-columns:1fr;gap:5px;margin-top:auto}
+.gr-travel-item-actions button{min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--text);display:flex;align-items:center;justify-content:center;gap:5px;font-size:10px;font-weight:800;min-height:38px}
+.gr-travel-item-actions button:first-child{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gr-travel-item-actions button.done,.gr-travel-detail-buttons button.done{border-color:#329876;color:#1eddaf}
+.gr-travel-pagination{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:13px}
+.gr-travel-pagination button{border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);font-size:12px;padding:10px 15px;font-weight:800}
+.gr-travel-pagination button:disabled{opacity:.36}
+.gr-travel-pagination span{font-size:11px;color:var(--muted)}
+.gr-travel-source{font-size:10px;color:var(--muted);line-height:1.5;margin-top:14px}
+.gr-travel-empty{padding:24px 12px;border:1px solid var(--line);border-radius:14px;color:var(--muted);background:var(--card);text-align:center;font-size:12px;line-height:1.6}
+.gr-travel-detail{position:fixed;inset:0;z-index:8600;overflow:auto;overscroll-behavior:contain;background:rgba(5,8,14,.94);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.gr-travel-detail-sheet{margin:auto;max-width:620px;min-height:100%;background:var(--bg);padding:16px 14px 26px}
+.gr-travel-detail-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.gr-travel-detail-head>div{min-width:0}
+.gr-travel-detail-head b{display:block;font-size:22px;line-height:1.3;margin-top:4px;overflow-wrap:anywhere}
+.gr-travel-detail-head small{display:block;color:var(--accent);font-size:11px;font-weight:900}
+.gr-travel-detail-head button{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;color:var(--text);background:var(--card2)}
+.gr-travel-photo{position:relative;height:min(57vw,340px);min-height:220px;border-radius:18px;overflow:hidden;background:var(--card2);display:grid;place-items:center}
+.gr-travel-photo img{height:100%;width:100%;object-fit:cover}
+.gr-travel-credit{position:absolute;bottom:8px;right:8px;background:#080b12d9;color:#fff;padding:7px 9px;border-radius:10px;font-size:10px;text-decoration:none}
+.gr-travel-photo-count{font-size:11px;color:var(--muted);margin:8px 0}
+.gr-travel-thumbs{display:flex;gap:7px;overflow-x:auto;margin:10px 0}
+.gr-travel-thumbs button{border:2px solid transparent;border-radius:9px;padding:0;width:90px;height:64px;flex:0 0 90px;overflow:hidden}
+.gr-travel-thumbs button.active{border-color:var(--accent)}
+.gr-travel-thumbs img{width:100%;height:100%;object-fit:cover}
+.gr-travel-detail-copy{padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--card)}
+.gr-travel-detail-copy h3{font-size:18px;margin:0 0 10px}
+.gr-travel-detail-copy p{font-size:13px;line-height:1.65}
+.gr-travel-warning{padding:12px;border-radius:12px;background:var(--soft);color:var(--muted);font-size:11px!important}
+.gr-travel-detail-buttons{display:grid;grid-template-columns:1.2fr 1fr;gap:9px;margin-top:12px}
+.gr-travel-detail-buttons button{border:1px solid var(--line);border-radius:12px;color:var(--text);background:var(--card2);padding:13px 9px;min-width:0;display:flex;justify-content:center;align-items:center;gap:5px;font-size:12px;font-weight:800}
+.gr-travel-detail-buttons button:first-child{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media(max-width:390px){.gr-travel-items{gap:7px}.gr-travel-item{padding:10px}.gr-travel-item>b{font-size:12px}.gr-travel-detail-buttons button{font-size:11px}}

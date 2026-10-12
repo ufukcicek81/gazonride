@@ -511,7 +511,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="gazon-nav-progress.js?v=20261009-route-progress-v1"></script>
 <script src="gazon-native-route.js?v=20261011-google-nav-handoff-v1"></script>
-<script src="gazon-tour.js?v=20261011-google-native-blue-v2"></script>
+<script src="gazon-tour.js?v=20261012-real-loop-v1"></script>
 <script>
 (function(){
 "use strict";
@@ -2425,7 +2425,7 @@ function boot(){
     try {
      var tourStarted=false;
      if(window.GaZonNativeRoute&&typeof AndroidBridge.openNativeRoute==="function"){
-      var pathStops=GaZonNativeRoute.routeStops(tour.points,tour.origin,5);
+      var pathStops=GaZonNativeRoute.routeStops(tour.points,tour.origin,7);
       if(pathStops.length)tourStarted=!!AndroidBridge.openNativeRoute(
        JSON.stringify(pathStops),"Tur başlangıcına dönüş",false,false);
      }

@@ -228,3 +228,38 @@ html body.mode-ride .liveBox small{font-size:clamp(9px,2.6vw,10.5px)!important}
 .voiceMeters i{display:block;height:10px;border-radius:5px;background:var(--gr-surface-2);overflow:hidden}
 .voiceMeters b{display:block;height:100%;width:0;background:var(--gr-ok);transition:width .1s linear}
 .talkBtn.muted{background:var(--gr-surface-2)!important;color:var(--gr-muted)!important;box-shadow:none!important}
+
+/* ---------- Keşfet: simpler page + Sürüşlerim (gazon-discover.js) ---------- */
+html body.mode-discover #discoverSection>.quickRow{display:none!important}
+body.mode-discover #grMusic{display:none!important}
+body.mode-discover:not(.gr-discover-home):not(.gr-discover-mine) #grMyRides{display:none}
+body.gr-discover-mine #grSocial,body.gr-discover-mine .gr-travel,body.gr-discover-mine #grTravel{display:none!important}
+.discoverTabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.discoverTabs::-webkit-scrollbar{display:none}
+.discoverTabs .chip{flex:0 0 auto}
+.gr-myrides{margin:14px 0 6px}
+.gr-myrides-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:10px}
+.gr-myrides-head b{display:block;font-size:22px;font-weight:900}
+.gr-myrides-head small{display:block;color:var(--gr-muted);font-size:13px;margin-top:2px}
+.gr-myrides-head button{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);font-weight:800}
+.gr-myrides-strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+.gr-myrides-strip::-webkit-scrollbar{display:none}
+.gr-myrides-list{display:grid;gap:12px}
+.gr-myride{flex:0 0 74%;max-width:300px;scroll-snap-align:start;display:grid;gap:3px;text-align:left;padding:10px;border-radius:var(--gr-r);border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);cursor:pointer}
+.gr-myride.wide{max-width:none;padding:12px}
+.gr-myride-map{position:relative;border-radius:var(--gr-r-sm);overflow:hidden;min-height:110px;background:linear-gradient(135deg,#1d3a2e,#20304a);display:grid;place-items:center}
+html.theme-light .gr-myride-map{background:linear-gradient(135deg,#dff1e4,#dbe8f7)}
+.gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-radius:0}
+.gr-myride.wide .gr-myride-map .gr-j-thumb{aspect-ratio:640/220}
+.gr-myride-map>.mi{font-size:40px;color:var(--gr-muted)}
+.gr-myride-play{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:16px;background:rgba(10,12,16,.82);color:#fff;font-size:12px;font-weight:800}
+.gr-myride-play .mi{font-size:16px;color:var(--gr-accent)}
+.gr-myride>b{font-size:16px;font-weight:900;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-myride>small{color:var(--gr-muted);font-size:12px}
+.gr-myride-stats{font-size:13px;font-weight:700}
+.gr-myrides-empty{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:14px;border-radius:var(--gr-r);border:1px dashed var(--gr-line);background:var(--gr-surface)}
+.gr-myrides-empty>.mi{font-size:32px;color:var(--gr-accent)}
+.gr-myrides-empty b{display:block;font-size:16px}
+.gr-myrides-empty small{display:block;color:var(--gr-muted);font-size:13px;margin-top:2px}
+.gr-myrides-empty button{grid-column:1/-1;min-height:52px;border:0;border-radius:var(--gr-r-sm);background:var(--gr-accent);color:#fff;font-weight:900;font-size:15px}
+.discoverTabs .chip.active{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff}

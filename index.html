@@ -937,6 +937,11 @@ window.GaZonLean={
  onUnavailable:function(){var x=$("leanStatus");if(x)x.textContent="Bu cihazda uygun hareket sensörü bulunamadı."}
 };
 function startLeanSensor(){
+ // iPhone / browser: motion sensor of the web page (permission on first tap).
+ if(!window.AndroidBridge&&window.GaZonWebLean&&GaZonWebLean.available()){
+  GaZonWebLean.start().then(function(ok){var x=$("leanStatus");if(x)x.textContent=ok?"Sensör aktif · motor dikken kalibre et":"Hareket sensörü izni verilmedi (Ayarlar › Safari › Hareket ve Yön)"});
+  return;
+ }
  try{
   if(window.AndroidBridge&&typeof AndroidBridge.hasLeanSensor==="function"&&!AndroidBridge.hasLeanSensor()){GaZonLean.onUnavailable();return}
   if(window.AndroidBridge&&typeof AndroidBridge.startLeanTracking==="function"){AndroidBridge.startLeanTracking();var x=$("leanStatus");if(x)x.textContent=leanCalibrated?"Kalibrasyon aktif":"Sensör aktif · motor dikken kalibre et"}
@@ -948,7 +953,10 @@ function calibrateLeanSensor(){
    AndroidBridge.calibrateLean();leanCalibrated=true;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;
    var x=$("leanStatus");if(x)x.textContent="0° kalibre edildi";
    var l=$("leanLeftMax"),r=$("leanRightMax");if(l)l.textContent="0°";if(r)r.textContent="0°";
-  }else{var x2=$("leanStatus");if(x2)x2.textContent="Yatış ölçümü için Android uygulaması gerekli"}
+  }else if(window.GaZonWebLean&&GaZonWebLean.available()){
+   GaZonWebLean.calibrate();leanCalibrated=true;leanAngleNow=0;leanMaxLeft=0;leanMaxRight=0;leanSamples=[];leanLastSampleTs=0;
+   var xw=$("leanStatus");if(xw)xw.textContent="0° kalibre edildi";
+  }else{var x2=$("leanStatus");if(x2)x2.textContent="Bu cihazda hareket sensörü bulunamadı"}
  }catch(e){var x3=$("leanStatus");if(x3)x3.textContent="Kalibrasyon yapılamadı"}
 }
 function nativeRidePoints(){
@@ -2610,9 +2618,9 @@ function boot(){
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
  var leanBox=$("grLeanBox");if(leanBox)leanBox.addEventListener("click",function(){var b=$("leanCalibrate");if(b)b.click()});
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",function(){
-  if(window.GaZonJournal&&window.AndroidBridge&&typeof AndroidBridge.calibrateLean==="function")
+  if(window.GaZonJournal&&((window.AndroidBridge&&typeof AndroidBridge.calibrateLean==="function")||(!window.AndroidBridge&&window.GaZonWebLean&&GaZonWebLean.available())))
    GaZonJournal.leanWizard({start:startLeanSensor,calibrate:calibrateLeanSensor,
-    available:!(typeof AndroidBridge.hasLeanSensor==="function"&&!AndroidBridge.hasLeanSensor())});
+    available:window.AndroidBridge?!(typeof AndroidBridge.hasLeanSensor==="function"&&!AndroidBridge.hasLeanSensor()):true});
   else calibrateLeanSensor();
  });
  startLeanSensor();

@@ -103,7 +103,7 @@ function renderOptions(){
   return '<button type="button" data-tour="'+i+'" aria-pressed="'+(i===selected)+'" class="gr-tour-route'+(i===selected?' active':'')+'">'+
   '<b>'+(i+1)+'. '+esc(x.name)+'</b><strong>'+x.km.toFixed(1)+' km</strong><small>'+duration(x.sec)+' · viraj '+x.curveScore+' /10 km'+(x.overlap>=.02?' · yol tekrarı %'+Math.round(x.overlap*100):'')+'</small>'+(x.warning?'<em class="gr-tour-warning">'+esc(x.warning)+'</em>':'')+'</button>'
  }).join("")+'</div>'+
- '<div class="gr-tour-action"><button id="grTourOpen" type="button"><span class="mi">navigation</span> GaZonRide’da turu başlat</button></div>'+
+ '<div class="gr-tour-action"><button id="grTourOpen" type="button"><span class="mi">two_wheeler</span> SÜR · Turu başlat</button></div>'+
  '<p class="gr-tour-disclaimer">Viraj puanı Google yol çizgilerinden tahmindir; asfalt kalitesi, kapalı yollar ve motosiklete uygunluk doğrulanmaz. Canlı navigasyon gerektiğinde rotayı yeniden hesaplayabilir.</p>';
  box.classList.add("active");
  box.querySelectorAll("[data-tour]").forEach(b=>b.onclick=function(){choose(Number(b.dataset.tour))});

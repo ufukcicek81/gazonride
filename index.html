@@ -466,6 +466,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
     <button id="guidanceCenter" title="Konumuma dön"><span class="mi">navigation</span></button>
     <button id="guidanceSound" title="Sesli yönlendirme"><span class="mi">volume_up</span></button>
     <button id="guidanceMapType" title="Harita görünümü"><span class="mi">layers</span></button>
+    <button id="guidanceView" title="2D / 3D görünüm" aria-label="2D veya 3D navigasyon görünümü"><span class="gr-view-label">3D</span></button>
   </div>
   <div class="guidanceSpeed"><b id="guidanceSpeed">0</b><small>km/sa</small></div>
   <div class="guidanceBottom">
@@ -509,7 +510,8 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <button class="navBtn" data-page="profile"><b><span class="mi">person</span></b>Profil</button>
 </nav>
 <script src="gazonride-config.js?v=20261008-audit1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261009-fix1"></script><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="gazon-nav-progress.js?v=20261012-circular-start-fix"></script>
+<script src="gazon-nav-progress.js?v=20261012-offroute-v1"></script>
+<script src="gazon-camera.js?v=20261012-camera-v1"></script>
 <script src="gazon-native-route.js?v=20261012-stable-road-anchor-v2"></script>
 <script src="gazon-route-token.js?v=20261012-token-v1"></script>
 <script src="gazon-tour-engine.js?v=20261012-engine-v2"></script>
@@ -639,8 +641,35 @@ function acceptLiveGpsFix(p,c,ts){
  }
  gpsRideReference={p:{lat:p.lat,lon:p.lon},ts:ts,accuracy:acc};return true;
 }
+// Smooth camera (gazon-camera.js): one moveCamera per frame, gliding
+// between GPS fixes; the rider arrow moves with it. Manual map drags pause
+// following until the rider taps "Konumuma dön".
+var gazonGpsFilter=window.GaZonCamera?GaZonCamera.GpsFilter():null,gazonCamera=null,gazonCameraPaused=false;
+function navArrowIcon(rot){return {path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:rot,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}}
+function ensureGazonCamera(){
+ if(gazonCamera||!map||!window.GaZonCamera)return gazonCamera;
+ var saved="3d";try{saved=localStorage.getItem("gazon_nav_view")||"3d"}catch(e){}
+ gazonCamera=GaZonCamera.Camera(map,{marker:function(){return marker},icon:navArrowIcon,
+  // Heading-up map: the arrow is drawn in screen space, so it points up.
+  headingFor:function(c){return c.heading}});
+ gazonCamera.setMode(saved);
+ try{map.addListener("dragstart",function(){if(gazonCamera&&gazonCamera.active){gazonCamera.stop();gazonCameraPaused=true}})}catch(e){}
+ return gazonCamera;
+}
 function followRideCamera(p,c,ts){
  if(!map)return;
+ var following=navActive||(riding&&gazonCurrentMode==="ride");
+ var cam=ensureGazonCamera();
+ if(cam&&gazonGpsFilter){
+  var f=gazonGpsFilter.accept({lat:p.lat,lon:p.lon,ts:ts,accuracy:c.accuracy,speed:c.speed,heading:c.heading});
+  if(f.accepted){
+   if(f.heading!=null){lastHeading=f.heading;headingReady=true}
+   if(following&&!gazonCameraPaused){if(!cam.active)cam.start();cam.fix(f)}
+   else if(!following&&cam.active)cam.stop();
+  }
+  gpsCameraReference={p:{lat:p.lat,lon:p.lon},ts:ts};
+  return;
+ }
  var acc=Number(c.accuracy),v=c.speed==null?NaN:Number(c.speed),hd=c.heading==null?NaN:Number(c.heading);
  var prev=gpsCameraReference,d=prev?hav(prev.p,p)*1000:0,dt=prev?(ts-prev.ts)/1000:0;
  var course=prev&&dt>0&&dt<90&&d>=9?bearing(prev.p,p):NaN;
@@ -699,7 +728,7 @@ function applyPosition(pos){
    var gp={lat:p.lat,lng:p.lon};
    var markerIcon=(navActive||riding)?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:headingReady?lastHeading:0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
    if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:markerIcon,zIndex:999});}
-   else{marker.setPosition(gp);marker.setIcon(markerIcon);}
+   else if(!(gazonCamera&&gazonCamera.active)){marker.setPosition(gp);marker.setIcon(markerIcon);}
  }
  if(map&&!riding&&!navActive)setMapCenter(p,16);
  if(riding){
@@ -1610,12 +1639,15 @@ function updateGuidanceHud(p){
 }
 function enterGuidanceMode(){
  document.body.classList.add("guidance-active");
+ gazonCameraPaused=false;if(window.GaZonOffRoute)GaZonOffRoute.reset();
+ var cam=ensureGazonCamera();if(cam)cam.start();
  var hud=$("guidanceHud");if(hud)hud.style.display="block";
  if(map&&currentPoint){map.setCenter({lat:currentPoint.lat,lng:currentPoint.lon});map.setZoom(17);try{map.setTilt(25);if(headingReady)map.setHeading(lastHeading)}catch(e){}}
  updateGuidanceHud(currentPoint);
 }
 function exitGuidanceMode(){
  document.body.classList.remove("guidance-active");
+ if(gazonCamera)gazonCamera.stop();
  var hud=$("guidanceHud");if(hud)hud.style.display="";
  try{if(map){map.setTilt(0);map.setHeading(0);}}catch(e){}
 }
@@ -1687,6 +1719,8 @@ function openGoogleMapsNavigation(){
 }
 function recenterNavigationOnce(){
  if(!map||!currentPoint)return;
+ gazonCameraPaused=false;
+ if(gazonCamera&&(navActive||riding)){gazonCamera.start();return}
  map.panTo({lat:currentPoint.lat,lng:currentPoint.lon});
  map.setZoom(17);
  try{map.setTilt(navActive?25:0);map.setHeading(navActive&&headingReady?lastHeading:0)}catch(e){}
@@ -1887,7 +1921,7 @@ function renderNavStep(){
 function trimPassedNavigationRoute(progress){
  if(!navActive||!navRoute||!progress||!progress.valid||navPathPoints.length<2)return;
  var target=Math.max(0,progress.progressMeters-12);
- if(navLastRouteTrim>=0&&Math.abs(target-navLastRouteTrim)<12)return;
+ if(navLastRouteTrim>=0&&Math.abs(target-navLastRouteTrim)<35)return;
  navLastRouteTrim=target;
  var travelled=0,points=navPathPoints;
  for(var i=1;i<points.length;i++){
@@ -1903,6 +1937,11 @@ function trimPassedNavigationRoute(progress){
 }
 function updateNavigation(p,ts,accuracy,speed){
  if(!navActive)return;
+ // Multipath spikes never advance progress or trigger a reroute.
+ if(gazonGpsFilter&&window.GaZonCamera){
+  var last=gpsCameraReference;
+  if(last&&ts>last.ts&&GaZonCamera.meters(last.p,p)/((ts-last.ts)/1000)>75&&GaZonCamera.meters(last.p,p)>Number(accuracy||0)*3)return;
+ }
  // The remaining stops must not be discarded on route deviation.
  if(Array.isArray(window.GaZonTourRemaining)&&window.GaZonTourRemaining.length>1){
   var next=window.GaZonTourRemaining[0];
@@ -1926,8 +1965,9 @@ function updateNavigation(p,ts,accuracy,speed){
  }
  if(state&&state.valid)trimPassedNavigationRoute(state);
  var offKm=state&&isFinite(state.accuracyMeters)?state.accuracyMeters/1000:distanceToActiveRouteKm(p);
- if(offKm>0.10)navOffRouteCount++;else if(offKm<0.065)navOffRouteCount=0;
- if(navOffRouteCount>=3&&!navRecalculating)recalculateNavigation();
+ if(window.GaZonOffRoute){if(GaZonOffRoute.update(offKm*1000,accuracy,ts)&&!navRecalculating)recalculateNavigation()}
+ else{if(offKm>0.10)navOffRouteCount++;else if(offKm<0.065)navOffRouteCount=0;
+ if(navOffRouteCount>=3&&!navRecalculating)recalculateNavigation();}
  updateGuidanceHud(p)
 }
 function stopNavigation(){
@@ -2525,6 +2565,17 @@ function boot(){
  $("navStop").addEventListener("click",stopNavigation);
  $("guidanceClose").addEventListener("click",stopNavigation);
  $("guidanceCenter").addEventListener("click",recenterNavigationOnce);
+ var viewBtn=$("guidanceView");
+ if(viewBtn){
+  var paintView=function(){var m=gazonCamera?gazonCamera.mode:"3d";viewBtn.querySelector(".gr-view-label").textContent=m==="3d"?"3D":m==="2d"?"2D":"K";viewBtn.title=m==="3d"?"3D görünüm":m==="2d"?"2D yön yukarı":"2D kuzey yukarı"};
+  viewBtn.addEventListener("click",function(){
+   var cam=ensureGazonCamera();if(!cam)return;
+   var next=cam.mode==="3d"?"2d":cam.mode==="2d"?"2d-north":"3d";
+   cam.setMode(next);try{localStorage.setItem("gazon_nav_view",next)}catch(e){}
+   paintView();
+  });
+  setTimeout(paintView,0);
+ }
  $("guidanceSound").addEventListener("click",function(){guidanceMuted=!guidanceMuted;this.innerHTML='<span class="mi">'+(guidanceMuted?"volume_off":"volume_up")+'</span>';if(guidanceMuted){if(window.GaZonMusic&&GaZonMusic.stopSpeech)GaZonMusic.stopSpeech();try{if("speechSynthesis" in window)speechSynthesis.cancel()}catch(e){}}else updateGuidanceHud(currentPoint);});
  $("guidanceMapType").addEventListener("click",toggleSatellite);
  $("guidanceMore").addEventListener("click",function(){alert(activeNavLabel+"\n"+$("guidanceRemain").textContent);});

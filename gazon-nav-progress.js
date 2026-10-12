@@ -139,6 +139,24 @@
   function age(){return lastGPS?Math.max(0,Date.now()-lastGPS):Infinity}
   return {initialize:initialize,update:update,heartbeat:heartbeat,state:state,age:age,normalize:pnt,closest:closest}
  }
+ // Reroute only after the rider is CLEARLY off the road: 3 consecutive
+ // accurate fixes over 100 m from the route spanning at least 6 seconds.
+ // A single bad fix or a parallel service road never triggers a reroute.
+ function OffRouteDetector(opts){
+  opts=opts||{};
+  var limit=opts.meters||100,back=opts.backMeters||65,count=0,since=0,lastAt=0;
+  function update(offMeters,accuracy,when){
+   var off=finite(offMeters),acc=finite(accuracy),t=finite(when)||Date.now();
+   if(off==null||(acc!=null&&acc>50))return false;
+   if(off>limit+Math.min(40,acc||0)){if(!count)since=t;count++}
+   else if(off<back)count=0;
+   if(count>=3&&t-since>=6000&&t-lastAt>=9000){lastAt=t;count=0;return true}
+   return false;
+  }
+  function reset(){count=0;since=0}
+  return {update:update,reset:reset}
+ }
  root.GaZonNavProgress=Engine();
- if(typeof module!=="undefined"&&module.exports)module.exports={Engine:Engine}
+ root.GaZonOffRoute=OffRouteDetector();
+ if(typeof module!=="undefined"&&module.exports)module.exports={Engine:Engine,OffRouteDetector:OffRouteDetector}
 })(typeof window!=="undefined"?window:globalThis);

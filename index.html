@@ -396,6 +396,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <div class="liveBox"><b id="speed">0</b><small>KM/SA HIZ</small></div>
 <div class="liveBox"><b id="distance">0.00</b><small>KM MESAFE</small></div>
 <div class="liveBox"><b id="altitude">—</b><small>M RAKIM</small></div>
+<button type="button" class="liveBox gr-lean-box" id="grLeanBox" aria-label="Yatış açısı · kalibre etmek için dokun"><b id="grLeanLive">0°</b><small id="grLeanLiveSide">YATIŞ</small></button>
 </div>
 <div class="mapBottom"><div class="loc" id="location"><span class="mi">location_on</span><span>Konum aranıyor...</span></div><button class="mapBtn" id="locBtn"><span class="mi">my_location</span></button><button class="mapBtn" id="satBtn"><span class="mi">satellite_alt</span></button></div>
 </section>
@@ -917,6 +918,9 @@ window.GaZonLean={
   leanAngleNow=angle;leanMaxLeft=Math.max(leanMaxLeft,leftMax);leanMaxRight=Math.max(leanMaxRight,rightMax);
   var a=$("leanAngle"),s=$("leanSide"),n=$("leanNeedle"),l=$("leanLeftMax"),r=$("leanRightMax");
   if(a)a.textContent=Math.abs(angle).toFixed(1)+"°";
+  var la=$("grLeanLive"),ls=$("grLeanLiveSide");
+  if(la)la.textContent=Math.round(Math.abs(angle))+"°";
+  if(ls)ls.textContent=Math.abs(angle)<1.5?"YATIŞ · DİK":(angle<0?"YATIŞ · SOL":"YATIŞ · SAĞ");
   if(s)s.textContent=Math.abs(angle)<1.5?"DİK":(angle<0?"SOL":"SAĞ");
   if(n)n.style.transform="translateX(-50%) rotate("+Math.max(-55,Math.min(55,angle))+"deg)";
   if(l)l.textContent=leanMaxLeft.toFixed(1)+"°";
@@ -2579,6 +2583,7 @@ function boot(){
  $("navDestination").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();clearNavSuggestions();this.blur();planNavigation();}});
  $("navDrive").addEventListener("click",function(){startPlannedNavigation(false)});
  $("navGoogleMaps").addEventListener("click",openGoogleMapsNavigation);
+ var leanBox=$("grLeanBox");if(leanBox)leanBox.addEventListener("click",function(){var b=$("leanCalibrate");if(b)b.click()});
  var leanBtn=$("leanCalibrate");if(leanBtn)leanBtn.addEventListener("click",function(){
   if(window.GaZonJournal&&window.AndroidBridge&&typeof AndroidBridge.calibrateLean==="function")
    GaZonJournal.leanWizard({start:startLeanSensor,calibrate:calibrateLeanSensor,

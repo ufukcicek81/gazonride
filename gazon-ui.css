@@ -214,3 +214,10 @@ html.theme-light .gr-j-thumb{background:linear-gradient(135deg,#dff1e4,#dbe8f7)}
 .gr-j-go{min-height:var(--gr-touch-lg);border:0;border-radius:20px;background:var(--gr-accent);color:#fff;font-size:18px;font-weight:900}
 .gr-j-go:disabled{opacity:.45}
 .gr-j-skip{min-height:48px;border:0;background:transparent;color:var(--gr-accent);font-size:16px;font-weight:700}
+/* Live lean tile next to speed / distance / altitude */
+html body.mode-ride .map .live{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.gr-lean-box{display:none}
+html body.mode-ride .gr-lean-box{display:block;font:inherit;cursor:pointer}
+html body.mode-ride .gr-lean-box small{white-space:nowrap}
+html body.mode-ride .liveBox b{font-size:clamp(22px,7vw,30px)!important}
+html body.mode-ride .liveBox small{font-size:clamp(9px,2.6vw,10.5px)!important}

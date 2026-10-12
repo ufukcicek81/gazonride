@@ -94,7 +94,7 @@ jobs:
         working-directory: android
         env:
           GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
-        run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta -PwebChannel=beta
+        run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta -PwebChannel=beta -PbuildCommit=${{ github.sha }}
       - name: Navigation SDK API report (method signatures used via reflection)
         if: always()
         shell: bash

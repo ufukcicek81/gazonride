@@ -460,6 +460,7 @@ public class MainActivity extends Activity {
         }
         webView.loadUrl(startUrl());
         new Handler(Looper.getMainLooper()).postDelayed(this::checkForNativeUpdate, 1800);
+        new Handler(Looper.getMainLooper()).postDelayed(this::checkForBetaUpdate, 2500);
     }
 
     private void startNativeLocation(){
@@ -668,6 +669,53 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    // Test builds only: offer the newest beta-latest APK in one tap.
+    // The pre-release body contains the commit it was built from; the APK
+    // knows its own commit (build_commit), so equal commits = up to date.
+    private static final String BETA_RELEASE_API = "https://api.github.com/repos/ufukcicek81/gazonride/releases/tags/beta-latest";
+    private static final String BETA_APK_URL = "https://github.com/ufukcicek81/gazonride/releases/download/beta-latest/GaZonRide-beta.apk";
+    private volatile boolean betaCheckRunning = false;
+    private void checkForBetaUpdate(){
+        String own=getString(R.string.build_commit);
+        if(prefs==null || betaCheckRunning || own.isEmpty() || !"beta".equals(getString(R.string.default_web_channel))) return;
+        if(prefs.getBoolean("ride_active",false)) return;
+        long now=System.currentTimeMillis();
+        if(now-prefs.getLong("beta_update_last_check_ms",0L)<10L*60*1000) return;
+        betaCheckRunning=true;
+        prefs.edit().putLong("beta_update_last_check_ms",now).apply();
+        new Thread(() -> {
+            HttpURLConnection c=null;
+            try{
+                c=(HttpURLConnection)new URL(BETA_RELEASE_API).openConnection();
+                c.setConnectTimeout(7000); c.setReadTimeout(7000);
+                c.setRequestProperty("Accept","application/vnd.github+json");
+                c.setRequestProperty("User-Agent","GazonRide-Android");
+                if(c.getResponseCode()!=200) return;
+                BufferedReader r=new BufferedReader(new InputStreamReader(c.getInputStream()));
+                StringBuilder b=new StringBuilder(); String line;
+                while((line=r.readLine())!=null)b.append(line);
+                r.close();
+                String body=new JSONObject(b.toString()).optString("body","");
+                java.util.regex.Matcher m=java.util.regex.Pattern.compile("@ ([0-9a-f]{40})").matcher(body);
+                if(!m.find()) return;
+                final String remote=m.group(1);
+                if(remote.equals(own) || remote.equals(prefs.getString("beta_update_skipped",""))) return;
+                runOnUiThread(() -> {
+                    if(isFinishing() || prefs.getBoolean("ride_active",false)) return;
+                    new AlertDialog.Builder(this)
+                        .setTitle("Yeni test sürümü hazır")
+                        .setMessage("GaZonRide BETA güncellendi. Sürüşlerin ve ayarların korunur. Şimdi indirilip kurulsun mu?")
+                        .setNegativeButton("Daha sonra",(d,w)->prefs.edit().putString("beta_update_skipped",remote).apply())
+                        .setPositiveButton("Güncelle",(d,w)->startNativeUpdateDownload(BETA_APK_URL))
+                        .show();
+                });
+            }catch(Exception ignored){} finally {
+                if(c!=null)c.disconnect();
+                betaCheckRunning=false;
+            }
+        }).start();
+    }
+
     private void registerUpdateDownloadReceiver(){
         if(downloadReceiverRegistered) return;
         IntentFilter filter=new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
@@ -775,6 +823,7 @@ public class MainActivity extends Activity {
         if(updateDownloadId!=-1L) new Handler(Looper.getMainLooper()).postDelayed(() -> handleDownloadedApk(updateDownloadId),700);
         // Check again when the user comes back later, but never during an active ride.
         checkForNativeUpdate();
+        checkForBetaUpdate();
         if(leanTracking && sensorManager!=null && rotationSensor!=null){
             sensorManager.registerListener(leanSensorListener,rotationSensor,SensorManager.SENSOR_DELAY_GAME);
         }

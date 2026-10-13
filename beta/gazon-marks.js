@@ -91,6 +91,16 @@ function button(id,cls){
  b.setAttribute("aria-label","Yer işaretle");b.title="Yer işaretle (mola, su, asfalt…)";
  b.innerHTML='<span class="mi">add_location_alt</span>';b.onclick=open;return b;
 }
+function importNative(){
+ var B=root.AndroidBridge;if(!B||typeof B.takeNativeMarks!=="function")return 0;
+ var got=[];try{got=JSON.parse(B.takeNativeMarks()||"[]")}catch(e){got=[]}
+ if(!Array.isArray(got)||!got.length)return 0;
+ var a=read(),ids={};a.forEach(function(m){ids[m.id]=1});
+ var n=0;got.forEach(function(m){var r=make(m.type,{lat:m.lat,lng:m.lng},m.ts);if(r){r.id=String(m.id||r.id);if(!ids[r.id]){a.push(r);n++}}});
+ write(a);syncLiveMap();
+ if(n)toast(n+" işaret navigasyondan eklendi");
+ return n;
+}
 function install(){
  // Ride screen: next to the other map buttons.
  var bar=document.querySelector(".mapBottom");
@@ -98,6 +108,9 @@ function install(){
  // Navigation (guidance) screen: in the floating button column.
  var fl=document.querySelector(".guidanceFloat");
  if(fl&&!$("grMarkNav"))fl.appendChild(button("grMarkNav",""));
+ // Marks from the native Google navigation screen (Android app).
+ importNative();
+ document.addEventListener("visibilitychange",function(){if(!document.hidden)importNative()});
  // Draw saved marks once the main map exists.
  var tries=0;(function wait(){if(syncLiveMap()||++tries>60)return;setTimeout(wait,1000)})();
 }

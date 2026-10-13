@@ -310,3 +310,7 @@ html.theme-light .gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-
 .gr-mark-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .gr-mark-toast button{min-height:44px;padding:0 14px;border-radius:12px;border:0;background:#FF5A1F;color:#fff;font-weight:900}
 body.guidance-active .gr-mark-toast{bottom:calc(120px + var(--gr-safe-bottom))}
+.gr-myride-pub{position:absolute;top:10px;right:62px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+ border:1px solid color-mix(in srgb,var(--gr-accent) 55%,transparent);background:color-mix(in srgb,var(--gr-accent) 12%,var(--gr-surface));color:var(--gr-accent);cursor:pointer}
+.gr-myride-pub .mi{font-size:22px}
+.gr-myride-wrap .gr-ride-card-top{padding-right:104px}

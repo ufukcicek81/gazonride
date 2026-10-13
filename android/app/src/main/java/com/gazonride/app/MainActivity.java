@@ -342,6 +342,23 @@ public class MainActivity extends Activity {
                 return openNativeRoute(json,"Tur başlangıcına dönüş",false,false);
             } catch(Exception e){return false;}
         }
+        // System share sheet (WhatsApp, Instagram, Telegram, …): the WebView has
+        // no navigator.share and cannot open whatsapp:// links by itself.
+        @JavascriptInterface public void shareText(String title,String text){
+            runOnUiThread(() -> {
+                try {
+                    Intent send=new Intent(Intent.ACTION_SEND);
+                    send.setType("text/plain");
+                    send.putExtra(Intent.EXTRA_SUBJECT,title==null?"GaZonRide":title);
+                    send.putExtra(Intent.EXTRA_TEXT,text==null?"":text);
+                    Intent chooser=Intent.createChooser(send,"Sürüşü paylaş");
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(chooser);
+                } catch(Exception e) {
+                    Toast.makeText(MainActivity.this,"Paylaşım açılamadı.",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
         @JavascriptInterface public void openExternal(String url){
             runOnUiThread(() -> {
                 try {

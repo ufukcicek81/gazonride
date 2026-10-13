@@ -333,6 +333,8 @@ function routePoint(progress){
  * ahead (so it pre-rotates into bends instead of snapping), smoothed with a
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
+// Shown in the header so a cached old version is easy to spot on the phone.
+var REPLAY_BUILD="s14";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -509,7 +511,7 @@ function startReplayPlayback(ride,label){
  function go(){
   if(mode!=="3d"||thisSession!==playSessionId)return;
   auto=true;start=0;
-  $("grReplayState").textContent=(camMode==="chase"?"Takip kamerası · ":"Drone yörüngesi · ")+qualityLabel(ride);
+  $("grReplayState").textContent=(camMode==="chase"?"Takip kamerası · ":"Drone yörüngesi · ")+qualityLabel(ride)+" · "+REPLAY_BUILD;
   anim=requestAnimationFrame(loop)
  }
  if(!using3d){setTimeout(go,introDelay);return}

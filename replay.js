@@ -2,7 +2,7 @@
 "use strict";
 var modal,currentRide=null,anim=0,start=0,duration=65000,auto=false,mode="overview",introDelay=900,lastProgress=0,playPoints=[],playCum=[],playTotal=0,lastCameraTs=0,lastTrailTs=0,lastCameraHeading=0,lastCameraPoint=null,playbackSpeed=2,orbitRail=[],orbitStartHeading=0,orbitTotalDegrees=245,orbitLastFrame=0,orbitFrames=0,orbitLatest=null,playSessionId=0,lastBikeTs=0;
 var overviewMap=null,overviewRoute=null,startMarker=null,endMarker=null;
-var map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
+var puck3d=null,map3d=null,classicMap=null,route3d=null,travel3d=null,bike3d=null,classicRoute=null,classicTravel=null,classicBike=null,using3d=false;
 
 function $(id){return document.getElementById(id)}
 function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(!Array.isArray(a))a=[];if(window.GaZonDemoRide)a=a.concat([window.GaZonDemoRide]);return a}catch(e){return window.GaZonDemoRide?[window.GaZonDemoRide]:[]}}
@@ -254,11 +254,11 @@ function clearMaps(){
  cancelAnimationFrame(anim);anim=0;start=0;auto=false;mode="overview";
  var host=$("grReplayMap");if(host)host.innerHTML="";
  overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
- map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
+ puck3d=null;map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
 }
 function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:2.5}}
 // Rider puck: white ring, red core, white centre (no emoji, no default pin).
-var RIDER_SVG='<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="#E8322E" fill-opacity=".28"/><circle cx="22" cy="22" r="13" fill="#E8322E" stroke="#fff" stroke-width="4"/><circle cx="22" cy="22" r="4.5" fill="#fff"/></svg>';
+var RIDER_SVG='<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="#E8322E" fill-opacity=".28"/><circle cx="22" cy="22" r="13" fill="#E8322E" stroke="#fff" stroke-width="4"/><circle cx="22" cy="22" r="4.5" fill="#fff"/></svg>';
 function riderIconUrl(){return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(RIDER_SVG)}
 function riderTemplate(){
  var t=document.createElement("template");
@@ -290,7 +290,7 @@ async function buildClassicFollowMap(ride){
  });
  classicRoute=new google.maps.Polyline({map:classicMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#20e0d0",strokeWeight:16,strokeOpacity:1});
  classicTravel=new google.maps.Polyline({map:classicMap,path:[{lat:a[0].lat,lng:a[0].lng}],strokeColor:"#ffffff",strokeWeight:3,strokeOpacity:.9});
- classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},icon:{url:riderIconUrl(),scaledSize:new google.maps.Size(44,44),anchor:new google.maps.Point(22,22)},zIndex:50});
+ classicBike=new google.maps.Marker({map:classicMap,position:{lat:a[0].lat,lng:a[0].lng},icon:{url:riderIconUrl(),scaledSize:new google.maps.Size(28,28),anchor:new google.maps.Point(14,14)},zIndex:50});
  lastCameraHeading=bearing(a[0],a[Math.min(3,a.length-1)]);lastCameraPoint={lat:a[0].lat,lng:a[0].lng};
  try{classicMap.setTilt(35);classicMap.setHeading(lastCameraHeading)}catch(e){}
  startReplayPlayback(ride,"Uyumlu takip görünümü");
@@ -477,7 +477,7 @@ async function build3DMap(ride){
  classicMap=null;classicRoute=null;classicTravel=null;classicBike=null;
  try{
   var lib=await google.maps.importLibrary("maps3d");
-  var Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement;
+  var Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement,Polygon3DElement=lib.Polygon3DElement;
   if(!Map3DElement||!Polyline3DElement)throw new Error("3D Maps desteklenmiyor");
   var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
   map3d=new Map3DElement({
@@ -494,7 +494,16 @@ async function build3DMap(ride){
   travel3d=newTrail([first]);
   map3d.append(travel3d);
 
-  if(Marker3DElement){
+  puck3d=null;
+  if(Polygon3DElement){
+   // Rider dot lying flat on the road (white ring, red core, white centre),
+   // sized in metres from the camera distance so it stays small on screen.
+   puck3d=[["#FFFFFF",1,3.4],["#E5322D",.68,3.5],["#FFFFFF",.26,3.6]].map(function(l,k){
+    var el=new Polygon3DElement({altitudeMode:"RELATIVE_TO_GROUND",fillColor:l[0],strokeColor:"#00000000",strokeWidth:0,
+     drawsOccludedSegments:true,zIndex:31+k,outerCoordinates:puckCircle(first,6*l[1],l[2])});
+    map3d.append(el);return {el:el,f:l[1],alt:l[2]};
+   });
+  }else if(Marker3DElement){
    bike3d=new Marker3DElement({
     position:{lat:first.lat,lng:first.lng,altitude:2},
     altitudeMode:"RELATIVE_TO_GROUND",sizePreserved:true,drawsWhenOccluded:true,zIndex:30
@@ -522,13 +531,19 @@ async function build3DMap(ride){
   await buildClassicFollowMap(ride)
  }
 }
+// Circle of radius r metres around p (flat, a little above the trail).
+function puckCircle(p,r,alt){
+ var out=[],k=Math.cos(p.lat*Math.PI/180);
+ for(var i=0;i<=24;i++){var a=i/24*2*Math.PI;out.push({lat:p.lat+r*Math.cos(a)/111320,lng:p.lng+r*Math.sin(a)/(111320*k),altitude:alt})}
+ return out;
+}
 /* Travelled trail: finished pieces are frozen as their own polylines, so
  * each frame only redraws the short live piece behind the rider. */
 var trailCtor=null,trailChunks=[],trailFrom=0;
 function newTrail(points){
  return new trailCtor({
   path:points.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}}),
-  altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#E8322E",strokeWidth:14,
+  altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#E8322E",strokeWidth:9,
   outerColor:"#FFFFFF",outerWidth:.22,drawsOccludedSegments:true,zIndex:12
  });
 }
@@ -551,7 +566,12 @@ function updateScene(progress,ts){
  var x=pointAtDistance(progress);if(!x)return;
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
  if(using3d&&map3d){
-  if(bike3d){
+  if(puck3d){
+   var cr=Number(camMode==="chase"?chase.range:(orbitLatest&&orbitLatest.range))||Number(map3d.range)||600;
+   var R=Math.max(2.5,Math.min(60,cr*.011));
+   puck3d.forEach(function(l){try{l.el.outerCoordinates=puckCircle(p,R*l.f,l.alt)}catch(e){}});
+   lastBikeTs=now
+  }else if(bike3d){
    try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}
    lastBikeTs=now
   }

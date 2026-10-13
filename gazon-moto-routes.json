@@ -24,7 +24,25 @@
       "place": "Soğanlı Geçidi",
       "aka": [
         "D915"
-      ]
+      ],
+      "points": [
+        {
+          "q": "Çaykara, Trabzon",
+          "lat": 40.747855,
+          "lng": 40.242043
+        },
+        {
+          "q": "Soğanlı Geçidi, Bayburt",
+          "lat": 40.512926,
+          "lng": 40.234402
+        },
+        {
+          "q": "Bayburt",
+          "lat": 40.202303,
+          "lng": 40.21216
+        }
+      ],
+      "check": "verified"
     },
     {
       "id": 2,
@@ -45,7 +63,28 @@
       ],
       "end": "Torul, Gümüşhane",
       "place": "Zigana Geçidi",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Maçka, Trabzon",
+          "lat": 40.812042,
+          "lng": 39.612715
+        },
+        {
+          "q": "Zigana, Gümüşhane",
+          "lat": 40.613876,
+          "lng": 39.36544
+        },
+        {
+          "q": "Torul, Gümüşhane",
+          "lat": 40.557658,
+          "lng": 39.292636
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Zigana.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Zigana_Ge%C3%A7idi",
+      "imageTitle": "Zigana Geçidi"
     },
     {
       "id": 3,
@@ -69,7 +108,33 @@
       "place": "Cide",
       "aka": [
         "D010"
-      ]
+      ],
+      "points": [
+        {
+          "q": "Sinop",
+          "lat": 41.647638,
+          "lng": 34.956014
+        },
+        {
+          "q": "İnebolu, Kastamonu",
+          "lat": 41.978576,
+          "lng": 33.759903
+        },
+        {
+          "q": "Cide, Kastamonu",
+          "lat": 41.891571,
+          "lng": 33.003712
+        },
+        {
+          "q": "Amasra, Bartın",
+          "lat": 41.748917,
+          "lng": 32.386696
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Gideros_Bay1.jpg/960px-Gideros_Bay1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Cide",
+      "imageTitle": "Cide"
     },
     {
       "id": 4,
@@ -90,7 +155,28 @@
       ],
       "end": "Ayder, Çamlıhemşin",
       "place": "Ayder Yaylası",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Ardeşen, Rize",
+          "lat": 41.191875,
+          "lng": 40.989418
+        },
+        {
+          "q": "Çamlıhemşin, Rize",
+          "lat": 41.045571,
+          "lng": 41.005697
+        },
+        {
+          "q": "Ayder, Çamlıhemşin",
+          "lat": 40.95252,
+          "lng": 41.102051
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Ayder7.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ayder",
+      "imageTitle": "Ayder"
     },
     {
       "id": 5,
@@ -109,7 +195,23 @@
       "via": [],
       "end": "Uzungöl, Çaykara",
       "place": "Uzungöl",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Of, Trabzon",
+          "lat": 40.947642,
+          "lng": 40.269407
+        },
+        {
+          "q": "Uzungöl, Çaykara",
+          "lat": 40.619126,
+          "lng": 40.29481
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Uzung%C3%B6l%2C_Trabzon.jpg/960px-Uzung%C3%B6l%2C_Trabzon.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Uzung%C3%B6l",
+      "imageTitle": "Uzungöl"
     },
     {
       "id": 6,
@@ -131,7 +233,33 @@
       ],
       "end": "Ardahan",
       "place": "Şavşat",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Artvin",
+          "lat": 41.160506,
+          "lng": 41.839863
+        },
+        {
+          "q": "Şavşat, Artvin",
+          "lat": 41.252488,
+          "lng": 42.356886
+        },
+        {
+          "q": "Sahara Milli Parkı",
+          "lat": 41.213588,
+          "lng": 42.462631
+        },
+        {
+          "q": "Ardahan",
+          "lat": 41.03725,
+          "lng": 42.746219
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/%C5%9Eav%C5%9Fat_il%C3%A7e_g%C3%B6r%C3%BCn%C3%BCm.jpg/960px-%C5%9Eav%C5%9Fat_il%C3%A7e_g%C3%B6r%C3%BCn%C3%BCm.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/%C5%9Eav%C5%9Fat",
+      "imageTitle": "Şavşat"
     },
     {
       "id": 7,
@@ -150,7 +278,23 @@
       "via": [],
       "end": "Yusufeli, Artvin",
       "place": "Yusufeli",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Artvin",
+          "lat": 41.160506,
+          "lng": 41.839863
+        },
+        {
+          "q": "Yusufeli, Artvin",
+          "lat": 40.810829,
+          "lng": 41.527085
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/Yusufeli.jpg/960px-Yusufeli.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Yusufeli",
+      "imageTitle": "Yusufeli"
     },
     {
       "id": 8,
@@ -171,7 +315,26 @@
       ],
       "end": "Kümbet Yaylası, Dereli",
       "place": "Kümbet Yaylası",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Giresun",
+          "lat": 40.653162,
+          "lng": 38.517203
+        },
+        {
+          "q": "Dereli, Giresun",
+          "lat": 40.73904,
+          "lng": 38.449132
+        },
+        {
+          "q": "Kümbet Yaylası, Dereli"
+        }
+      ],
+      "check": "unverified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Waldgebiete_K%C3%BCmbet_Yaylas%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/K%C3%BCmbet_Yaylas%C4%B1",
+      "imageTitle": "Kümbet Yaylası"
     },
     {
       "id": 9,
@@ -192,7 +355,28 @@
       ],
       "end": "Amasra, Bartın",
       "place": "Amasra",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Bartın",
+          "lat": 41.494771,
+          "lng": 32.435426
+        },
+        {
+          "q": "İnkumu, Bartın",
+          "lat": 41.660277,
+          "lng": 32.217409
+        },
+        {
+          "q": "Amasra, Bartın",
+          "lat": 41.748917,
+          "lng": 32.386696
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/Amasra%2C_Turkey%2C_Castle%2C_view_from_the_island.jpg/960px-Amasra%2C_Turkey%2C_Castle%2C_view_from_the_island.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Amasra",
+      "imageTitle": "Amasra"
     },
     {
       "id": 10,
@@ -213,7 +397,28 @@
       ],
       "end": "Ilgaz, Çankırı",
       "place": "Ilgaz Dağı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Kastamonu",
+          "lat": 41.368022,
+          "lng": 33.761918
+        },
+        {
+          "q": "Ilgaz Dağı Milli Parkı",
+          "lat": 41.068265,
+          "lng": 33.736778
+        },
+        {
+          "q": "Ilgaz, Çankırı",
+          "lat": 40.924887,
+          "lng": 33.625341
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Ilgaz_35.JPG/960px-Ilgaz_35.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ilgaz_Da%C4%9Flar%C4%B1",
+      "imageTitle": "Ilgaz Dağları"
     },
     {
       "id": 11,
@@ -232,7 +437,23 @@
       "via": [],
       "end": "Yedigöller Milli Parkı",
       "place": "Yedigöller Millî Parkı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Bolu",
+          "lat": 40.62121,
+          "lng": 31.646026
+        },
+        {
+          "q": "Yedigöller Milli Parkı",
+          "lat": 40.949991,
+          "lng": 31.747121
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Yedigoller_1398_nevit.jpg/960px-Yedigoller_1398_nevit.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Yedig%C3%B6ller_Mill%C3%AE_Park%C4%B1",
+      "imageTitle": "Yedigöller Millî Parkı"
     },
     {
       "id": 12,
@@ -251,7 +472,23 @@
       "via": [],
       "end": "Abant Gölü",
       "place": "Abant Gölü",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Bolu",
+          "lat": 40.62121,
+          "lng": 31.646026
+        },
+        {
+          "q": "Abant Gölü",
+          "lat": 40.605223,
+          "lng": 31.27994
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/Abant_Bolu_Province.jpg/960px-Abant_Bolu_Province.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Abant_G%C3%B6l%C3%BC",
+      "imageTitle": "Abant Gölü"
     },
     {
       "id": 13,
@@ -272,7 +509,28 @@
       ],
       "end": "Kefken, Kandıra",
       "place": "Akçakoca",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Akçakoca, Düzce",
+          "lat": 41.088228,
+          "lng": 31.123983
+        },
+        {
+          "q": "Kandıra, Kocaeli",
+          "lat": 41.070391,
+          "lng": 30.15233
+        },
+        {
+          "q": "Kefken, Kandıra",
+          "lat": 41.169541,
+          "lng": 30.227886
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/AK%C3%87AKOCA%2C_D%C3%BCzce%2C_Turkey_-_Murat_%C3%96zsoy_37.jpg/960px-AK%C3%87AKOCA%2C_D%C3%BCzce%2C_Turkey_-_Murat_%C3%96zsoy_37.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ak%C3%A7akoca",
+      "imageTitle": "Akçakoca"
     },
     {
       "id": 14,
@@ -294,7 +552,33 @@
       ],
       "end": "Kardüz Yaylası",
       "place": "Güzeldere Şelalesi",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Düzce",
+          "lat": 40.877454,
+          "lng": 31.200962
+        },
+        {
+          "q": "Samandere Şelalesi",
+          "lat": 40.689403,
+          "lng": 31.260068
+        },
+        {
+          "q": "Güzeldere Şelalesi",
+          "lat": 40.72386,
+          "lng": 31.049838
+        },
+        {
+          "q": "Kardüz Yaylası",
+          "lat": 40.670479,
+          "lng": 30.982123
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/G%C3%BCzeldere_%C5%9Felalesi.jpg/960px-G%C3%BCzeldere_%C5%9Felalesi.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%BCzeldere_%C5%9Eelalesi_Tabiat_Park%C4%B1",
+      "imageTitle": "Güzeldere Şelalesi Tabiat Parkı"
     },
     {
       "id": 15,
@@ -313,7 +597,23 @@
       "via": [],
       "end": "Yenice, Karabük",
       "place": "Safranbolu",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Safranbolu",
+          "lat": 41.245666,
+          "lng": 32.692957
+        },
+        {
+          "q": "Yenice, Karabük",
+          "lat": 41.205491,
+          "lng": 32.31888
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Safranbolu_traditional_houses.jpg/960px-Safranbolu_traditional_houses.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Safranbolu",
+      "imageTitle": "Safranbolu"
     },
     {
       "id": 16,
@@ -332,7 +632,23 @@
       "via": [],
       "end": "Ağva, Şile",
       "place": "Ağva",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Şile, İstanbul",
+          "lat": 41.174407,
+          "lng": 29.612522
+        },
+        {
+          "q": "Ağva, Şile",
+          "lat": 41.138056,
+          "lng": 29.856667
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/A%C4%9Fva_Ye%C5%9Fil%C3%A7ay_%C4%B0stanbul_Province.jpg/960px-A%C4%9Fva_Ye%C5%9Fil%C3%A7ay_%C4%B0stanbul_Province.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/A%C4%9Fva_Merkez",
+      "imageTitle": "Ağva Merkez"
     },
     {
       "id": 17,
@@ -353,7 +669,25 @@
       ],
       "end": "Şarköy, Tekirdağ",
       "place": "Uçmakdere",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Tekirdağ",
+          "lat": 41.07314,
+          "lng": 27.410201
+        },
+        {
+          "q": "Uçmakdere",
+          "lat": 40.798105,
+          "lng": 27.365073
+        },
+        {
+          "q": "Şarköy, Tekirdağ",
+          "lat": 40.614873,
+          "lng": 27.112186
+        }
+      ],
+      "check": "verified"
     },
     {
       "id": 18,
@@ -375,7 +709,33 @@
       ],
       "end": "Erdek, Balıkesir",
       "place": "Kapıdağ Yarımadası",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Erdek, Balıkesir",
+          "lat": 40.397435,
+          "lng": 27.790987
+        },
+        {
+          "q": "Narlı, Erdek",
+          "lat": 40.474298,
+          "lng": 27.692329
+        },
+        {
+          "q": "Ballıpınar, Erdek",
+          "lat": 40.505547,
+          "lng": 27.903805
+        },
+        {
+          "q": "Erdek, Balıkesir",
+          "lat": 40.397435,
+          "lng": 27.790987
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif/lossy-page1-960px-1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Kap%C4%B1da%C4%9F_Yar%C4%B1madas%C4%B1",
+      "imageTitle": "Kapıdağ Yarımadası"
     },
     {
       "id": 19,
@@ -394,7 +754,23 @@
       "via": [],
       "end": "Uludağ Oteller Bölgesi",
       "place": "Uludağ",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Bursa",
+          "lat": 40.182573,
+          "lng": 29.067504
+        },
+        {
+          "q": "Uludağ Oteller Bölgesi",
+          "lat": 40.123522,
+          "lng": 29.123887
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Uludag.JPG/960px-Uludag.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Uluda%C4%9F",
+      "imageTitle": "Uludağ"
     },
     {
       "id": 20,
@@ -415,7 +791,28 @@
       ],
       "end": "Kartepe",
       "place": "Kartepe",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Sapanca",
+          "lat": 40.693058,
+          "lng": 30.273417
+        },
+        {
+          "q": "Maşukiye, Kartepe",
+          "lat": 40.70193,
+          "lng": 30.1398
+        },
+        {
+          "q": "Kartepe",
+          "lat": 40.745436,
+          "lng": 30.011283
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Kartepe_Belediyesi.jpg/960px-Kartepe_Belediyesi.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Kartepe",
+      "imageTitle": "Kartepe"
     },
     {
       "id": 21,
@@ -437,7 +834,33 @@
       ],
       "end": "Kilitbahir, Eceabat",
       "place": "Gelibolu Tarihi Yarımadası",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Eceabat, Çanakkale",
+          "lat": 40.185214,
+          "lng": 26.359097
+        },
+        {
+          "q": "Anzak Koyu",
+          "lat": 40.23593,
+          "lng": 26.27681
+        },
+        {
+          "q": "Çanakkale Şehitleri Anıtı",
+          "lat": 40.050425,
+          "lng": 26.219952
+        },
+        {
+          "q": "Kilitbahir, Eceabat",
+          "lat": 40.146779,
+          "lng": 26.377973
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Gallipoli_peninsula_from_space.png/960px-Gallipoli_peninsula_from_space.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Gelibolu_Yar%C4%B1madas%C4%B1",
+      "imageTitle": "Gelibolu Yarımadası"
     },
     {
       "id": 22,
@@ -459,7 +882,33 @@
       ],
       "end": "Babakale, Ayvacık",
       "place": "Assos",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Ayvacık, Çanakkale",
+          "lat": 39.601185,
+          "lng": 26.403131
+        },
+        {
+          "q": "Behramkale, Ayvacık",
+          "lat": 39.491999,
+          "lng": 26.336865
+        },
+        {
+          "q": "Sivrice, Ayvacık",
+          "lat": 39.576335,
+          "lng": 26.603811
+        },
+        {
+          "q": "Babakale, Ayvacık",
+          "lat": 39.479737,
+          "lng": 26.064866
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/AssosBurgberg.jpg/960px-AssosBurgberg.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Assos",
+      "imageTitle": "Assos"
     },
     {
       "id": 23,
@@ -480,7 +929,28 @@
       ],
       "end": "Zeytinli, Edremit",
       "place": "Kazdağı Millî Parkı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Küçükkuyu, Ayvacık",
+          "lat": 39.546543,
+          "lng": 26.604528
+        },
+        {
+          "q": "Adatepe, Ayvacık",
+          "lat": 39.569381,
+          "lng": 26.619281
+        },
+        {
+          "q": "Zeytinli, Edremit",
+          "lat": 39.614587,
+          "lng": 26.949189
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Kazdagi_Verwaltung.JPG/960px-Kazdagi_Verwaltung.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Kazda%C4%9F%C4%B1_Mill%C3%AE_Park%C4%B1",
+      "imageTitle": "Kazdağı Millî Parkı"
     },
     {
       "id": 24,
@@ -502,7 +972,33 @@
       ],
       "end": "Karaburun, İzmir",
       "place": "Karaburun",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Urla, İzmir",
+          "lat": 38.322818,
+          "lng": 26.7673
+        },
+        {
+          "q": "Balıklıova, Urla",
+          "lat": 38.423375,
+          "lng": 26.583176
+        },
+        {
+          "q": "Mordoğan, Karaburun",
+          "lat": 38.514779,
+          "lng": 26.621794
+        },
+        {
+          "q": "Karaburun, İzmir",
+          "lat": 38.635442,
+          "lng": 26.509803
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Faik_Sarikaya_Karaburun_Bodrum_Koyu.jpg/960px-Faik_Sarikaya_Karaburun_Bodrum_Koyu.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Karaburun",
+      "imageTitle": "Karaburun"
     },
     {
       "id": 25,
@@ -523,7 +1019,28 @@
       ],
       "end": "Alaçatı",
       "place": "Ildır",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Çeşme",
+          "lat": 38.324404,
+          "lng": 26.30296
+        },
+        {
+          "q": "Ildır, Çeşme",
+          "lat": 38.383601,
+          "lng": 26.476831
+        },
+        {
+          "q": "Alaçatı",
+          "lat": 38.284757,
+          "lng": 26.374518
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/Ildiri_Erythrai.JPG/960px-Ildiri_Erythrai.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ild%C4%B1r",
+      "imageTitle": "Ildır"
     },
     {
       "id": 26,
@@ -542,7 +1059,23 @@
       "via": [],
       "end": "Spil Dağı Millî Parkı",
       "place": "Spil Dağı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Manisa",
+          "lat": 38.85744,
+          "lng": 28.056571
+        },
+        {
+          "q": "Spil Dağı Millî Parkı",
+          "lat": 38.563325,
+          "lng": 27.445757
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Spil_National_Park_-_Spil_Milli_Park%C4%B1.jpg/960px-Spil_National_Park_-_Spil_Milli_Park%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Spil_Da%C4%9F%C4%B1_Mill%C3%AE_Park%C4%B1",
+      "imageTitle": "Spil Dağı Millî Parkı"
     },
     {
       "id": 27,
@@ -564,7 +1097,33 @@
       ],
       "end": "Bozburun, Marmaris",
       "place": "Bozburun",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Marmaris",
+          "lat": 36.852255,
+          "lng": 28.274266
+        },
+        {
+          "q": "Orhaniye, Marmaris",
+          "lat": 36.753479,
+          "lng": 28.150761
+        },
+        {
+          "q": "Selimiye, Marmaris",
+          "lat": 36.705931,
+          "lng": 28.093988
+        },
+        {
+          "q": "Bozburun, Marmaris",
+          "lat": 36.692778,
+          "lng": 28.044277
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Bozburun.jpg/960px-Bozburun.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Bozburun,_Marmaris",
+      "imageTitle": "Bozburun, Marmaris"
     },
     {
       "id": 28,
@@ -585,7 +1144,28 @@
       ],
       "end": "Knidos, Datça",
       "place": "Datça",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Marmaris",
+          "lat": 36.852255,
+          "lng": 28.274266
+        },
+        {
+          "q": "Datça, Muğla",
+          "lat": 36.72634,
+          "lng": 27.687386
+        },
+        {
+          "q": "Knidos, Datça",
+          "lat": 36.687191,
+          "lng": 27.373296
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Dat%C3%A7a.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Dat%C3%A7a",
+      "imageTitle": "Datça"
     },
     {
       "id": 29,
@@ -607,7 +1187,33 @@
       ],
       "end": "Kaş, Antalya",
       "place": "Kaputaş Plajı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Fethiye",
+          "lat": 36.622115,
+          "lng": 29.115338
+        },
+        {
+          "q": "Kalkan, Kaş",
+          "lat": 36.265272,
+          "lng": 29.415257
+        },
+        {
+          "q": "Kaputaş Plajı",
+          "lat": 36.228389,
+          "lng": 29.450023
+        },
+        {
+          "q": "Kaş, Antalya",
+          "lat": 36.199375,
+          "lng": 29.641337
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d5/Kaputa%C5%9F_Plaj%C4%B1.jpg/960px-Kaputa%C5%9F_Plaj%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Kaputa%C5%9F_Plaj%C4%B1",
+      "imageTitle": "Kaputaş Plajı"
     },
     {
       "id": 30,
@@ -628,7 +1234,28 @@
       ],
       "end": "Anamur, Mersin",
       "place": "Anamur Kalesi",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Alanya",
+          "lat": 36.886573,
+          "lng": 30.703024
+        },
+        {
+          "q": "Gazipaşa, Antalya",
+          "lat": 36.268271,
+          "lng": 32.317507
+        },
+        {
+          "q": "Anamur, Mersin",
+          "lat": 36.080323,
+          "lng": 32.831211
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anamurvonosten.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Anamur",
+      "imageTitle": "Anamur"
     },
     {
       "id": 31,
@@ -649,7 +1276,28 @@
       ],
       "end": "Olimpos, Kumluca",
       "place": "Olimpos",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Kemer, Antalya",
+          "lat": 36.601382,
+          "lng": 30.563856
+        },
+        {
+          "q": "Ulupınar, Kemer",
+          "lat": 36.455255,
+          "lng": 30.430584
+        },
+        {
+          "q": "Olimpos, Kumluca",
+          "lat": 36.396558,
+          "lng": 30.473542
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Olympus_National_Park_30.jpg/960px-Olympus_National_Park_30.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Olimpos_Da%C4%9F%C4%B1",
+      "imageTitle": "Olimpos Dağı"
     },
     {
       "id": 32,
@@ -668,7 +1316,23 @@
       "via": [],
       "end": "Beşkonak, Manavgat",
       "place": "Köprülü Kanyon",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Manavgat",
+          "lat": 36.787012,
+          "lng": 31.440667
+        },
+        {
+          "q": "Beşkonak, Manavgat",
+          "lat": 37.144328,
+          "lng": 31.199316
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/K%C3%B6pr%C3%BCl%C3%BC_Kanyon.JPG/960px-K%C3%B6pr%C3%BCl%C3%BC_Kanyon.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/K%C3%B6pr%C3%BCl%C3%BC_Kanyon",
+      "imageTitle": "Köprülü Kanyon"
     },
     {
       "id": 33,
@@ -687,7 +1351,23 @@
       "via": [],
       "end": "Uzuncaburç, Silifke",
       "place": "Uzuncaburç",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Silifke",
+          "lat": 36.377817,
+          "lng": 33.926037
+        },
+        {
+          "q": "Uzuncaburç, Silifke",
+          "lat": 36.584411,
+          "lng": 33.926506
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/57608567_-_panoramio.jpg/960px-57608567_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Uzuncabur%C3%A7",
+      "imageTitle": "Uzuncaburç"
     },
     {
       "id": 34,
@@ -709,7 +1389,33 @@
       ],
       "end": "Eğirdir, Isparta",
       "place": "Eğirdir Gölü",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Eğirdir, Isparta",
+          "lat": 37.874434,
+          "lng": 30.850043
+        },
+        {
+          "q": "Barla, Eğirdir",
+          "lat": 38.019136,
+          "lng": 30.781628
+        },
+        {
+          "q": "Gelendost, Isparta",
+          "lat": 38.121471,
+          "lng": 31.013711
+        },
+        {
+          "q": "Eğirdir, Isparta",
+          "lat": 37.874434,
+          "lng": 30.850043
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Lake_Egirdir.jpg/960px-Lake_Egirdir.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/E%C4%9Firdir_G%C3%B6l%C3%BC",
+      "imageTitle": "Eğirdir Gölü"
     },
     {
       "id": 35,
@@ -728,7 +1434,23 @@
       "via": [],
       "end": "Salda Gölü",
       "place": "Salda Gölü",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Yeşilova, Burdur",
+          "lat": 37.506438,
+          "lng": 29.755238
+        },
+        {
+          "q": "Salda Gölü",
+          "lat": 37.547598,
+          "lng": 29.681613
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Saldives_Reflection.jpg/960px-Saldives_Reflection.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Salda_G%C3%B6l%C3%BC",
+      "imageTitle": "Salda Gölü"
     },
     {
       "id": 36,
@@ -750,7 +1472,33 @@
       ],
       "end": "Ürgüp, Nevşehir",
       "place": "Göreme",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Nevşehir",
+          "lat": 38.723507,
+          "lng": 34.719417
+        },
+        {
+          "q": "Uçhisar",
+          "lat": 38.629383,
+          "lng": 34.804614
+        },
+        {
+          "q": "Göreme",
+          "lat": 38.642089,
+          "lng": 34.829623
+        },
+        {
+          "q": "Ürgüp, Nevşehir",
+          "lat": 38.592812,
+          "lng": 34.959455
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/G%C3%B6reme_town_and_valley_2015.JPG/960px-G%C3%B6reme_town_and_valley_2015.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/G%C3%B6reme",
+      "imageTitle": "Göreme"
     },
     {
       "id": 37,
@@ -771,7 +1519,28 @@
       ],
       "end": "Ihlara, Güzelyurt",
       "place": "Ihlara Vadisi",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Aksaray",
+          "lat": 38.432629,
+          "lng": 33.897696
+        },
+        {
+          "q": "Selime, Güzelyurt",
+          "lat": 38.308391,
+          "lng": 34.256374
+        },
+        {
+          "q": "Ihlara, Güzelyurt",
+          "lat": 38.238449,
+          "lng": 34.306466
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Ihlara_-_25936870521.jpg/960px-Ihlara_-_25936870521.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ihlara,_G%C3%BCzelyurt",
+      "imageTitle": "Ihlara, Güzelyurt"
     },
     {
       "id": 38,
@@ -792,7 +1561,28 @@
       ],
       "end": "Erciyes Kayak Merkezi",
       "place": "Erciyes Dağı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Kayseri",
+          "lat": 38.721901,
+          "lng": 35.487321
+        },
+        {
+          "q": "Hisarcık, Kayseri",
+          "lat": 38.591162,
+          "lng": 35.506098
+        },
+        {
+          "q": "Erciyes Kayak Merkezi",
+          "lat": 38.558724,
+          "lng": 35.477795
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/39/Wild_horses1.jpg/960px-Wild_horses1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Erciyes",
+      "imageTitle": "Erciyes"
     },
     {
       "id": 39,
@@ -811,7 +1601,23 @@
       "via": [],
       "end": "Çukurbağ, Çamardı",
       "place": "Aladağlar Millî Parkı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Çamardı, Niğde",
+          "lat": 37.83441,
+          "lng": 34.986392
+        },
+        {
+          "q": "Çukurbağ, Çamardı",
+          "lat": 37.838657,
+          "lng": 35.059964
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Yelatan_Alada%C4%9Flar_03.jpg/960px-Yelatan_Alada%C4%9Flar_03.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Alada%C4%9Flar_Mill%C3%AE_Park%C4%B1",
+      "imageTitle": "Aladağlar Millî Parkı"
     },
     {
       "id": 40,
@@ -832,7 +1638,28 @@
       ],
       "end": "Nemrut Dağı",
       "place": "Nemrut Dağı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Kahta, Adıyaman",
+          "lat": 37.786072,
+          "lng": 38.621718
+        },
+        {
+          "q": "Cendere Köprüsü",
+          "lat": 37.932906,
+          "lng": 38.608497
+        },
+        {
+          "q": "Nemrut Dağı",
+          "lat": 37.980639,
+          "lng": 38.740797
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Mount_Nemrut_-_East_Terrace_%284961323529%29.jpg/960px-Mount_Nemrut_-_East_Terrace_%284961323529%29.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Nemrut_Da%C4%9F%C4%B1",
+      "imageTitle": "Nemrut Dağı"
     },
     {
       "id": 41,
@@ -855,7 +1682,28 @@
       "place": "Karanlık Kanyon",
       "aka": [
         "Kemaliye Taş Yolu"
-      ]
+      ],
+      "points": [
+        {
+          "q": "Kemaliye, Erzincan",
+          "lat": 39.262097,
+          "lng": 38.496527
+        },
+        {
+          "q": "Karanlık Kanyon",
+          "lat": 39.284773,
+          "lng": 38.488104
+        },
+        {
+          "q": "Kemaliye, Erzincan",
+          "lat": 39.262097,
+          "lng": 38.496527
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Canyone_2_%2832828345%29.jpeg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Karanl%C4%B1k_Kanyon",
+      "imageTitle": "Karanlık Kanyon"
     },
     {
       "id": 42,
@@ -876,7 +1724,28 @@
       ],
       "end": "Ovacık, Tunceli",
       "place": "Munzur Vadisi",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Tunceli",
+          "lat": 39.219755,
+          "lng": 39.413967
+        },
+        {
+          "q": "Munzur Vadisi Millî Parkı",
+          "lat": 39.305329,
+          "lng": 39.360955
+        },
+        {
+          "q": "Ovacık, Tunceli",
+          "lat": 39.358383,
+          "lng": 39.214447
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Munzur_Vadisi_Milli_Park%C4%B1.jpg/960px-Munzur_Vadisi_Milli_Park%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Munzur_Vadisi_Mill%C3%AE_Park%C4%B1",
+      "imageTitle": "Munzur Vadisi Millî Parkı"
     },
     {
       "id": 43,
@@ -900,7 +1769,43 @@
       ],
       "end": "Tatvan, Bitlis",
       "place": "Van Gölü",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Tatvan, Bitlis",
+          "lat": 38.508744,
+          "lng": 42.275854
+        },
+        {
+          "q": "Ahlat, Bitlis",
+          "lat": 38.754653,
+          "lng": 42.483327
+        },
+        {
+          "q": "Erciş, Van",
+          "lat": 39.028989,
+          "lng": 43.359106
+        },
+        {
+          "q": "Van",
+          "lat": 38.32496,
+          "lng": 43.658983
+        },
+        {
+          "q": "Gevaş, Van",
+          "lat": 38.295286,
+          "lng": 43.108271
+        },
+        {
+          "q": "Tatvan, Bitlis",
+          "lat": 38.508744,
+          "lng": 42.275854
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Lakevanlandsat.jpeg/960px-Lakevanlandsat.jpeg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Van_G%C3%B6l%C3%BC",
+      "imageTitle": "Van Gölü"
     },
     {
       "id": 44,
@@ -919,7 +1824,23 @@
       "via": [],
       "end": "Nemrut Kalderası",
       "place": "Nemrut Kalderası",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Tatvan, Bitlis",
+          "lat": 38.508744,
+          "lng": 42.275854
+        },
+        {
+          "q": "Nemrut Kalderası",
+          "lat": 38.622169,
+          "lng": 42.242298
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Nemrut_Krateri.jpg/960px-Nemrut_Krateri.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Nemrut_Kalderas%C4%B1",
+      "imageTitle": "Nemrut Kalderası"
     },
     {
       "id": 45,
@@ -938,7 +1859,23 @@
       "via": [],
       "end": "İshak Paşa Sarayı",
       "place": "İshak Paşa Sarayı",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Doğubayazıt",
+          "lat": 39.548337,
+          "lng": 44.079359
+        },
+        {
+          "q": "İshak Paşa Sarayı",
+          "lat": 39.520383,
+          "lng": 44.129685
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/ISHAKPASA_SARAYI.jpg/960px-ISHAKPASA_SARAYI.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/%C4%B0shak_Pa%C5%9Fa_Saray%C4%B1",
+      "imageTitle": "İshak Paşa Sarayı"
     },
     {
       "id": 46,
@@ -957,7 +1894,23 @@
       "via": [],
       "end": "Yüksekova, Hakkari",
       "place": "Zap Suyu",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Hakkari",
+          "lat": 37.495358,
+          "lng": 44.105478
+        },
+        {
+          "q": "Yüksekova, Hakkari",
+          "lat": 37.571769,
+          "lng": 44.28217
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f5/Greater_Zab_River_near_Erbil_Iraqi_Kurdistan.jpg/960px-Greater_Zab_River_near_Erbil_Iraqi_Kurdistan.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Zap_Suyu",
+      "imageTitle": "Zap Suyu"
     },
     {
       "id": 47,
@@ -979,7 +1932,33 @@
       ],
       "end": "Samandağ, Hatay",
       "place": "Belen",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "İskenderun",
+          "lat": 36.590227,
+          "lng": 36.171035
+        },
+        {
+          "q": "Belen, Hatay",
+          "lat": 36.491674,
+          "lng": 36.194446
+        },
+        {
+          "q": "Antakya",
+          "lat": 36.202557,
+          "lng": 36.164099
+        },
+        {
+          "q": "Samandağ, Hatay",
+          "lat": 36.08516,
+          "lng": 35.979937
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/City_view_of_Belen_Turkey_-_panoramio.jpg/960px-City_view_of_Belen_Turkey_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Belen",
+      "imageTitle": "Belen"
     },
     {
       "id": 48,
@@ -1000,7 +1979,28 @@
       ],
       "end": "Curtea de Argeș",
       "place": "Transfăgărășan",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Cârțișoara",
+          "lat": 45.726327,
+          "lng": 24.574476
+        },
+        {
+          "q": "Bâlea Lac",
+          "lat": 45.603315,
+          "lng": 24.617049
+        },
+        {
+          "q": "Curtea de Argeș",
+          "lat": 45.146934,
+          "lng": 24.677983
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/74/Romania-roads-DN7C.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://en.wikipedia.org/wiki/Transf%C4%83g%C4%83r%C4%83%C8%99an",
+      "imageTitle": "Transfăgărășan"
     },
     {
       "id": 49,
@@ -1021,7 +2021,28 @@
       ],
       "end": "Sebeș",
       "place": "Transalpina",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Novaci",
+          "lat": 45.172429,
+          "lng": 23.663754
+        },
+        {
+          "q": "Rânca",
+          "lat": 45.292114,
+          "lng": 23.688906
+        },
+        {
+          "q": "Sebeș",
+          "lat": 45.957538,
+          "lng": 23.569157
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Romania-roads-DN67C.png/960px-Romania-roads-DN67C.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Transalpina_(DN67C)",
+      "imageTitle": "Transalpina (DN67C)"
     },
     {
       "id": 50,
@@ -1043,7 +2064,33 @@
       ],
       "end": "Smolyan",
       "place": "Rhodope Mountains",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Plovdiv",
+          "lat": 42.141854,
+          "lng": 24.74993
+        },
+        {
+          "q": "Asenovgrad",
+          "lat": 42.007363,
+          "lng": 24.87627
+        },
+        {
+          "q": "Shiroka Laka",
+          "lat": 41.6794,
+          "lng": 24.58073
+        },
+        {
+          "q": "Smolyan",
+          "lat": 41.624097,
+          "lng": 24.59133
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/%D0%A0%D0%BE%D0%B4%D0%BE%D0%BF%D1%81%D0%BA%D0%BE_%D0%B7%D0%B5%D0%BB%D0%B5%D0%BD%D0%BE.jpg/960px-%D0%A0%D0%BE%D0%B4%D0%BE%D0%BF%D1%81%D0%BA%D0%BE_%D0%B7%D0%B5%D0%BB%D0%B5%D0%BD%D0%BE.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Rhodope_Mountains",
+      "imageTitle": "Rhodope Mountains"
     },
     {
       "id": 51,
@@ -1064,7 +2111,20 @@
       "place": "Kotor Serpentine",
       "aka": [
         "Kotor Serpentine"
-      ]
+      ],
+      "points": [
+        {
+          "q": "Kotor",
+          "lat": 42.42492,
+          "lng": 18.771333
+        },
+        {
+          "q": "Njeguši",
+          "lat": 42.431297,
+          "lng": 18.824771
+        }
+      ],
+      "check": "verified"
     },
     {
       "id": 52,
@@ -1085,7 +2145,28 @@
       ],
       "end": "Plužine",
       "place": "Durmitor",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Žabljak",
+          "lat": 43.155053,
+          "lng": 19.120867
+        },
+        {
+          "q": "Sedlo Pass",
+          "lat": 43.098619,
+          "lng": 19.050673
+        },
+        {
+          "q": "Plužine",
+          "lat": 43.156228,
+          "lng": 18.845225
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bf/Durmitor.jpg/960px-Durmitor.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Durmitor",
+      "imageTitle": "Durmitor"
     },
     {
       "id": 53,
@@ -1106,7 +2187,28 @@
       ],
       "end": "Dhërmi",
       "place": "Llogara Pass",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Vlorë",
+          "lat": 40.47076,
+          "lng": 19.491272
+        },
+        {
+          "q": "Llogara National Park",
+          "lat": 40.21302,
+          "lng": 19.575303
+        },
+        {
+          "q": "Dhërmi",
+          "lat": 40.151199,
+          "lng": 19.641412
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/ALB_20070718_img_1372.jpg/960px-ALB_20070718_img_1372.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Llogara_Pass",
+      "imageTitle": "Llogara Pass"
     },
     {
       "id": 54,
@@ -1125,7 +2227,23 @@
       "via": [],
       "end": "Kastraki",
       "place": "Meteora",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Kalabaka",
+          "lat": 39.698343,
+          "lng": 21.611326
+        },
+        {
+          "q": "Kastraki",
+          "lat": 39.716842,
+          "lng": 21.620611
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Meteora%27s_monastery_2.jpg/960px-Meteora%27s_monastery_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Meteora",
+      "imageTitle": "Meteora"
     },
     {
       "id": 55,
@@ -1147,7 +2265,33 @@
       ],
       "end": "Stepantsminda",
       "place": "Georgian Military Road",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Tbilisi",
+          "lat": 41.693459,
+          "lng": 44.801449
+        },
+        {
+          "q": "Ananuri",
+          "lat": 42.177032,
+          "lng": 44.6906
+        },
+        {
+          "q": "Gudauri",
+          "lat": 42.476558,
+          "lng": 44.477029
+        },
+        {
+          "q": "Stepantsminda",
+          "lat": 42.65799,
+          "lng": 44.640808
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Central_Caucasus.png/960px-Central_Caucasus.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Georgian_Military_Road",
+      "imageTitle": "Georgian Military Road"
     },
     {
       "id": 56,
@@ -1168,7 +2312,28 @@
       ],
       "end": "Omalo",
       "place": "Abano Pass",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Pshaveli",
+          "lat": 42.08173,
+          "lng": 45.443353
+        },
+        {
+          "q": "Abano Pass",
+          "lat": 42.278009,
+          "lng": 45.508472
+        },
+        {
+          "q": "Omalo",
+          "lat": 42.370921,
+          "lng": 45.633079
+        }
+      ],
+      "check": "verified",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/2/24/%E1%83%90%E1%83%91%E1%83%90%E1%83%9C%E1%83%9D%E1%83%A1_%E1%83%A3%E1%83%A6%E1%83%94%E1%83%9A%E1%83%A2%E1%83%94%E1%83%AE%E1%83%98%E1%83%9A%E1%83%98.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "imageCredit": "https://en.wikipedia.org/wiki/Abano_Pass",
+      "imageTitle": "Abano Pass"
     },
     {
       "id": 57,
@@ -1189,7 +2354,28 @@
       ],
       "end": "Bormio",
       "place": "Stelvio Pass",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Prato allo Stelvio",
+          "lat": 46.603767,
+          "lng": 10.581909
+        },
+        {
+          "q": "Stelvio Pass",
+          "lat": 46.528618,
+          "lng": 10.453206
+        },
+        {
+          "q": "Bormio",
+          "lat": 46.46767,
+          "lng": 10.377466
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Stelvio_Pass_Bolzano_side_1.jpg/960px-Stelvio_Pass_Bolzano_side_1.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Stelvio_Pass",
+      "imageTitle": "Stelvio Pass"
     },
     {
       "id": 58,
@@ -1210,7 +2396,28 @@
       ],
       "end": "Heiligenblut",
       "place": "Grossglockner High Alpine Road",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Bruck an der Großglocknerstraße",
+          "lat": 47.286695,
+          "lng": 12.824131
+        },
+        {
+          "q": "Hochtor",
+          "lat": 47.081188,
+          "lng": 12.842586
+        },
+        {
+          "q": "Heiligenblut",
+          "lat": 47.038537,
+          "lng": 12.840821
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Grossglockner_road.jpg/960px-Grossglockner_road.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Grossglockner_High_Alpine_Road",
+      "imageTitle": "Grossglockner High Alpine Road"
     },
     {
       "id": 59,
@@ -1231,7 +2438,29 @@
       ],
       "end": "Valldal",
       "place": "Trollstigen",
-      "aka": []
+      "aka": [],
+      "points": [
+        {
+          "q": "Åndalsnes",
+          "lat": 62.568169,
+          "lng": 7.686762
+        },
+        {
+          "q": "Trollstigen",
+          "lat": 60.590686,
+          "lng": 10.405314
+        },
+        {
+          "q": "Valldal",
+          "lat": 62.298054,
+          "lng": 7.262385
+        }
+      ],
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/DSC07845-Panorama.jpg/960px-DSC07845-Panorama.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Trollstigen",
+      "imageTitle": "Trollstigen"
     }
-  ]
+  ],
+  "checkedAt": "2026-10-13T21:51:18.496Z"
 }

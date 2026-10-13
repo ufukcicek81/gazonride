@@ -45,6 +45,9 @@ async function commonsImage(q) {
   const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
   for (const r of data.routes) {
     const cc = r.cc || "TR";
+    // Already done (points found, photo set): keep, so new routes are cheap to add.
+    const want = [r.start, ...(r.via || []), r.end].join("|");
+    if (r.image && Array.isArray(r.points) && r.points.map(p => p.q).join("|") === want && r.points.every(p => p.lat != null)) continue;
     r.points = [];
     for (const q of [r.start, ...(r.via || []), r.end]) { const g = await geocode(q, cc); r.points.push(g ? { q, lat: g.lat, lng: g.lng } : { q }); }
     const ok = r.points.filter(p => p.lat != null).length;

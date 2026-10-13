@@ -25,7 +25,7 @@ async function mirror(file, listKey, prefix) {
   const p = path.join(ROOT, file), data = JSON.parse(fs.readFileSync(p, "utf8")), list = data[listKey];
   let ok = 0, fail = 0;
   for (const it of list) {
-    if (!it.image) continue;
+    if (!it.image) { const old = path.join(OUT, `${prefix}-${it.id}.jpg`); if (fs.existsSync(old)) fs.unlinkSync(old); delete it.photo; continue; }
     const name = `${prefix}-${it.id}.jpg`, dest = path.join(OUT, name);
     if (it.photo === "photos/" + name && it.photoSrc === it.image && fs.existsSync(dest)) { ok++; continue; }
     const buf = await download(it.image);

@@ -10,6 +10,7 @@ on:
       - "scripts/enrich-moto-routes.js"
       - "gazon-moto-routes.json"
       - "scripts/mirror-photos.js"
+      - "scripts/fix-bad-photos.js"
       - ".github/workflows/enrich-destinations.yml"
 permissions:
   contents: write
@@ -25,8 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Enrich moto routes
+      - name: Enrich new or changed moto routes
         run: node scripts/enrich-moto-routes.js
+      - name: Replace map/logo images with real photos
+        run: node scripts/fix-bad-photos.js
       - name: Mirror photos into the site
         run: |
           command -v convert >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick)

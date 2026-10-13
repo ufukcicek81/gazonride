@@ -23,7 +23,8 @@
       "end": "Bayburt",
       "place": "Soğanlı Geçidi",
       "aka": [
-        "D915"
+        "D.915",
+        "D915 karayolu"
       ],
       "points": [
         {
@@ -313,7 +314,7 @@
       "via": [
         "Dereli, Giresun"
       ],
-      "end": "Kümbet Yaylası, Dereli",
+      "end": "Kümbet, Dereli",
       "place": "Kümbet Yaylası",
       "aka": [],
       "points": [
@@ -669,7 +670,10 @@
       ],
       "end": "Şarköy, Tekirdağ",
       "place": "Uçmakdere",
-      "aka": [],
+      "aka": [
+        "Işıklar Dağı",
+        "Şarköy"
+      ],
       "points": [
         {
           "q": "Tekirdağ",
@@ -1275,8 +1279,10 @@
         "Ulupınar, Kemer"
       ],
       "end": "Olimpos, Kumluca",
-      "place": "Olimpos",
-      "aka": [],
+      "place": "Olimpos (Likya)",
+      "aka": [
+        "Olympos"
+      ],
       "points": [
         {
           "q": "Kemer, Antalya",
@@ -2110,7 +2116,7 @@
       "end": "Njeguši",
       "place": "Kotor Serpentine",
       "aka": [
-        "Kotor Serpentine"
+        "Kotor"
       ],
       "points": [
         {

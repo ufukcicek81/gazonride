@@ -51,6 +51,7 @@ async function commonsImage(q) {
     r.check = r.points[0].lat != null && r.points[r.points.length - 1].lat != null ? (ok === r.points.length ? "verified" : "partial") : "unverified";
     let img = null;
     for (const t of [r.place, ...(r.aka || [])]) { img = await wikiImage(t, cc === "TR" ? "tr" : "en"); if (img) break; }
+    if (!img && cc !== "TR") for (const t of r.aka || []) { img = await wikiImage(t, "en"); if (img) break; }
     if (!img && cc !== "TR") img = await wikiImage(r.place, "tr");
     if (!img) img = await commonsImage(r.place + " " + (r.country || ""));
     delete r.image; delete r.imageCredit; delete r.imageTitle;

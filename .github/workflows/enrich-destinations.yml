@@ -8,6 +8,7 @@ on:
     paths:
       - "scripts/enrich-destinations.js"
       - "scripts/enrich-moto-routes.js"
+      - "gazon-moto-routes.json"
       - ".github/workflows/enrich-destinations.yml"
 permissions:
   contents: write

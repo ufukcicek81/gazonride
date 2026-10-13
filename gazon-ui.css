@@ -324,3 +324,6 @@ body.mode-ride.gr-ride-expanded:not(.guidance-active) .gr-quick-marks,body.mode-
 .gr-quick-marks button small{font-size:10px;font-weight:900;line-height:1;letter-spacing:.2px}
 .gr-quick-marks button[data-quick-more]{background:var(--gr-glass);color:var(--gr-text);border-color:var(--gr-line)}
 .gr-quick-marks button:active{transform:scale(.94)}
+/* Photo credit: a small © in the corner instead of a big tappable label. */
+.gr-route-image-source{width:30px!important;height:30px!important;min-width:0!important;padding:0!important;border-radius:50%!important;
+ display:grid!important;place-items:center!important;font-size:14px!important;font-weight:800!important;opacity:.8;overflow:hidden}

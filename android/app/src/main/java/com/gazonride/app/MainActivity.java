@@ -455,6 +455,25 @@ public class MainActivity extends Activity {
         webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
         webView.setWebViewClient(new WebViewClient(){
+            // Only the app's own site loads inside the WebView; any other page
+            // (photo credits, Wikipedia, WhatsApp…) opens outside the app so
+            // the rider can always come back with the back button.
+            @Override public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request){
+                Uri u=request.getUrl();
+                String host=u.getHost()==null?"":u.getHost();
+                String scheme=u.getScheme()==null?"":u.getScheme();
+                Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
+                if(("https".equals(scheme)||"http".equals(scheme))&&host.equals(current.getHost()))return false;
+                if("about".equals(scheme)||"data".equals(scheme)||"blob".equals(scheme)||"javascript".equals(scheme))return false;
+                try{
+                    Intent i=new Intent(Intent.ACTION_VIEW,u);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                }catch(Exception e){
+                    Toast.makeText(MainActivity.this,"Bağlantı açılamadı.",Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
             @Override public void onPageFinished(WebView view, String url){
                 super.onPageFinished(view,url);
                 pushSafeArea();

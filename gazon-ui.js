@@ -111,7 +111,26 @@ function guestCard(){
   if(head&&head.nextSibling)screen.insertBefore(card,head.nextSibling);else screen.appendChild(card);
  }).observe(screen,{childList:true,attributes:true,attributeFilter:["class"]});
 }
+// Inside the Android app an external link (photo credit, Wikipedia, maps…)
+// replaced the app in the WebView with no way back. Open such links in the
+// phone's browser instead; app pages (same origin) still load in place.
+function externalLinks(){
+ var B=window.AndroidBridge;if(!B||typeof B.openExternal!=="function")return;
+ document.addEventListener("click",function(e){
+  var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(!a)return;
+  var url;try{url=new URL(a.getAttribute("href"),location.href)}catch(err){return}
+  if(url.origin===location.origin||!/^(https?|mailto|tel|whatsapp|geo|intent):$/.test(url.protocol))return;
+  e.preventDefault();e.stopPropagation();
+  try{B.openExternal(url.href)}catch(err){}
+ },true);
+ var open=window.open;
+ window.open=function(u){
+  try{var url=new URL(String(u),location.href);if(url.origin!==location.origin){B.openExternal(url.href);return null}}catch(err){}
+  return open.apply(window,arguments);
+ };
+}
 onReady(function(){
+ externalLinks();
  guestCard();
  tabs();rideSheet();intercomButton();beta();
  new MutationObserver(syncActiveTab).observe(document.body,{attributes:true,attributeFilter:["class"]});

@@ -479,12 +479,38 @@ function startReplayPlayback(ride,label){
  auto=false;start=0;lastProgress=0;lastTrailTs=0;lastBikeTs=0;
  preparePlayback(ride);buildOrbitRail();buildSpeedProfile(ride);chase={heading:null,range:null,ts:0,center:null};lastHudTs=0;cancelAnimationFrame(anim);
  var thisSession=++playSessionId;
- setTimeout(function(){
+ function go(){
   if(mode!=="3d"||thisSession!==playSessionId)return;
   auto=true;start=0;
   $("grReplayState").textContent=(camMode==="chase"?"Takip kamerası · ":"Drone yörüngesi · ")+qualityLabel(ride);
   anim=requestAnimationFrame(loop)
- },using3d?2300:introDelay)
+ }
+ if(!using3d){setTimeout(go,introDelay);return}
+ // Start only when the 3D tiles at the start point are sharp: wait for the
+ // intro flight, then for the map to report a steady (fully loaded) view.
+ setTimeout(function(){
+  if(mode!=="3d"||thisSession!==playSessionId)return;
+  $("grReplayState").textContent="3D harita netleşiyor…";
+  waitForSteady(9000).then(function(){setTimeout(go,350)});
+ },2300);
+}
+// gmp-steadychange(isSteady) is tracked from map creation; resolves once the
+// view has been steady for a moment, or after maxMs as a safety net.
+var map3dSteady=false,map3dSteadyAt=0;
+function trackSteady(el){
+ map3dSteady=false;map3dSteadyAt=0;
+ try{el.addEventListener("gmp-steadychange",function(e){map3dSteady=!!(e&&e.isSteady);map3dSteadyAt=map3dSteady?performance.now():0})}catch(e){}
+}
+function waitForSteady(maxMs){
+ var t0=performance.now();
+ return new Promise(function(resolve){
+  (function check(){
+   var now=performance.now();
+   if(map3dSteady&&now-map3dSteadyAt>=250)return resolve(true);
+   if(now-t0>=maxMs)return resolve(false);
+   setTimeout(check,120);
+  })();
+ });
 }
 async function build3DMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
@@ -500,7 +526,7 @@ async function build3DMap(ride){
    range:info.range,tilt:47,heading:head,mode:"HYBRID",
    defaultUIHidden:true,gestureHandling:"COOPERATIVE"
   });
-  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";
+  map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";trackSteady(map3d);
   host.appendChild(map3d);
 
   // The route is revealed only as the rider covers it (no full line ahead).

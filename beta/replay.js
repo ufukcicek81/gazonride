@@ -363,7 +363,7 @@ function updateChaseCamera(progress,now,force){
  chase.center={lat:t.rider.lat,lng:t.rider.lng};
  orbitLatest={center:chase.center,heading:chase.heading,tilt:t.tilt,range:chase.range};orbitFrames++;
  if(using3d&&map3d){
-  try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:0};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
+  try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:groundAt(progress)};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
  }else if(classicMap){
   try{classicMap.moveCamera({center:chase.center,zoom:16.4,heading:chase.heading,tilt:60})}catch(e){}
  }
@@ -388,6 +388,33 @@ function speedAt(progress){
  var sp=speedProfile;if(!sp.length)return null;
  var lo=0,hi=sp.length-1;while(lo<hi){var m=(lo+hi)>>1;if(sp[m].f<progress)lo=m+1;else hi=m}
  return sp[lo].v;
+}
+/* Ground elevation for the camera target. Map3DElement treats the centre
+ * altitude as absolute, so "0" aimed ~180 m below the road in Düzce and the
+ * rider showed up near the top of the screen. Profile from the recorded GPS
+ * altitudes by distance, smoothed; median as fallback. */
+var elevProfile=[],elevMedian=0;
+function buildElevProfile(ride){
+ elevProfile=[];elevMedian=0;
+ var a=cleanTrack(pts(ride)).filter(function(p){return Number(p.alt)>-100&&Number(p.alt)!==0});
+ if(a.length<2)return;
+ var alts=a.map(function(p){return Number(p.alt)}).sort(function(x,y){return x-y});elevMedian=alts[Math.floor(alts.length/2)];
+ var cum=[0];for(var i=1;i<a.length;i++)cum.push(cum[i-1]+geoKm(a[i-1],a[i]));
+ var tot=cum[cum.length-1]||1;
+ // ±200 m sliding mean (two pointers, linear time).
+ var lo=0,hi=0,sum=0;
+ for(var k=0;k<a.length;k++){
+  while(hi<a.length&&cum[hi]-cum[k]<=.2){sum+=Number(a[hi].alt);hi++}
+  while(cum[k]-cum[lo]>.2){sum-=Number(a[lo].alt);lo++}
+  elevProfile.push({f:cum[k]/tot,h:sum/(hi-lo)});
+ }
+}
+function groundAt(progress){
+ var e=elevProfile;if(!e.length)return elevMedian||0;
+ var p=Math.max(0,Math.min(1,progress)),lo=0,hi=e.length-1;
+ while(lo<hi){var m=(lo+hi)>>1;if(e[m].f<p)lo=m+1;else hi=m}
+ if(lo===0)return e[0].h;var a=e[lo-1],b=e[lo],t=(p-a.f)/Math.max(1e-9,b.f-a.f);
+ return a.h+(b.h-a.h)*t;
 }
 function altitudeAt(progress){
  var x=pointAtDistance(progress);return x&&x.point&&Number(x.point.alt)>0?x.point.alt:null;
@@ -445,7 +472,7 @@ function orbitCameraPose(progress){
  return {
   // Closer drone: ~1.5 km instead of 4.5 km, aimed at the ground (altitude
   // 0) so the route sits in the middle of the frame.
-  center:{lat:focus.lat,lng:focus.lng,altitude:0},
+  center:{lat:focus.lat,lng:focus.lng,altitude:groundAt(p)},
   heading:(orbitStartHeading+orbitTotalDegrees*orbitalEase)%360,
   tilt:55+5*arc*arc,
   range:1500-350*arc*arc
@@ -520,9 +547,10 @@ async function build3DMap(ride){
   var lib=await google.maps.importLibrary("maps3d");
   var Map3DElement=lib.Map3DElement,Polyline3DElement=lib.Polyline3DElement,Marker3DElement=lib.Marker3DElement,Polygon3DElement=lib.Polygon3DElement;
   if(!Map3DElement||!Polyline3DElement)throw new Error("3D Maps desteklenmiyor");
+  buildElevProfile(ride);
   var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
   map3d=new Map3DElement({
-   center:{lat:info.center.lat,lng:info.center.lng,altitude:0},
+   center:{lat:info.center.lat,lng:info.center.lng,altitude:elevMedian},
    range:info.range,tilt:47,heading:head,mode:"HYBRID",
    defaultUIHidden:true,gestureHandling:"COOPERATIVE"
   });
@@ -560,12 +588,12 @@ async function build3DMap(ride){
    preparePlayback(ride);chase={heading:null,range:null,ts:0,center:null};
    var t0=camMode==="chase"?chaseTarget(0):null;
    map3d.flyCameraTo({
-    endCamera:t0?{center:{lat:t0.rider.lat,lng:t0.rider.lng,altitude:0},range:t0.range,tilt:t0.tilt,heading:t0.heading}
-                :{center:{lat:first.lat,lng:first.lng,altitude:0},range:1500,tilt:55,heading:head},
+    endCamera:t0?{center:{lat:t0.rider.lat,lng:t0.rider.lng,altitude:groundAt(0)},range:t0.range,tilt:t0.tilt,heading:t0.heading}
+                :{center:{lat:first.lat,lng:first.lng,altitude:groundAt(0)},range:1500,tilt:55,heading:head},
     durationMillis:2100
    });
   }catch(e){
-   map3d.center={lat:first.lat,lng:first.lng,altitude:0};map3d.range=1500;map3d.tilt=55;map3d.heading=head;
+   map3d.center={lat:first.lat,lng:first.lng,altitude:groundAt(0)};map3d.range=1500;map3d.tilt=55;map3d.heading=head;
   }
   startReplayPlayback(ride,"Sinematik kamera hazırlanıyor");
  }catch(e){

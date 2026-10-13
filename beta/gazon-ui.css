@@ -327,3 +327,35 @@ body.mode-ride.gr-ride-expanded:not(.guidance-active) .gr-quick-marks,body.mode-
 /* Photo credit: a small © in the corner instead of a big tappable label. */
 .gr-route-image-source{width:30px!important;height:30px!important;min-width:0!important;padding:0!important;border-radius:50%!important;
  display:grid!important;place-items:center!important;font-size:14px!important;font-weight:800!important;opacity:.8;overflow:hidden}
+
+/* ---------- Keşfet → Moto Rotalar (gazon-moto-routes.js) ---------- */
+#grTravelTab,#homeTravelCatalogue{display:none!important}
+.gr-moto{display:none;margin:14px 0 6px}
+body.gr-moto-active .gr-moto{display:block}
+body.gr-moto-active #grSocial,body.gr-moto-active #grMyRides,body.gr-moto-active #grTravelCatalogue{display:none!important}
+.gr-moto-head b{display:block;font-size:22px;font-weight:900}
+.gr-moto-head small{display:block;color:var(--gr-muted);font-size:13px;margin:2px 0 10px}
+.gr-moto-filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px}
+.gr-moto-filters::-webkit-scrollbar{display:none}
+.gr-moto-filters button{flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);font-weight:800;font-size:13px}
+.gr-moto-filters button.on{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff}
+.gr-moto-list{display:grid;gap:14px;margin-top:6px}
+.gr-moto-card{border-radius:var(--gr-r);overflow:hidden;border:1px solid var(--gr-line);background:var(--gr-surface)}
+.gr-moto-photo{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#2b3a2f,#1f2d40)}
+html.theme-light .gr-moto-photo{background:linear-gradient(135deg,#dce9df,#d9e4f2)}
+.gr-moto-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.gr-moto-type,.gr-moto-flag{position:absolute;top:10px;left:10px;padding:6px 10px;border-radius:12px;background:rgba(10,12,16,.82);color:#fff;font-size:12px;font-weight:900}
+.gr-moto-flag{left:auto;right:48px}
+.gr-moto-credit{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(10,12,16,.6);color:#fff;font-size:14px;font-weight:800;text-decoration:none}
+.gr-moto-body{padding:12px 14px 14px;display:grid;gap:6px}
+.gr-moto-body>b{font-size:18px;font-weight:900;line-height:1.25}
+.gr-moto-body>small{color:var(--gr-muted);font-size:13px}
+.gr-moto-badges{display:flex;flex-wrap:wrap;gap:6px}
+.gr-moto-badges span{font-size:12px;font-weight:800;padding:4px 9px;border-radius:10px;background:var(--gr-surface-2);color:var(--gr-text)}
+.gr-moto-badges span[style]{background:var(--c);color:#fff}
+.gr-moto-body p{margin:2px 0 4px;font-size:14px;line-height:1.45;color:var(--gr-text)}
+.gr-moto-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gr-moto-actions button,.gr-moto-actions a{min-height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900;font-size:14px;text-decoration:none}
+.gr-moto-actions button{border:0;background:var(--gr-accent);color:#fff}
+.gr-moto-actions a{border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text)}
+.gr-moto-empty{padding:18px;border-radius:var(--gr-r);border:1px dashed var(--gr-line);color:var(--gr-muted);text-align:center}

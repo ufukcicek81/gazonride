@@ -18,7 +18,8 @@ function rideTile(r,i,wide){
  var j=J(),badge='<span class="gr-myride-play"><span class="mi">3d_rotation</span> 3D Tekrar</span>';
  var body=j&&j.rideCard?j.rideCard(r,{w:640,h:wide?320:300,badge:badge}):esc(r.destination||"Sürüş")+" · "+Number(r.km||0).toFixed(1)+" km";
  return '<div class="gr-myride-wrap'+(wide?' wide':'')+'"><button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç">'+body+'</button>'+
-  '<button type="button" class="gr-myride-del" data-myride-del="'+i+'" aria-label="Bu sürüşü sil" title="Sürüşü sil"><span class="mi">delete</span></button></div>';
+  '<button type="button" class="gr-myride-del" data-myride-del="'+i+'" aria-label="Bu sürüşü sil" title="Sürüşü sil"><span class="mi">delete</span></button>'+
+  '<button type="button" class="gr-myride-pub" data-myride-pub="'+i+'" aria-label="Keşfet\'e gönder" title="Keşfet\'e gönder (admin onayı)"><span class="mi">public</span></button></div>';
 }
 function bind(box){
  box.querySelectorAll("[data-myride]").forEach(function(b){b.onclick=function(){
@@ -29,8 +30,22 @@ function bind(box){
   e.stopPropagation();
   if(typeof window.GaZonDeleteRide==="function")window.GaZonDeleteRide(Number(b.getAttribute("data-myride-del")));
  }});
+ box.querySelectorAll("[data-myride-pub]").forEach(function(b){b.onclick=function(e){
+  e.stopPropagation();publish(Number(b.getAttribute("data-myride-pub")));
+ }});
  var all=box.querySelector("[data-myrides-all]");if(all)all.onclick=function(){select(true)};
  var go=box.querySelector("[data-myrides-start]");if(go)go.onclick=function(){var t=document.querySelector('.bottom [data-page="ride"]');if(t)t.click()};
+}
+// Send a saved ride to Keşfet: the existing route form (photos, rest stops,
+// description) stores it as a "pending" submission; it appears for everyone
+// only after an admin approves it in admin.html.
+function publish(i){
+ var A=window.GaZonAuth;
+ if(!A||!A.state||!A.state.user){
+  if(confirm("Sürüşünü Keşfet'te paylaşmak için üye girişi gerekli. Giriş sayfasına gidilsin mi?"))location.href="login.html?next="+encodeURIComponent(location.href);
+  return;
+ }
+ if(window.GaZonRideSocial&&GaZonRideSocial.routeForm)GaZonRideSocial.routeForm(i);
 }
 function empty(){
  return '<div class="gr-myrides-empty"><span class="mi">two_wheeler</span><div><b>Henüz sürüş kaydın yok</b><small>Sürüş sekmesinde BAŞLAT’a bas; bittiğinde sürüşün burada 3D tekrarıyla görünür.</small></div>'+

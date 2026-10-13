@@ -286,6 +286,18 @@ public final class NativeNavigationActivity extends Activity {
         musicFabParams.setMargins(0, 0, dp(12), 0);
         root.addView(musicFab, musicFabParams);
 
+        // Ride markers (same types as the web app): saved here, picked up by
+        // the WebView (AndroidBridge.takeNativeMarks) when the rider returns.
+        Button markFab = control("📍");
+        markFab.setTextSize(24);
+        markFab.setContentDescription("Yer işaretle: asfalt, tehlike, mola yeri, su, WC");
+        markFab.setBackground(shape(0xEC151D2B, 32));
+        markFab.setOnClickListener(v -> showMarkPicker());
+        FrameLayout.LayoutParams markParams =
+                new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.CENTER_VERTICAL | Gravity.END);
+        markParams.setMargins(0, dp(80), dp(12), 0);
+        root.addView(markFab, markParams);
+
         totalText = label("Rota hesaplanıyor…", 18, true);
         totalText.setSingleLine(true);
         totalText.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -504,6 +516,50 @@ public final class NativeNavigationActivity extends Activity {
                     : "Müzik · Spotify / YouTube");
             if (musicToggle != null) musicToggle.setEnabled(session);
         } catch (Exception ignored) {}
+    }
+
+    private static final String[][] MARK_TYPES={
+            {"good_road","İyi asfalt"},{"bad_road","Kötü asfalt"},{"danger","Tehlike"},
+            {"rest","Mola yeri"},{"water","Su"},{"wc","WC"},{"pin","Yer işaretle"}};
+    private void showMarkPicker(){
+        String[] labels=new String[MARK_TYPES.length];
+        for(int i=0;i<MARK_TYPES.length;i++)labels[i]=MARK_TYPES[i][1];
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Buraya işaret bırak")
+                .setItems(labels,(d,which)->saveMark(MARK_TYPES[which][0],MARK_TYPES[which][1]))
+                .setNegativeButton("Vazgeç",null)
+                .show();
+    }
+    private android.location.Location freshestLocation(){
+        android.location.Location best=null;
+        try{
+            android.location.LocationManager lm=(android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+            for(String p:lm.getProviders(true)){
+                android.location.Location l=lm.getLastKnownLocation(p);
+                if(l!=null&&(best==null||l.getTime()>best.getTime()))best=l;
+            }
+        }catch(SecurityException ignored){}
+        return best;
+    }
+    private void saveMark(String type,String label){
+        android.location.Location l=freshestLocation();
+        if(l==null||System.currentTimeMillis()-l.getTime()>120000){
+            Toast.makeText(this,"Konum henüz yok · GPS bekleniyor",Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try{
+            android.content.SharedPreferences prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+            JSONArray a=new JSONArray(prefs.getString("native_marks","[]"));
+            JSONObject m=new JSONObject();
+            long now=System.currentTimeMillis();
+            m.put("id","n"+Long.toString(now,36));
+            m.put("type",type);m.put("lat",l.getLatitude());m.put("lng",l.getLongitude());m.put("ts",now);
+            a.put(m);
+            prefs.edit().putString("native_marks",a.toString()).apply();
+            Toast.makeText(this,label+" işaretlendi",Toast.LENGTH_SHORT).show();
+        }catch(Exception e){
+            Toast.makeText(this,"İşaret kaydedilemedi",Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void exitNavigation() {

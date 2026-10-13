@@ -191,7 +191,8 @@ function openNavigation(item){
  }
  var go=$("navGo");if(go)go.click()
 }
-function routeForm(){
+// pre: index of the ride to preselect (from a ride card's "Keşfet'e gönder").
+function routeForm(pre){
  var rides=read("gazon_rides");
  if(!rides.length){modal("Rota Paylaş",'<div class="gr-empty">Paylaşılabilir rota için önce en az bir sürüş kaydetmelisin.</div>');return}
  var opts=rides.slice(0,30).map(function(r,i){return '<option value="'+i+'">'+esc(rideLabel(r,i))+'</option>'}).join("");
@@ -204,6 +205,11 @@ function routeForm(){
  $("grStopRange").oninput=function(){$("grStopPct").textContent="%"+this.value};
  $("grAddStop").onclick=function(){var name=$("grStopName").value.trim(),r=selectedRide(),t=normalizeTrack(r.track),pct=Number($("grStopRange").value);if(!name)return alert("Mola yerine bir isim ver.");if(t.length<2)return alert("Bu sürüşte rota izi yok.");if(stops.length>=5)return alert("En fazla 5 mola noktası ekleyebilirsin.");var idx=Math.min(t.length-1,Math.max(0,Math.round((pct/100)*(t.length-1)))),p=t[idx];stops.push({name:name,percent:pct,trackIndex:idx,lat:Number(p[0]),lon:Number(p[1])});$("grStopName").value="";renderStops()};
  $("grRoutePhotos").onchange=function(){var files=Array.prototype.slice.call(this.files||[]).slice(0,5);if((this.files||[]).length>5)alert("En fazla 5 fotoğraf yüklenebilir.");$("grPhotoPreview").innerHTML=files.map(function(f){return '<span>'+esc(f.name)+'</span>'}).join("")};
+ if(pre!=null&&rides[pre]&&pre<30){
+  $("grRideSelect").value=String(pre);
+  var J=window.GaZonJournal,r0=rides[pre];
+  if(!$("grRouteTitle").value)$("grRouteTitle").value=r0.destination||(J&&J.rideTitle?J.rideTitle(r0):"");
+ }
  updateSummary();renderStops();
  $("grSendRoute").onclick=async function(){
   var btn=this,title=$("grRouteTitle").value.trim(),dest=$("grRouteDest").value.trim(),ride=selectedRide(),track=normalizeTrack(ride.track);

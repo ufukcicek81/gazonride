@@ -344,6 +344,12 @@ public class MainActivity extends Activity {
         }
         // System share sheet (WhatsApp, Instagram, Telegram, …): the WebView has
         // no navigator.share and cannot open whatsapp:// links by itself.
+        // Markers left on the native navigation screen; returned once, then cleared.
+        @JavascriptInterface public String takeNativeMarks(){
+            String v=prefs.getString("native_marks","[]");
+            prefs.edit().remove("native_marks").apply();
+            return v;
+        }
         @JavascriptInterface public void shareText(String title,String text){
             runOnUiThread(() -> {
                 try {

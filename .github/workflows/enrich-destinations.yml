@@ -7,6 +7,7 @@ on:
     branches: ["claude/**"]
     paths:
       - "scripts/enrich-destinations.js"
+      - "scripts/enrich-moto-routes.js"
       - ".github/workflows/enrich-destinations.yml"
 permissions:
   contents: write
@@ -22,13 +23,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Enrich destinations
-        run: node scripts/enrich-destinations.js
+      - name: Enrich moto routes
+        run: node scripts/enrich-moto-routes.js
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gazon-destinations.json docs/destinations-check.md
+          git add gazon-destinations.json gazon-moto-routes.json docs/destinations-check.md
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
           git commit -m "Destinations: photos and province-checked coordinates (automated)"
           for i in 1 2 3; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 5; done

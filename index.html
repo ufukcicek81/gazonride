@@ -616,7 +616,7 @@ async function initMap(){
   map=new google.maps.Map($("map"),{center:{lat:39,lng:35},zoom:6,mapTypeId:"roadmap",renderingType:(google.maps.RenderingType&&google.maps.RenderingType.VECTOR)||"VECTOR",headingInteractionEnabled:false,tiltInteractionEnabled:false,disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false,zoomControl:false});
   var mapEl=$("map");
   if(mapEl){["touchstart","pointerdown","wheel"].forEach(function(ev){mapEl.addEventListener(ev,function(){},{passive:true})})}
-  route=new google.maps.Polyline({map:null,path:[],strokeColor:"#ff5a1f",strokeWeight:5,strokeOpacity:.95});
+  route=new google.maps.Polyline({map:null,path:[],strokeColor:"#E5322D",strokeWeight:5,strokeOpacity:.95,zIndex:20,clickable:false});
   geocoder=new google.maps.Geocoder();
   placesService=new google.maps.places.PlacesService(map);
   return true;
@@ -653,12 +653,16 @@ function acceptLiveGpsFix(p,c,ts){
 // following until the rider taps "Konumuma dön".
 var gazonGpsFilter=window.GaZonCamera?GaZonCamera.GpsFilter():null,gazonCamera=null,gazonCameraPaused=false;
 function navArrowIcon(rot){return {path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:rot,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}}
+function mapHeadingNow(){try{return map&&map.getHeading?Number(map.getHeading())||0:0}catch(e){return 0}}
+function arrowRotation(travel){return ((Number(travel)||0)-mapHeadingNow()+720)%360}
 function ensureGazonCamera(){
  if(gazonCamera||!map||!window.GaZonCamera)return gazonCamera;
  var saved="3d";try{saved=localStorage.getItem("gazon_nav_view")||"3d"}catch(e){}
  gazonCamera=GaZonCamera.Camera(map,{marker:function(){return marker},icon:navArrowIcon,
-  // Heading-up map: the arrow is drawn in screen space, so it points up.
-  headingFor:function(c){return c.heading}});
+  // Marker symbols are drawn in screen space: rotate the arrow by the
+  // travel heading MINUS the map's own heading (0 on a heading-up map,
+  // the full bearing when the map stays north-up, e.g. raster fallback).
+  headingFor:function(c){return arrowRotation(c.heading)}});
  gazonCamera.setMode(saved);
  try{map.addListener("dragstart",function(){if(gazonCamera&&gazonCamera.active){gazonCamera.stop();gazonCameraPaused=true}})}catch(e){}
  return gazonCamera;
@@ -734,7 +738,7 @@ function applyPosition(pos){
  if(map){
    followRideCamera(p,c,ts);
    var gp={lat:p.lat,lng:p.lon};
-   var markerIcon=(navActive||riding)?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:headingReady?lastHeading:0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
+   var markerIcon=(navActive||riding)?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:headingReady?arrowRotation(lastHeading):0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
    if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GaZonRide",icon:markerIcon,zIndex:999});}
    else if(!(gazonCamera&&gazonCamera.active)){marker.setPosition(gp);marker.setIcon(markerIcon);}
  }
@@ -743,6 +747,8 @@ function applyPosition(pos){
  if(map&&!riding&&!navActive&&!idleMapCentered){setMapCenter(p,16);idleMapCentered=true;}
  if(riding){
    track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),ts]);updateTurns();
+   // Draw the ridden path live.
+   if(route&&map){try{if(!route.getMap())route.setMap(map);route.getPath().push(new google.maps.LatLng(p.lat,p.lon))}catch(e){}}
    if(lastPoint){
  var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(ts-lastGpsTs)/1000):1;
  var acc=Number(c.accuracy||999),implied=dt>0?(d*3600/dt):999;

@@ -288,6 +288,8 @@ function buildOverviewMap(ride){
  startMarker=new google.maps.Marker({map:overviewMap,position:{lat:a[0].lat,lng:a[0].lng},icon:makeDotIcon("#22C55E",6),title:"Başlangıç",zIndex:3});
  var e=a[a.length-1];
  endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#DC2626",6),title:"Varış",zIndex:3});
+ // Markers left during the ride (asphalt, rest stop, water, …).
+ if(window.GaZonMarks&&Array.isArray(ride.marks))GaZonMarks.drawOn(overviewMap,ride.marks);
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
  mode="overview";$("grReplayPlay3D").style.display="inline-flex";modal.classList.remove("gr-replay-live");$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
 }

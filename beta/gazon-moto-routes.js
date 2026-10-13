@@ -36,7 +36,7 @@ function mapsUrl(r){
 function card(x){
  var r=x.r,d=DIFF[r.difficulty]||DIFF[2];
  return '<article class="gr-moto-card">'+
-  '<div class="gr-moto-photo">'+(r.image?'<img loading="lazy" decoding="async" src="'+esc(r.image)+'" alt="'+esc(r.name)+'" onerror="this.remove()">':'')+
+  '<div class="gr-moto-photo">'+((r.photo||r.image)?'<img loading="lazy" decoding="async" src="'+esc(r.photo||r.image)+'" alt="'+esc(r.name)+'" onerror="this.remove()">':'')+
    '<span class="gr-moto-type">'+esc(r.type)+'</span>'+(r.cc!=="TR"?'<span class="gr-moto-flag">'+esc(r.country)+'</span>':'')+
    (r.imageCredit?'<a class="gr-moto-credit" href="'+esc(r.imageCredit)+'" target="_blank" rel="noopener noreferrer" aria-label="Fotoğraf kaynağı">©</a>':'')+'</div>'+
   '<div class="gr-moto-body"><b>'+esc(r.name)+'</b><small>'+esc(r.region)+' · '+esc(r.cc==="TR"?r.city:r.country)+(x.d!=null?' · sana '+Math.round(x.d)+' km':'')+'</small>'+
@@ -76,7 +76,7 @@ function select(on){
  }
 }
 function load(){
- fetch("gazon-moto-routes.json?v=20261013-moto1",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
+ fetch("gazon-moto-routes.json?v=20261013-photo2",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
   routes=Array.isArray(d&&d.routes)?d.routes:[];loaded=true;render();
  }).catch(function(){loaded=true;routes=[];var b=$("grMotoRoutes");if(b)b.innerHTML='<div class="gr-moto-empty">Rotalar yüklenemedi. İnternet bağlantını kontrol et.</div>'});
 }

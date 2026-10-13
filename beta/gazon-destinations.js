@@ -38,7 +38,7 @@ function draw(){
  $("grTravelItems").innerHTML=items.length?items.map(function(x){
   var checked=!!v[x.id];
   var located=x.check==="verified"||x.check==="geocoded";
-  return '<article class="gr-travel-item'+(x.image?' has-photo':'')+'">'+(x.image?'<div class="gr-travel-item-photo"><img loading="lazy" decoding="async" src="'+esc(x.image)+'" alt="'+esc(x.place||x.title)+'" onerror="this.parentNode.remove()"></div>':'')+'<div class="gr-travel-item-top"><span class="gr-travel-number">#'+x.id+'</span><span class="gr-travel-city">'+esc(x.city)+'</span><span class="gr-travel-category">'+esc(x.category)+'</span></div>'+
+  return '<article class="gr-travel-item'+((x.photo||x.image)?' has-photo':'')+'">'+((x.photo||x.image)?'<div class="gr-travel-item-photo"><img loading="lazy" decoding="async" src="'+esc(x.photo||x.image)+'" alt="'+esc(x.place||x.title)+'" onerror="this.parentNode.remove()"></div>':'')+'<div class="gr-travel-item-top"><span class="gr-travel-number">#'+x.id+'</span><span class="gr-travel-city">'+esc(x.city)+'</span><span class="gr-travel-category">'+esc(x.category)+'</span></div>'+
    '<b>'+esc(x.title)+'</b>'+(located?'<small class="gr-travel-located"><span class="mi">verified</span> Konum doğrulandı</small>':'')+'<div class="gr-travel-item-actions"><button type="button" data-travel-details="'+x.id+'"><span class="mi">photo_library</span> Fotoğraf ve Detay</button>'+
    '<button type="button" data-travel-check="'+x.id+'" class="'+(checked?"done":"")+'">'+(checked?"✓ Gittim":"○ Gittim")+'</button></div></article>'
  }).join(""):'<div class="gr-travel-empty">Bu filtrede etkinlik bulunamadı.</div>';
@@ -105,7 +105,7 @@ function openDetails(id){
   var input=$("navDestination");if(input){input.value=x.lat!=null?x.lat+","+x.lng:destination;input.dispatchEvent(new Event("input",{bubbles:true}));}
   var go=$("navGo");if(go)go.click()
  };
- var lead=x.image?[{src:x.image,credit:x.imageCredit||x.wiki||"",label:x.wikiTitle||x.place||x.title,lead:true}]:[];
+ var lead=(x.photo||x.image)?[{src:x.photo||x.image,credit:x.imageCredit||x.wiki||"",label:x.wikiTitle||x.place||x.title,lead:true}]:[];
  travelMedia((x.place||x.title)+" "+x.city).then(function(images){
   images=lead.concat(images.filter(function(i){return !lead.length||i.src!==lead[0].src})).slice(0,6);
   if($("grTravelDetail")===dialog)paintDetailsPhotos(images)
@@ -175,7 +175,7 @@ function remoteCatalogue(){
  return attempt(0).then(function(catalog){try{localStorage.setItem(cacheKey,JSON.stringify(catalog))}catch(e){}return catalog})
 }
 function loadCatalogue(){
- return fetch("gazon-destinations.json?v=20261012-photos",{cache:"no-cache"})
+ return fetch("gazon-destinations.json?v=20261013-photo3",{cache:"no-cache"})
  .then(function(r){if(!r.ok)throw Error("Statik liste bulunamadı");return r.json()})
  .then(function(c){if(!c.items||c.items.length<81||!Array.isArray(c.cities)||c.cities.length!==81)throw Error("Statik katalog eksik");return c})
  // Offline / failed fetch: no fallback to the photo-less web scrape.

@@ -289,3 +289,24 @@ html.theme-light .gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-
  border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-muted);cursor:pointer}
 .gr-myride-del .mi{font-size:22px}
 .gr-myride-del:active{background:#3a1715;color:#ff8b80;border-color:#71332f}
+
+/* ---------- Ride markers (gazon-marks.js) ---------- */
+.gr-mark-sheet{position:fixed;inset:0;z-index:8000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45)}
+.gr-mark-sheet.open{display:flex}
+.gr-mark-panel{width:100%;max-width:560px;background:var(--gr-surface);color:var(--gr-text);border-radius:24px 24px 0 0;
+ padding:16px 14px calc(16px + var(--gr-safe-bottom));box-shadow:0 -12px 40px rgba(0,0,0,.35)}
+.gr-mark-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.gr-mark-head b{font-size:19px;font-weight:900}
+.gr-mark-x{width:48px;height:48px;border-radius:14px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);display:grid;place-items:center}
+.gr-mark-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gr-mark-grid button{min-height:84px;border-radius:16px;border:2px solid color-mix(in srgb,var(--mk) 70%,transparent);
+ background:color-mix(in srgb,var(--mk) 12%,var(--gr-surface));color:var(--gr-text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:14px}
+.gr-mark-grid button .mi{font-size:28px;color:var(--mk)}
+.gr-mark-grid button:last-child{grid-column:1/-1;min-height:64px;flex-direction:row}
+.gr-mark-grid button:active{transform:scale(.97)}
+.gr-mark-toast{position:fixed;left:50%;bottom:calc(var(--gr-nav-h) + var(--gr-safe-bottom) + 24px);transform:translate(-50%,20px);z-index:8100;
+ display:flex;align-items:center;gap:14px;padding:12px 14px 12px 18px;border-radius:16px;background:#111418;color:#fff;font-weight:700;font-size:15px;
+ box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px)}
+.gr-mark-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.gr-mark-toast button{min-height:44px;padding:0 14px;border-radius:12px;border:0;background:#FF5A1F;color:#fff;font-weight:900}
+body.guidance-active .gr-mark-toast{bottom:calc(120px + var(--gr-safe-bottom))}

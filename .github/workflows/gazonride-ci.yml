@@ -185,6 +185,7 @@ jobs:
             [ -f "$f" ] && cp "$f" ../site/beta/
           done
           cp -r icons ../site/beta/ 2>/dev/null || true
+          cp -r photos ../site/beta/ 2>/dev/null || true
           mkdir -p ../site/beta/android/app/src/main/res/drawable
           cp android/app/src/main/res/drawable/gazonride_real.jpg ../site/beta/android/app/src/main/res/drawable/ 2>/dev/null || true
           printf '{"branch":"%s","commit":"%s"}\n' "${GITHUB_REF_NAME}" "${GITHUB_SHA}" > ../site/beta/beta-build.json

@@ -9,6 +9,7 @@ on:
       - "scripts/enrich-destinations.js"
       - "scripts/enrich-moto-routes.js"
       - "gazon-moto-routes.json"
+      - "scripts/mirror-photos.js"
       - ".github/workflows/enrich-destinations.yml"
 permissions:
   contents: write
@@ -26,11 +27,15 @@ jobs:
           node-version: 20
       - name: Enrich moto routes
         run: node scripts/enrich-moto-routes.js
+      - name: Mirror photos into the site
+        run: |
+          command -v convert >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick)
+          node scripts/mirror-photos.js
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gazon-destinations.json gazon-moto-routes.json docs/destinations-check.md
+          git add gazon-destinations.json gazon-moto-routes.json docs/destinations-check.md photos
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
           git commit -m "Destinations: photos and province-checked coordinates (automated)"
           for i in 1 2 3; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 5; done

@@ -24,6 +24,9 @@ test("ride card v2: moving time, title, map with tiles",()=>{
  const m=J.metrics({km:2.6,duration:"01:30:57",track:t});
  assert.ok(m.sec>200&&m.sec<260,"moving time only, got "+m.sec);
  assert.ok(m.avg>30&&m.avg<45,"avg "+m.avg);
+ const short=[[40.84,31.16,0,1e12],[40.8405,31.16,0,1e12+20000],[40.841,31.16,0,1e12+40000],[40.841,31.16,0,1e12+5460000]];
+ assert.ok(J.metrics({km:.2,duration:"01:31:00",track:short}).sec<=60,"short ride keeps its real moving time");
+ assert.equal(J.metrics({km:3,duration:"00:20:00",track:[[1,2],[1.01,2]]}).sec,1200,"old rides without timestamps use stored time");
  assert.equal(J.rideTitle({track:t}),"12 Ekim Pazartesi · Akşam sürüşü");
  assert.equal(J.rideTitle({destination:"Abant",track:t}),"Abant");
  assert.equal(J.fmtDur(3780),"1sa 3dk");

@@ -158,8 +158,11 @@ function metrics(r){
    if(Math.abs(turn)>=40&&i-last>=3){turns++;last=i}
   }
  }
- var out={km:km,sec:sec>60?Math.round(sec):0,climb:Math.round(climb),turns:turns};
- if(!out.sec){var p=String(r&&r.duration||"").split(":").map(Number);var s2=Number(r&&r.durationSeconds)||(p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:0);if(s2>0&&s2<86400)out.sec=s2}
+ var timed=a.filter(function(p){return p.t>0}).length>=2;
+ var out={km:km,sec:Math.round(sec),climb:Math.round(climb),turns:turns};
+ // Stored duration only for old rides without GPS timestamps: it counts
+ // stops and a forgotten "stop" button (0.2 km shown as 1 h 31 min).
+ if(!timed){var p=String(r&&r.duration||"").split(":").map(Number);var s2=Number(r&&r.durationSeconds)||(p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:0);if(s2>0&&s2<86400)out.sec=s2}
  out.avg=out.sec>0&&(mkm||km)>0?Math.round((mkm||km)/(out.sec/3600)):0;
  if(!out.climb&&Number(r&&r.elev)>0)out.climb=Math.round(r.elev);
  if(!out.turns&&Number(r&&r.turns)>0)out.turns=Number(r.turns);

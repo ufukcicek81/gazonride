@@ -314,3 +314,13 @@ body.guidance-active .gr-mark-toast{bottom:calc(120px + var(--gr-safe-bottom))}
  border:1px solid color-mix(in srgb,var(--gr-accent) 55%,transparent);background:color-mix(in srgb,var(--gr-accent) 12%,var(--gr-surface));color:var(--gr-accent);cursor:pointer}
 .gr-myride-pub .mi{font-size:22px}
 .gr-myride-wrap .gr-ride-card-top{padding-right:104px}
+/* One-tap marker column (ride + navigation screens) */
+.gr-quick-marks{position:fixed;left:10px;top:50%;transform:translateY(-50%);z-index:1600;display:none;flex-direction:column;gap:10px}
+body.mode-ride .gr-quick-marks,body.guidance-active .gr-quick-marks{display:flex}
+body.mode-ride.gr-ride-expanded:not(.guidance-active) .gr-quick-marks,body.mode-overlay .gr-quick-marks,body:has(#screen.active) .gr-quick-marks{display:none}
+.gr-quick-marks button{width:64px;height:64px;border-radius:18px;border:2px solid #fff;background:var(--mk,#0F766E);color:#fff;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 6px 18px rgba(0,0,0,.35);padding:0}
+.gr-quick-marks button .mi{font-size:26px}
+.gr-quick-marks button small{font-size:10px;font-weight:900;line-height:1;letter-spacing:.2px}
+.gr-quick-marks button[data-quick-more]{background:var(--gr-glass);color:var(--gr-text);border-color:var(--gr-line)}
+.gr-quick-marks button:active{transform:scale(.94)}

@@ -256,7 +256,7 @@ function clearMaps(){
  overviewMap=null;overviewRoute=null;startMarker=null;endMarker=null;
  map3d=null;classicMap=null;route3d=null;travel3d=null;bike3d=null;classicRoute=null;classicTravel=null;classicBike=null;using3d=false;
 }
-function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:3}}
+function makeDotIcon(color,scale){return {path:google.maps.SymbolPath.CIRCLE,scale:scale||8,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:2.5}}
 // Rider puck: white ring, red core, white centre (no emoji, no default pin).
 var RIDER_SVG='<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="#E8322E" fill-opacity=".28"/><circle cx="22" cy="22" r="13" fill="#E8322E" stroke="#fff" stroke-width="4"/><circle cx="22" cy="22" r="4.5" fill="#fff"/></svg>';
 function riderIconUrl(){return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(RIDER_SVG)}
@@ -269,10 +269,13 @@ function buildOverviewMap(ride){
  var a=replaySource(ride),host=$("grReplayMap");if(!host||a.length<2)throw new Error("Rota izi yok");
  host.innerHTML="";
  overviewMap=new google.maps.Map(host,{center:{lat:a[0].lat,lng:a[0].lng},zoom:10,mapTypeId:"roadmap",disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false});
- overviewRoute=new google.maps.Polyline({map:overviewMap,path:a.map(function(p){return {lat:p.lat,lng:p.lng}}),strokeColor:"#ff5926",strokeWeight:14,strokeOpacity:1});
- startMarker=new google.maps.Marker({map:overviewMap,position:{lat:a[0].lat,lng:a[0].lng},icon:makeDotIcon("#27c46b",8),title:"Başlangıç"});
+ var path=a.map(function(p){return {lat:p.lat,lng:p.lng}});
+ // Same look as the ride cards: thin red line on a soft white halo.
+ new google.maps.Polyline({map:overviewMap,path:path,strokeColor:"#FFFFFF",strokeWeight:7,strokeOpacity:.85,zIndex:1,clickable:false});
+ overviewRoute=new google.maps.Polyline({map:overviewMap,path:path,strokeColor:"#E5322D",strokeWeight:4,strokeOpacity:1,zIndex:2,clickable:false});
+ startMarker=new google.maps.Marker({map:overviewMap,position:{lat:a[0].lat,lng:a[0].lng},icon:makeDotIcon("#22C55E",6),title:"Başlangıç",zIndex:3});
  var e=a[a.length-1];
- endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#d9272e",9),title:"Varış"});
+ endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#DC2626",6),title:"Varış",zIndex:3});
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
  mode="overview";$("grReplayPlay3D").style.display="inline-flex";modal.classList.remove("gr-replay-live");$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
 }
@@ -626,8 +629,10 @@ function backOverview(){
  stopCinematicFlight();orbitRail=[];orbitLatest=null;orbitLastFrame=0;buildOverviewMap(currentRide)
 }
 function replayShareText(){
- var ride=currentRide||{},track=pts(ride),label=ride.destination||"Motosiklet sürüşü";
- var text="🏍 GaZonRide sürüşü\n"+label+"\n"+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"");
+ var ride=currentRide||{},track=pts(ride),J=window.GaZonJournal,label=J&&J.rideTitle?J.rideTitle(ride):(ride.destination||"Motosiklet sürüşü");
+ var m=J&&J.metrics?J.metrics(ride):null,bits=[Number(ride.km||0).toFixed(1)+" km"];
+ if(m){if(m.sec)bits.push(J.fmtDur(m.sec));if(m.avg>0)bits.push("ort. "+m.avg+" km/sa");if(m.turns)bits.push(m.turns+" viraj")}else if(ride.duration)bits.push(ride.duration);
+ var text="🏍 GaZonRide sürüşü\n"+label+"\n"+bits.join(" · ");
  if(track.length>1){
   var a=track[0],b=track[track.length-1];
   var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a.lat.toFixed(6)+","+a.lng.toFixed(6))+"&destination="+encodeURIComponent(b.lat.toFixed(6)+","+b.lng.toFixed(6))+"&travelmode=driving";
@@ -639,6 +644,8 @@ function closeReplayShare(){
  var panel=$("grReplaySharePanel");if(panel)panel.classList.remove("active")
 }
 function shareRide(){
+ // Android app: system share sheet straight away (WhatsApp, Instagram, …).
+ if(window.AndroidBridge&&typeof AndroidBridge.shareText==="function"){try{AndroidBridge.shareText("GaZonRide Sürüşü",replayShareText());return}catch(e){}}
  var panel=$("grReplaySharePanel");if(!panel)return;
  panel.classList.add("active");
  var msg=$("grReplayShareResult");if(msg)msg.textContent="Paylaşım yöntemini seç";
@@ -658,11 +665,16 @@ async function copyReplayShare(){
 }
 function whatsappReplayShare(){
  var url="https://wa.me/?text="+encodeURIComponent(replayShareText());
+ // Inside the Android WebView window.open/wa.me do nothing: hand the link to Android.
+ if(window.AndroidBridge&&typeof AndroidBridge.openExternal==="function"){
+  try{AndroidBridge.openExternal("whatsapp://send?text="+encodeURIComponent(replayShareText()));return}catch(e){}
+ }
  var tab=null;try{tab=window.open(url,"_blank","noopener,noreferrer")}catch(e){}
  if(!tab)window.location.href=url
 }
 async function nativeReplayShare(){
  var txt=replayShareText(),result=$("grReplayShareResult");
+ if(window.AndroidBridge&&typeof AndroidBridge.shareText==="function"){try{AndroidBridge.shareText("GaZonRide Sürüşü",txt);return}catch(e){}}
  if(!navigator.share){if(result)result.textContent="Cihaz paylaşımı desteklenmiyor. WhatsApp veya Kopyala'yı kullan.";return}
  try{
   await navigator.share({title:"GaZonRide Sürüşü",text:txt});

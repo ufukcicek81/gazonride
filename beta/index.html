@@ -1059,7 +1059,7 @@ function showRideSummary(ride){
  x.querySelector("#closeRideSummary").onclick=function(){setMode("discover");setDiscoverFilter("discover")};
  try{var rep0=x.querySelector(".rideReport");if(window.GaZonJournal&&rep0)rep0.parentNode.insertBefore(GaZonJournal.moodPicker(ride),rep0)}catch(e){}
  x.querySelector("#rideSummaryReplay").onclick=function(){if(window.GaZonReplay)GaZonReplay.open(ride)};
- x.querySelector("#rideSummaryShare").onclick=function(){var t="GaZonRide sürüşüm · "+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"")+" · Max "+Math.round(Number(ride.max||0))+" km/sa";if(navigator.share)navigator.share({title:"GaZonRide Sürüş",text:t}).catch(function(){});else navigator.clipboard&&navigator.clipboard.writeText(t)};
+ x.querySelector("#rideSummaryShare").onclick=function(){var t="GaZonRide sürüşüm · "+Number(ride.km||0).toFixed(1)+" km · "+(ride.duration||"")+" · Max "+Math.round(Number(ride.max||0))+" km/sa";shareTextAnywhere("GaZonRide Sürüş",t)};
  setTimeout(function(){
   try{
    var pts=(ride.track||[]).filter(function(p){return Array.isArray(p)&&p.length>=2});
@@ -1126,7 +1126,15 @@ function buildDemoRide(){
 window.GaZonDemoRide=buildDemoRide();
 function ridesForHistory(){var rs=[];try{rs=JSON.parse(localStorage.getItem("gazon_rides")||"[]");if(!Array.isArray(rs))rs=[]}catch(e){rs=[]}return rs.concat([window.GaZonDemoRide])}
 function renderHistory(){var rs=ridesForHistory();$("historyList").innerHTML=rs.map(function(r){var fuel=!r.demo&&Number(r.fuelConsumption||0)>0?'<small class="rideFuel">'+Number(r.fuelConsumption).toFixed(1)+' L/100 · '+Number(r.fuelLiters||0).toFixed(1)+' L'+(Number(r.fuelCost||0)>0?' · '+Number(r.fuelCost).toFixed(0)+' ₺':'')+'</small>':"",lean=!r.demo&&(Number(r.leanMaxLeft||0)>0||Number(r.leanMaxRight||0)>0)?'<small class="rideFuel">Yatış: Sol '+Number(r.leanMaxLeft||0).toFixed(1)+'° · Sağ '+Number(r.leanMaxRight||0).toFixed(1)+'°</small>':"";return '<div class="ride'+(r.demo?' demoRide':'')+'"><div><b>'+(r.demo?'Örnek 3D · ':'')+Number(r.km).toFixed(1)+' km</b><small>'+r.date+" · "+r.duration+'</small>'+fuel+lean+'</div><div><b>'+r.max+" km/sa</b><small>Max hız</small></div><div><b>"+Number(r.turns||0)+"</b><small>Viraj</small></div></div>";}).join("");}
-function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";if(navigator.share)navigator.share({title:"GazonRide sürüşüm",text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t);}
+function shareRide(){var t="GaZonRide sürüşüm\n"+totalKm.toFixed(1)+" km · "+$("duration").textContent+" · Max "+Math.round(maxSpeed)+" km/sa";shareTextAnywhere("GaZonRide sürüşüm",t);}
+// Android app: system share sheet; browsers: Web Share; otherwise WhatsApp
+// link, then clipboard.
+function shareTextAnywhere(title,text){
+ if(window.AndroidBridge&&typeof AndroidBridge.shareText==="function"){try{AndroidBridge.shareText(title,text);return}catch(e){}}
+ if(navigator.share){navigator.share({title:title,text:text}).catch(function(){});return}
+ if(window.AndroidBridge&&typeof AndroidBridge.openExternal==="function"){try{AndroidBridge.openExternal("whatsapp://send?text="+encodeURIComponent(text));return}catch(e){}}
+ if(navigator.clipboard)navigator.clipboard.writeText(text).then(function(){alert("Sürüş bilgisi kopyalandı.")},function(){});
+}
 function locate(){if(!navigator.geolocation)return;startGPS();if(map&&currentPoint)setMapCenter(currentPoint,16);}
 function toggleSatellite(){if(!map)return;satellite=!satellite;map.setMapTypeId(satellite?"hybrid":"roadmap");}
 
@@ -2755,7 +2763,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="social.js?v=20261011-card-nav-start-v1"></script>
 <script src="gazon-guides.js?v=20261011-photo1"></script>
 <script src="gazon-destinations.js?v=20261012-photos1"></script>
-<script src="replay.js?v=20261012-chase4"></script>
+<script src="replay.js?v=20261013-share1"></script>
 <script src="gazon-music.js?v=20261012-ios1"></script>
 <script src="gazon-journal.js?v=20261013-card6"></script>
 <script src="gazon-discover.js?v=20261013-del1"></script>

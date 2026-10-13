@@ -211,8 +211,8 @@ function routeSvg(track,w,h){
  var g='<g transform="translate('+w/2+' '+h/2+') scale('+f.toFixed(3)+') translate('+(-w/2)+' '+(-h/2)+')">',ns=' vector-effect="non-scaling-stroke"',rr=(10/f).toFixed(2);
  return '<svg class="gr-j-map" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Sürüş haritası">'+
   '<rect width="'+w+'" height="'+h+'" fill="'+(isDark()?"#1d2229":"#e9edf0")+'"/>'+g+tiles+
-  '<path d="'+d+'" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"'+ns+'/>'+
-  '<path d="'+d+'" fill="none" stroke="#E8322E" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"'+ns+'/>'+
+  '<path d="'+d+'" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"'+ns+'/>'+
+  '<path d="'+d+'" fill="none" stroke="#E5322D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"'+ns+'/>'+
   '<circle cx="'+(a[0]-x0).toFixed(1)+'" cy="'+(a[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#22C55E" stroke="#fff" stroke-width="3"'+ns+'/>'+
   '<circle cx="'+(b[0]-x0).toFixed(1)+'" cy="'+(b[1]-y0).toFixed(1)+'" r="'+rr+'" fill="#DC2626" stroke="#fff" stroke-width="3"'+ns+'/></g>'+
   '</svg>';
@@ -235,16 +235,47 @@ var DARK_STYLE=["element:geometry|color:0x1d2229","element:labels.text.fill|colo
  "feature:road|element:geometry|color:0x3a4250","feature:road.highway|element:geometry|color:0x56606e","feature:water|element:geometry|color:0x0e2a3b",
  "feature:poi|visibility:off","feature:transit|visibility:off"];
 var LIGHT_STYLE=["feature:poi|visibility:off","feature:transit|visibility:off"];
+// GPS jitter makes a hand-drawn looking line: drop points closer than 8 m,
+// then a light 5-point moving average (ends kept exact).
+function smoothTrack(pts){
+ var k=[];pts.forEach(function(p){if(!k.length||hav(k[k.length-1],p)>=.008)k.push(p)});
+ if(k.length<5)return k;
+ return k.map(function(p,i){
+  if(i<2||i>k.length-3)return p;
+  var la=0,lo=0;for(var j=i-2;j<=i+2;j++){la+=k[j].lat;lo+=k[j].lon}
+  return {lat:la/5,lon:lo/5};
+ });
+}
+function mercX(p,z){return 256*Math.pow(2,z)*(p.lon+180)/360}
+function mercY(p,z){var s=Math.sin(p.lat*Math.PI/180);return 256*Math.pow(2,z)*(.5-Math.log((1+s)/(1-s))/(4*Math.PI))}
+// Our own center/zoom (same fit as the SVG) so the dots can be sized in pixels.
+function fitView(pts,w,h,pad){
+ var minLa=Infinity,maxLa=-Infinity,minLo=Infinity,maxLo=-Infinity;
+ pts.forEach(function(p){minLa=Math.min(minLa,p.lat);maxLa=Math.max(maxLa,p.lat);minLo=Math.min(minLo,p.lon);maxLo=Math.max(maxLo,p.lon)});
+ var sw={lat:minLa,lon:minLo},ne={lat:maxLa,lon:maxLo},z=17;
+ for(;z>3;z--)if(mercX(ne,z)-mercX(sw,z)<=w-2*pad&&mercY(sw,z)-mercY(ne,z)<=h-2*pad)break;
+ return {center:{lat:(minLa+maxLa)/2,lon:(minLo+maxLo)/2},zoom:z};
+}
+// Filled circle as a polygon path, radius in screen pixels at zoom z.
+function dotPath(p,z,px,fill){
+ var m=px*156543.03392*Math.cos(p.lat*Math.PI/180)/Math.pow(2,z),pts=[];
+ for(var i=0;i<=20;i++){var a=i/20*2*Math.PI;pts.push({lat:p.lat+m*Math.cos(a)/111320,lon:p.lon+m*Math.sin(a)/(111320*Math.cos(p.lat*Math.PI/180))})}
+ return "path="+encodeURIComponent("color:0x00000000|weight:0|fillcolor:"+fill+"|enc:"+encodePath(pts));
+}
 function staticMapUrl(track,w,h,key){
  var pts=points(track);if(pts.length<2||!key)return "";
+ pts=smoothTrack(pts);if(pts.length<2)return "";
  var max=300,step=Math.max(1,Math.ceil(pts.length/max)),s=[];
  for(var i=0;i<pts.length;i+=step)s.push(pts[i]);if(s[s.length-1]!==pts[pts.length-1])s.push(pts[pts.length-1]);
- var a=s[0],b=s[s.length-1],q=[
-  "size="+Math.min(640,w)+"x"+Math.min(640,h),"scale=2","maptype=roadmap","language=tr",
-  "path="+encodeURIComponent("color:0xFFFFFFCC|weight:9|enc:"+encodePath(s)),
-  "path="+encodeURIComponent("color:0xE8322EFF|weight:5|enc:"+encodePath(s)),
-  "markers="+encodeURIComponent("size:mid|color:0x22C55E|"+a.lat.toFixed(5)+","+a.lon.toFixed(5)),
-  "markers="+encodeURIComponent("size:mid|color:0xDC2626|"+b.lat.toFixed(5)+","+b.lon.toFixed(5))
+ var W=Math.min(640,w),H=Math.min(640,h),v=fitView(s,W,H,36),a=s[0],b=s[s.length-1],q=[
+  "size="+W+"x"+H,"scale=2","maptype=roadmap","language=tr",
+  "center="+v.center.lat.toFixed(6)+","+v.center.lon.toFixed(6),"zoom="+v.zoom,
+  // Thin red line on a soft white halo; round start/end dots drawn as
+  // filled circles (no marker pins, no external icon files).
+  "path="+encodeURIComponent("color:0xFFFFFFB3|weight:6|enc:"+encodePath(s)),
+  "path="+encodeURIComponent("color:0xE5322DFF|weight:3|enc:"+encodePath(s)),
+  dotPath(a,v.zoom,7.5,"0xFFFFFFFF"),dotPath(a,v.zoom,5,"0x22C55EFF"),
+  dotPath(b,v.zoom,7.5,"0xFFFFFFFF"),dotPath(b,v.zoom,5,"0xDC2626FF")
  ];
  (isDark()?DARK_STYLE:LIGHT_STYLE).forEach(function(x){q.push("style="+encodeURIComponent(x))});
  q.push("key="+encodeURIComponent(key));

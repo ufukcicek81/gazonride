@@ -17,12 +17,17 @@ function rides(){try{var a=JSON.parse(localStorage.getItem("gazon_rides")||"[]")
 function rideTile(r,i,wide){
  var j=J(),badge='<span class="gr-myride-play"><span class="mi">3d_rotation</span> 3D Tekrar</span>';
  var body=j&&j.rideCard?j.rideCard(r,{w:640,h:wide?320:300,badge:badge}):esc(r.destination||"Sürüş")+" · "+Number(r.km||0).toFixed(1)+" km";
- return '<button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç">'+body+'</button>';
+ return '<div class="gr-myride-wrap'+(wide?' wide':'')+'"><button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç">'+body+'</button>'+
+  '<button type="button" class="gr-myride-del" data-myride-del="'+i+'" aria-label="Bu sürüşü sil" title="Sürüşü sil"><span class="mi">delete</span></button></div>';
 }
 function bind(box){
  box.querySelectorAll("[data-myride]").forEach(function(b){b.onclick=function(){
   var r=rides()[Number(b.getAttribute("data-myride"))];
   if(r&&window.GaZonReplay)GaZonReplay.open(r);
+ }});
+ box.querySelectorAll("[data-myride-del]").forEach(function(b){b.onclick=function(e){
+  e.stopPropagation();
+  if(typeof window.GaZonDeleteRide==="function")window.GaZonDeleteRide(Number(b.getAttribute("data-myride-del")));
  }});
  var all=box.querySelector("[data-myrides-all]");if(all)all.onclick=function(){select(true)};
  var go=box.querySelector("[data-myrides-start]");if(go)go.onclick=function(){var t=document.querySelector('.bottom [data-page="ride"]');if(t)t.click()};

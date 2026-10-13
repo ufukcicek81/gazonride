@@ -345,7 +345,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261012-safe1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261012-safe1">
 <link rel="stylesheet" href="gazon-tour.css?v=20261012-safe1">
-<link rel="stylesheet" href="gazon-ui.css?v=20261012-card3">
+<link rel="stylesheet" href="gazon-ui.css?v=20261013-del1">
 </head>
 <body>
 <div class="app">
@@ -2471,6 +2471,19 @@ function syncMemberExtras(){
   if(!ir.error){localStorage.setItem("gazon_intercom_history_v1",JSON.stringify((ir.data||[]).map(function(v){return {room:v.room_code,date:new Date(v.started_at).toLocaleString("tr-TR"),role:v.role==="owner"?"Kurucu":"Katılımcı"}})));}
  });
 }
+// Deletes one saved ride (also from the cloud when signed in, otherwise the
+// next sync would bring it back). Returns true when it was removed.
+async function deleteRideAt(idx){
+ var arr=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),ride=arr[idx];if(!ride)return false;
+ if(!confirm("Bu sürüş kaydını silmek istiyor musun? Bu işlem geri alınamaz."))return false;
+ if(ride.cloudId&&window.GaZonAuth&&GaZonAuth.configured){
+   try{await GaZonAuth.ready;if(GaZonAuth.state.user){var del=await GaZonAuth.client.from("rides").delete().eq("id",ride.cloudId).eq("user_id",GaZonAuth.state.user.id);if(del.error){alert("Sürüş buluttan silinemedi: "+del.error.message);return false}}}catch(e){alert("Sürüş silinemedi.");return false}
+ }
+ arr.splice(idx,1);localStorage.setItem("gazon_rides",JSON.stringify(arr));renderHistory();
+ try{if(window.GaZonDiscover)GaZonDiscover.render(document.body.classList.contains("gr-discover-mine"))}catch(e){}
+ return true;
+}
+window.GaZonDeleteRide=deleteRideAt;
 function showScreen(page){
  var x=$("screen");x.classList.add("active");
  if(page==="routes"){
@@ -2499,12 +2512,7 @@ x.querySelectorAll("[data-route]").forEach(function(b){b.onclick=function(){
  }
 }});
    x.querySelectorAll("[data-delete-ride]").forEach(function(b){b.onclick=async function(){
- var idx=Number(b.getAttribute("data-delete-ride")),arr=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),ride=arr[idx];if(!ride)return;
- if(!confirm("Bu sürüş kaydını silmek istiyor musun?"))return;
- if(ride.cloudId&&window.GaZonAuth&&GaZonAuth.configured){
-   try{await GaZonAuth.ready;if(GaZonAuth.state.user){var del=await GaZonAuth.client.from("rides").delete().eq("id",ride.cloudId).eq("user_id",GaZonAuth.state.user.id);if(del.error){alert("Sürüş buluttan silinemedi: "+del.error.message);return}}}catch(e){alert("Sürüş silinemedi.");return}
- }
- arr.splice(idx,1);localStorage.setItem("gazon_rides",JSON.stringify(arr));renderHistory();showScreen("routes");
+ if(await deleteRideAt(Number(b.getAttribute("data-delete-ride"))))showScreen("routes");
 }});
  }else if(page==="groups"){
    if(window.GaZonAuth&&GaZonAuth.configured){showGroupsSupabase(x);return;}
@@ -2743,8 +2751,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-destinations.js?v=20261012-photos1"></script>
 <script src="replay.js?v=20261012-chase4"></script>
 <script src="gazon-music.js?v=20261012-ios1"></script>
-<script src="gazon-journal.js?v=20261013-card5"></script>
-<script src="gazon-discover.js?v=20261012-card2"></script>
+<script src="gazon-journal.js?v=20261013-card6"></script>
+<script src="gazon-discover.js?v=20261013-del1"></script>
 <script src="gazon-ui.js?v=20261012-ui3"></script>
 </body>
 </html>

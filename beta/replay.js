@@ -133,6 +133,7 @@ async function matchRideToRoads(ride){
    // Road matching can trim the first/last metres; keep the real start and end.
    if(geoKm(raw[0],osrmPath[0])>.02)osrmPath.unshift(raw[0]);
    var rl=raw[raw.length-1];if(geoKm(rl,osrmPath[osrmPath.length-1])>.02)osrmPath.push(rl);
+   ride._roadMatched=true;
    return osrmPath;
   }
   console.warn("Road match rejected: incomplete route")
@@ -145,8 +146,19 @@ async function matchRideToRoads(ride){
  if(repaired.bridged&&reported>0&&suggested>reported*1.5)console.warn("Reconstructed road exceeds recorded trip; check GPS");
  return resamplePath(repaired.path,18)
 }
+// Raw GPS (road matching failed) zigzags at junctions and red lights:
+// drop points closer than 6 m and apply a 5-point moving average.
+function smoothRaw(a){
+ var k=[];a.forEach(function(p){if(!k.length||geoKm(k[k.length-1],p)>=.006)k.push(p)});
+ if(k.length<5)return k;
+ return k.map(function(p,i){
+  if(i<2||i>k.length-3)return p;
+  var la=0,lo=0,al=0;for(var j=i-2;j<=i+2;j++){la+=k[j].lat;lo+=k[j].lng;al+=Number(k[j].alt)||0}
+  return {lat:la/5,lng:lo/5,alt:al/5,time:p.time};
+ });
+}
 function preparePlayback(ride){
- playPoints=replaySource(ride);playCum=[0];playTotal=0;
+ playPoints=replaySource(ride);if(!(ride&&ride._roadMatched))playPoints=smoothRaw(playPoints);playCum=[0];playTotal=0;
  for(var i=1;i<playPoints.length;i++){playTotal+=geoKm(playPoints[i-1],playPoints[i]);playCum.push(playTotal)}
 }
 function pointAtDistance(progress){
@@ -347,7 +359,8 @@ function updateChaseCamera(progress,now,force){
  chase.range=chase.range==null?t.range:chase.range+(t.range-chase.range)*kR;
  // Look at a point just ahead of the rider along the camera heading: the
  // rider stays fixed in the lower middle of the frame, the road opens ahead.
- chase.center=offsetPoint(t.rider,chase.heading,chase.range*.00018);
+ // Locked on the rider: the dot stays in the middle of the frame.
+ chase.center={lat:t.rider.lat,lng:t.rider.lng};
  orbitLatest={center:chase.center,heading:chase.heading,tilt:t.tilt,range:chase.range};orbitFrames++;
  if(using3d&&map3d){
   try{map3d.center={lat:chase.center.lat,lng:chase.center.lng,altitude:0};map3d.heading=chase.heading;map3d.tilt=t.tilt;map3d.range=chase.range}catch(e){}
@@ -430,10 +443,12 @@ function orbitCameraPose(progress){
  var p=Math.max(0,Math.min(1,progress)),focus=orbitRailAt(p);
  var orbitalEase=p*p*(3-2*p),arc=Math.sin(Math.PI*p);
  return {
-  center:{lat:focus.lat,lng:focus.lng,altitude:140},
+  // Closer drone: ~1.5 km instead of 4.5 km, aimed at the ground (altitude
+  // 0) so the route sits in the middle of the frame.
+  center:{lat:focus.lat,lng:focus.lng,altitude:0},
   heading:(orbitStartHeading+orbitTotalDegrees*orbitalEase)%360,
-  tilt:47+5*arc*arc,
-  range:4500-750*arc*arc
+  tilt:55+5*arc*arc,
+  range:1500-350*arc*arc
  }
 }
 function updateOrbitCamera(progress,ts,force){
@@ -495,13 +510,14 @@ async function build3DMap(ride){
   map3d.append(travel3d);
 
   puck3d=null;
-  if(Polygon3DElement){
-   // Rider dot lying flat on the road (white ring, red core, white centre),
-   // sized in metres from the camera distance so it stays small on screen.
-   puck3d=[["#FFFFFF",1,3.4],["#E5322D",.68,3.5],["#FFFFFF",.26,3.6]].map(function(l,k){
-    var el=new Polygon3DElement({altitudeMode:"RELATIVE_TO_GROUND",fillColor:l[0],strokeColor:"#00000000",strokeWidth:0,
-     drawsOccludedSegments:true,zIndex:31+k,outerCoordinates:puckCircle(first,6*l[1],l[2])});
-    map3d.append(el);return {el:el,f:l[1],alt:l[2]};
+  if(Polyline3DElement){
+   // Rider dot lying flat on the road, drawn like the trail (polylines are
+   // ground ribbons with a constant on-screen width): a tiny circle with a
+   // wide stroke reads as a filled dot. White rim, red core, white centre.
+   puck3d=[["#FFFFFF",22,4.2],["#E5322D",15,4.4],["#FFFFFF",5,4.6]].map(function(l,k){
+    var el=new Polyline3DElement({altitudeMode:"RELATIVE_TO_GROUND",strokeColor:l[0],strokeWidth:l[1],
+     drawsOccludedSegments:true,zIndex:40+k,path:puckCircle(first,.45,l[2])});
+    map3d.append(el);return {el:el,alt:l[2]};
    });
   }else if(Marker3DElement){
    bike3d=new Marker3DElement({
@@ -518,12 +534,12 @@ async function build3DMap(ride){
    preparePlayback(ride);chase={heading:null,range:null,ts:0,center:null};
    var t0=camMode==="chase"?chaseTarget(0):null;
    map3d.flyCameraTo({
-    endCamera:t0?(function(){var c=offsetPoint(t0.rider,t0.heading,t0.range*.00018);return {center:{lat:c.lat,lng:c.lng,altitude:0},range:t0.range,tilt:t0.tilt,heading:t0.heading}})()
-                :{center:{lat:first.lat,lng:first.lng,altitude:140},range:4500,tilt:47,heading:head},
+    endCamera:t0?{center:{lat:t0.rider.lat,lng:t0.rider.lng,altitude:0},range:t0.range,tilt:t0.tilt,heading:t0.heading}
+                :{center:{lat:first.lat,lng:first.lng,altitude:0},range:1500,tilt:55,heading:head},
     durationMillis:2100
    });
   }catch(e){
-   map3d.center={lat:first.lat,lng:first.lng,altitude:140};map3d.range=4500;map3d.tilt=47;map3d.heading=head;
+   map3d.center={lat:first.lat,lng:first.lng,altitude:0};map3d.range=1500;map3d.tilt=55;map3d.heading=head;
   }
   startReplayPlayback(ride,"Sinematik kamera hazırlanıyor");
  }catch(e){
@@ -534,7 +550,7 @@ async function build3DMap(ride){
 // Circle of radius r metres around p (flat, a little above the trail).
 function puckCircle(p,r,alt){
  var out=[],k=Math.cos(p.lat*Math.PI/180);
- for(var i=0;i<=24;i++){var a=i/24*2*Math.PI;out.push({lat:p.lat+r*Math.cos(a)/111320,lng:p.lng+r*Math.sin(a)/(111320*k),altitude:alt})}
+ for(var i=0;i<=12;i++){var a=i/12*2*Math.PI;out.push({lat:p.lat+r*Math.cos(a)/111320,lng:p.lng+r*Math.sin(a)/(111320*k),altitude:alt})}
  return out;
 }
 /* Travelled trail: finished pieces are frozen as their own polylines, so
@@ -567,9 +583,7 @@ function updateScene(progress,ts){
  var p=x.point,pos={lat:p.lat,lng:p.lng},now=Number(ts||performance.now());
  if(using3d&&map3d){
   if(puck3d){
-   var cr=Number(camMode==="chase"?chase.range:(orbitLatest&&orbitLatest.range))||Number(map3d.range)||600;
-   var R=Math.max(2.5,Math.min(60,cr*.011));
-   puck3d.forEach(function(l){try{l.el.outerCoordinates=puckCircle(p,R*l.f,l.alt)}catch(e){}});
+   puck3d.forEach(function(l){try{l.el.path=puckCircle(p,.45,l.alt)}catch(e){}});
    lastBikeTs=now
   }else if(bike3d){
    try{bike3d.position={lat:p.lat,lng:p.lng,altitude:2}}catch(e){}

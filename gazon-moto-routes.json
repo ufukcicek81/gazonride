@@ -329,10 +329,12 @@
           "lng": 38.449132
         },
         {
-          "q": "Kümbet Yaylası, Dereli"
+          "q": "Kümbet, Dereli",
+          "lat": 40.559685,
+          "lng": 38.43724
         }
       ],
-      "check": "unverified",
+      "check": "verified",
       "image": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Waldgebiete_K%C3%BCmbet_Yaylas%C4%B1.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
       "imageCredit": "https://tr.wikipedia.org/wiki/K%C3%BCmbet_Yaylas%C4%B1",
       "imageTitle": "Kümbet Yaylası"
@@ -691,7 +693,10 @@
           "lng": 27.112186
         }
       ],
-      "check": "verified"
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/01/Sarkoymeydan.jpg/960px-Sarkoymeydan.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/%C5%9Eark%C3%B6y",
+      "imageTitle": "Şarköy"
     },
     {
       "id": 18,
@@ -1301,9 +1306,9 @@
         }
       ],
       "check": "verified",
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Olympus_National_Park_30.jpg/960px-Olympus_National_Park_30.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Olimpos_Da%C4%9F%C4%B1",
-      "imageTitle": "Olimpos Dağı"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/OlymposRomanBath.jpg/960px-OlymposRomanBath.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Olimpos,_Kumluca",
+      "imageTitle": "Olimpos, Kumluca"
     },
     {
       "id": 32,
@@ -1658,8 +1663,8 @@
         },
         {
           "q": "Nemrut Dağı",
-          "lat": 37.980639,
-          "lng": 38.740797
+          "lat": 37.98032,
+          "lng": 38.740936
         }
       ],
       "check": "verified",
@@ -2130,7 +2135,10 @@
           "lng": 18.824771
         }
       ],
-      "check": "verified"
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/20090719_Crkva_Gospa_od_Zdravlja_Kotor_Bay_Montenegro.jpg/960px-20090719_Crkva_Gospa_od_Zdravlja_Kotor_Bay_Montenegro.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://en.wikipedia.org/wiki/Kotor",
+      "imageTitle": "Kotor"
     },
     {
       "id": 52,
@@ -2468,5 +2476,5 @@
       "imageTitle": "Trollstigen"
     }
   ],
-  "checkedAt": "2026-10-13T21:51:18.496Z"
+  "checkedAt": "2026-10-13T21:55:21.974Z"
 }

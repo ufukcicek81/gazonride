@@ -280,3 +280,12 @@ html.theme-light .gr-myride-map .gr-j-thumb{height:auto;aspect-ratio:2/1;border-
 .gr-myride>.gr-ride-card{pointer-events:none}
 .gr-myride .gr-myride-play{pointer-events:none}
 .gr-ride-map .gr-j-mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+/* Ride delete button on ride cards */
+.gr-myride-wrap{position:relative;min-width:0}
+.gr-myrides-strip>.gr-myride-wrap{flex:0 0 86%;max-width:360px;scroll-snap-align:start;display:flex}
+.gr-myride-wrap>.gr-myride{width:100%;max-width:none;flex:1 1 auto}
+.gr-myride-wrap .gr-ride-card-top{padding-right:52px}
+.gr-myride-del{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+ border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-muted);cursor:pointer}
+.gr-myride-del .mi{font-size:22px}
+.gr-myride-del:active{background:#3a1715;color:#ff8b80;border-color:#71332f}

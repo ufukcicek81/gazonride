@@ -76,7 +76,7 @@ function select(on){
  }
 }
 function load(){
- fetch("gazon-moto-routes.json?v=20261013-photo2",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
+ fetch("gazon-moto-routes.json?v=20261014-photos4",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
   routes=Array.isArray(d&&d.routes)?d.routes:[];loaded=true;render();
  }).catch(function(){loaded=true;routes=[];var b=$("grMotoRoutes");if(b)b.innerHTML='<div class="gr-moto-empty">Rotalar yüklenemedi. İnternet bağlantını kontrol et.</div>'});
 }

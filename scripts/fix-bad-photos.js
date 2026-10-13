@@ -32,6 +32,7 @@ async function commons(q) {
     const p = path.join(ROOT, file), data = JSON.parse(fs.readFileSync(p, "utf8"));
     let fixed = 0;
     for (const it of data[key]) {
+      if (!it.image) continue;
       const src = decodeURIComponent(it.image.split("?")[0]);
       // PNG lead images on Wikipedia are nearly always maps or diagrams.
       if (!it.image || !(BAD.test(src) || /\.png$/i.test(src))) continue;

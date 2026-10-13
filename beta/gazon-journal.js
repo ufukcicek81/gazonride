@@ -287,7 +287,12 @@ function mapView(track,w,h){
  var url=staticMapUrl(track,w||640,h||320,(root.GAZONRIDE_STATIC_MAPS_KEY&&String(root.GAZONRIDE_STATIC_MAPS_KEY))||mapsKey());
  return svg+(url?'<img class="gr-j-mapimg" loading="lazy" decoding="async" alt="Sürüş haritası" src="'+esc(url)+'" onerror="this.remove()">':'');
 }
-function bikeName(r){var m=r&&r.motor||{};return [m.brand,m.model].filter(Boolean).join(" ")}
+function bikeName(r){
+ var m=r&&r.motor||{};
+ // Rides saved with the old built-in default KTM (never chosen by the rider).
+ if(m.brand==="KTM"&&m.model==="1290 Super Adventure"&&Number(m.tank)===23&&Number(m.consumption)===5.5&&!m.year)return "";
+ return [m.brand,m.model].filter(Boolean).join(" ");
+}
 // Full card used in Keşfet / Sürüşlerim and the journal.
 function rideCard(r,opts){
  opts=opts||{};var m=metrics(r||{}),mood=moodLine(r),bike=bikeName(r);

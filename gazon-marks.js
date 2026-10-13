@@ -102,12 +102,18 @@ function importNative(){
  return n;
 }
 function install(){
- // Ride screen: next to the other map buttons.
- var bar=document.querySelector(".mapBottom");
- if(bar&&!$("grMarkFab"))bar.appendChild(button("grMarkFab","mapBtn"));
- // Navigation (guidance) screen: in the floating button column.
- var fl=document.querySelector(".guidanceFloat");
- if(fl&&!$("grMarkNav"))fl.appendChild(button("grMarkNav",""));
+ // One-tap column on the left edge of the ride and navigation screens:
+ // the three most used marks are saved with a single tap (no menu while
+ // riding); "Diğer" opens the full sheet.
+ if(!$("grQuickMarks")){
+  var col=document.createElement("div");col.id="grQuickMarks";col.className="gr-quick-marks";col.setAttribute("aria-label","Hızlı işaret");
+  col.innerHTML=["bad_road","danger","rest"].map(function(id){var t=type(id);
+   return '<button type="button" data-quick-mark="'+id+'" style="--mk:'+t.color+'" aria-label="'+t.label+' işaretle"><span class="mi">'+t.icon+'</span><small>'+t.label.replace(" asfalt","")+'</small></button>'}).join("")+
+   '<button type="button" data-quick-more aria-label="Diğer işaretler"><span class="mi">add_location_alt</span><small>Diğer</small></button>';
+  document.body.appendChild(col);
+  col.querySelectorAll("[data-quick-mark]").forEach(function(b){b.onclick=function(){add(b.getAttribute("data-quick-mark"))}});
+  col.querySelector("[data-quick-more]").onclick=open;
+ }
  // Marks from the native Google navigation screen (Android app).
  importNative();
  document.addEventListener("visibilitychange",function(){if(!document.hidden)importNative()});

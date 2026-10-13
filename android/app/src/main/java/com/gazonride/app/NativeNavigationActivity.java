@@ -286,17 +286,35 @@ public final class NativeNavigationActivity extends Activity {
         musicFabParams.setMargins(0, 0, dp(12), 0);
         root.addView(musicFab, musicFabParams);
 
-        // Ride markers (same types as the web app): saved here, picked up by
-        // the WebView (AndroidBridge.takeNativeMarks) when the rider returns.
-        Button markFab = control("📍");
-        markFab.setTextSize(24);
-        markFab.setContentDescription("Yer işaretle: asfalt, tehlike, mola yeri, su, WC");
-        markFab.setBackground(shape(0xEC151D2B, 32));
-        markFab.setOnClickListener(v -> showMarkPicker());
-        FrameLayout.LayoutParams markParams =
-                new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.CENTER_VERTICAL | Gravity.END);
-        markParams.setMargins(0, dp(80), dp(12), 0);
-        root.addView(markFab, markParams);
+        // One-tap ride markers on the left edge (same types as the web app):
+        // no menu while riding; "Diğer" opens the full list. Saved here and
+        // picked up by the WebView (AndroidBridge.takeNativeMarks) later.
+        LinearLayout quick = new LinearLayout(this);
+        quick.setOrientation(LinearLayout.VERTICAL);
+        String[][] quickTypes={{"bad_road","Kötü asfalt","Kötü","#DC2626"},{"danger","Tehlike","Tehlike","#D97706"},{"rest","Mola yeri","Mola","#EA580C"}};
+        for(String[] q:quickTypes){
+            Button b=control(q[2]);
+            b.setTextSize(13);
+            b.setTypeface(Typeface.DEFAULT_BOLD);
+            GradientDrawable bg=shape(Color.parseColor(q[3]),18);
+            bg.setStroke(dp(2),Color.WHITE);
+            b.setBackground(bg);
+            b.setContentDescription(q[1]+" işaretle");
+            b.setOnClickListener(v -> saveMark(q[0],q[1]));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(64),dp(64));
+            lp.setMargins(0,0,0,dp(10));
+            quick.addView(b,lp);
+        }
+        Button more=control("＋📍");
+        more.setTextSize(15);
+        more.setBackground(shape(0xEC151D2B,18));
+        more.setContentDescription("Diğer işaretler: iyi asfalt, su, WC, yer işaretle");
+        more.setOnClickListener(v -> showMarkPicker());
+        quick.addView(more,new LinearLayout.LayoutParams(dp(64),dp(64)));
+        FrameLayout.LayoutParams quickParams =
+                new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL | Gravity.START);
+        quickParams.setMargins(dp(10), 0, 0, 0);
+        root.addView(quick, quickParams);
 
         totalText = label("Rota hesaplanıyor…", 18, true);
         totalText.setSingleLine(true);

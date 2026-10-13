@@ -349,7 +349,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </head>
 <body>
 <div class="app">
-<header class="appHeader"><div class="logoWrap"><div class="logoMark"><span class="mi">two_wheeler</span></div><div class="logo">GAZON<span>RIDE</span></div></div><button class="motor" id="motorBtn"><span class="mi">two_wheeler</span><span class="motorText"><b id="motorName">KTM 1290</b><small id="motorModel">Super Adventure</small></span><span class="mi chev">expand_more</span></button></header>
+<header class="appHeader"><div class="logoWrap"><div class="logoMark"><span class="mi">two_wheeler</span></div><div class="logo">GAZON<span>RIDE</span></div></div><button class="motor" id="motorBtn"><span class="mi">two_wheeler</span><span class="motorText"><b id="motorName">Motosiklet</b><small id="motorModel">Motor bilgilerini gir</small></span><span class="mi chev">expand_more</span></button></header>
 <section class="homeSection" id="homeSection">
   <div class="homeHero"><div><b id="homeWelcome">GaZonRide</b><small id="homeBikeSummary">Ne yapmak istiyorsun?</small></div><div class="homeAvatar" id="homeAvatar"><span class="mi">person</span></div></div>
   <div class="homeMenuGrid">
@@ -813,11 +813,23 @@ window.addEventListener("gazon-location-permission-changed",function(){
  startGPS();
  if(gazonCurrentMode==="navigation")startNavigationGpsWatch();
 });
-function defaultMotor(){return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),brand:"KTM",model:"1290 Super Adventure",year:"",engine:"1290",tank:23,consumption:5.5,fuelType:"benzin",fuelPrice:0,fuelCity:"",fuelSource:"",fuelUpdatedAt:"",odometer:0}}
+// New riders start with an empty motorcycle (the developer's KTM used to be
+// the built-in default and showed up on every new install).
+function defaultMotor(){return blankMotor()}
+// The old built-in default, untouched by the rider: brand KTM, model exactly
+// "1290 Super Adventure", 23 L tank, 5.5 L/100 km, nothing else filled in.
+function isOldDefaultMotor(m){
+ return !!m&&m.brand==="KTM"&&m.model==="1290 Super Adventure"&&Number(m.tank)===23&&Number(m.consumption)===5.5&&
+  !m.year&&!Number(m.odometer||0)&&!Number(m.fuelPrice||0);
+}
 function blankMotor(){return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),brand:"",model:"",year:"",engine:"",tank:0,consumption:0,fuelType:"benzin",fuelPrice:0,fuelCity:"",fuelSource:"",fuelUpdatedAt:"",odometer:0}}
 function getRiderProfile(){
- var d={name:"GaZonRide sürücüsü",bike:"KTM 1290",avatar:"",motors:[],activeMotorIndex:0,motor:defaultMotor()};
+ var d={name:"GaZonRide sürücüsü",bike:"",avatar:"",motors:[],activeMotorIndex:0,motor:defaultMotor()};
  try{var p=JSON.parse(localStorage.getItem("gazon_profile")||"{}");if(p&&typeof p==="object")Object.assign(d,p)}catch(e){}
+ // Drop the old auto-filled KTM from installs that never edited it.
+ if(Array.isArray(d.motors))d.motors=d.motors.map(function(x){return isOldDefaultMotor(x)?blankMotor():x});
+ if(isOldDefaultMotor(d.motor))d.motor=blankMotor();
+ if(d.bike==="KTM 1290"||d.bike==="KTM 1290 Super Adventure")d.bike="";
  var legacy=d.motor&&typeof d.motor==="object"?d.motor:null;
  if(!Array.isArray(d.motors)||!d.motors.length)d.motors=[Object.assign(defaultMotor(),legacy||{})];
  d.activeMotorIndex=Math.max(0,Math.min(Number(d.activeMotorIndex||0),d.motors.length-1));
@@ -2765,7 +2777,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-destinations.js?v=20261012-photos1"></script>
 <script src="replay.js?v=20261013-marks1"></script>
 <script src="gazon-music.js?v=20261012-ios1"></script>
-<script src="gazon-journal.js?v=20261013-card6"></script>
+<script src="gazon-journal.js?v=20261013-motor1"></script>
 <script src="gazon-discover.js?v=20261013-pub1"></script>
 <script src="gazon-marks.js?v=20261013-quick1"></script>
 <script src="gazon-ui.js?v=20261012-ui3"></script>

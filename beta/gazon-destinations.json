@@ -327,13 +327,15 @@
       "place": "Anadolu Medeniyetleri Müzesi",
       "lat": 39.938333,
       "lng": 32.861944,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9f/100._YIL_LOGO.jpg/960px-100._YIL_LOGO.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Anadolu_Medeniyetleri_M%C3%BCzesi",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Ankara_-_Anadolu_Medeniyetleri_M%C3%BCzesi_1225.jpg/960px-Ankara_-_Anadolu_Medeniyetleri_M%C3%BCzesi_1225.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Ankara_-_Anadolu_Medeniyetleri_M%C3%BCzesi_1225.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Anadolu_Medeniyetleri_M%C3%BCzesi",
       "wikiTitle": "Anadolu Medeniyetleri Müzesi",
       "check": "verified",
-      "photo": "photos/il-14.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9f/100._YIL_LOGO.jpg/960px-100._YIL_LOGO.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Ankara_-_Anadolu_Medeniyetleri_M%C3%BCzesi_1225.jpg/960px-Ankara_-_Anadolu_Medeniyetleri_M%C3%BCzesi_1225.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Ankara - Anadolu Medeniyetleri Müzesi 1225.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-14.jpg"
     },
     {
       "id": 15,
@@ -517,13 +519,15 @@
       "place": "Kapıdağ Yarımadası",
       "lat": 40.459444,
       "lng": 27.851667,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif/lossy-page1-960px-1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Kap%C4%B1da%C4%9F_Yar%C4%B1madas%C4%B1",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/A_part_of_the_Kap%C4%B1da%C4%9F_Peninsula_with_Erdek_Gulf_and_Cyzicus_%28cropped%29.jpg/960px-A_part_of_the_Kap%C4%B1da%C4%9F_Peninsula_with_Erdek_Gulf_and_Cyzicus_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:A_part_of_the_Kap%C4%B1da%C4%9F_Peninsula_with_Erdek_Gulf_and_Cyzicus_(cropped).jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Kap%C4%B1da%C4%9F_Yar%C4%B1madas%C4%B1",
       "wikiTitle": "Kapıdağ Yarımadası",
       "check": "verified",
-      "photo": "photos/il-24.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif/lossy-page1-960px-1956_map_of_the_Kapidag_Peninsula_%28cropped%29.tif.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/A_part_of_the_Kap%C4%B1da%C4%9F_Peninsula_with_Erdek_Gulf_and_Cyzicus_%28cropped%29.jpg/960px-A_part_of_the_Kap%C4%B1da%C4%9F_Peninsula_with_Erdek_Gulf_and_Cyzicus_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:A part of the Kapıdağ Peninsula with Erdek Gulf and Cyzicus (cropped).jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-24.jpg"
     },
     {
       "id": 25,
@@ -886,13 +890,15 @@
       "place": "Gelibolu Tarihi Yarımadası",
       "lat": 40.170278,
       "lng": 26.367778,
-      "image": "https://upload.wikimedia.org/wikipedia/commons/e/ee/GYTMP_HARITASI_01.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
-      "imageCredit": "https://tr.wikipedia.org/wiki/%C3%87anakkale_Sava%C5%9Flar%C4%B1_Gelibolu_Tarih%C3%AE_Alan%C4%B1",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Gelibolu_Yar%C4%B1madas%C4%B1_Tarihi_Milli_Park%C4%B1_Sembolik_%C5%9Eehitlikler.jpg/960px-Gelibolu_Yar%C4%B1madas%C4%B1_Tarihi_Milli_Park%C4%B1_Sembolik_%C5%9Eehitlikler.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Gelibolu_Yar%C4%B1madas%C4%B1_Tarihi_Milli_Park%C4%B1_Sembolik_%C5%9Eehitlikler.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/%C3%87anakkale_Sava%C5%9Flar%C4%B1_Gelibolu_Tarih%C3%AE_Alan%C4%B1",
       "wikiTitle": "Çanakkale Savaşları Gelibolu Tarihî Alanı",
       "check": "verified",
-      "photo": "photos/il-44.jpg",
-      "photoSrc": "https://upload.wikimedia.org/wikipedia/commons/e/ee/GYTMP_HARITASI_01.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Gelibolu_Yar%C4%B1madas%C4%B1_Tarihi_Milli_Park%C4%B1_Sembolik_%C5%9Eehitlikler.jpg/960px-Gelibolu_Yar%C4%B1madas%C4%B1_Tarihi_Milli_Park%C4%B1_Sembolik_%C5%9Eehitlikler.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Gelibolu Yarımadası Tarihi Milli Parkı Sembolik Şehitlikler.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-44.jpg"
     },
     {
       "id": 45,
@@ -996,13 +1002,15 @@
       "place": "Hierapolis Antik Kenti",
       "lat": 37.925086,
       "lng": 29.125898,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Hierapolis",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Necropolis_of_Hierapolis_03.jpg/960px-Necropolis_of_Hierapolis_03.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Necropolis_of_Hierapolis_03.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Hierapolis",
       "wikiTitle": "Hierapolis",
       "check": "verified",
-      "photo": "photos/il-50.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Necropolis_of_Hierapolis_03.jpg/960px-Necropolis_of_Hierapolis_03.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Necropolis of Hierapolis 03.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-50.jpg"
     },
     {
       "id": 51,
@@ -1381,13 +1389,15 @@
       "place": "Narman Peri Bacaları",
       "lat": 40.347222,
       "lng": 41.868333,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Erzurum_in_Turkey.svg/960px-Erzurum_in_Turkey.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Narman",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/Narman_peri_bacalar%C4%B1_Erzurum.jpg/960px-Narman_peri_bacalar%C4%B1_Erzurum.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Narman_peri_bacalar%C4%B1_Erzurum.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Narman",
       "wikiTitle": "Narman",
       "check": "verified",
-      "photo": "photos/il-73.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Erzurum_in_Turkey.svg/960px-Erzurum_in_Turkey.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/Narman_peri_bacalar%C4%B1_Erzurum.jpg/960px-Narman_peri_bacalar%C4%B1_Erzurum.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Narman peri bacaları Erzurum.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-73.jpg"
     },
     {
       "id": 74,
@@ -2529,13 +2539,15 @@
       "note": "Konum Kırşehir ili sınırında",
       "lat": 39.269722,
       "lng": 34.261111,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/K%C4%B1r%C5%9Fehir_in_Turkey.svg/960px-K%C4%B1r%C5%9Fehir_in_Turkey.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Boztepe",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/Ordu_Boztepe_Ropeway%2C_%E2%80%9EBatumi%E2%80%9C_cabin.JPG/960px-Ordu_Boztepe_Ropeway%2C_%E2%80%9EBatumi%E2%80%9C_cabin.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Ordu_Boztepe_Ropeway,_%E2%80%9EBatumi%E2%80%9C_cabin.JPG",
       "wiki": "https://tr.wikipedia.org/wiki/Boztepe",
       "wikiTitle": "Boztepe",
       "check": "verified",
-      "photo": "photos/il-136.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/K%C4%B1r%C5%9Fehir_in_Turkey.svg/960px-K%C4%B1r%C5%9Fehir_in_Turkey.svg.png?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/Ordu_Boztepe_Ropeway%2C_%E2%80%9EBatumi%E2%80%9C_cabin.JPG/960px-Ordu_Boztepe_Ropeway%2C_%E2%80%9EBatumi%E2%80%9C_cabin.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Ordu Boztepe Ropeway, „Batumi“ cabin.JPG",
+      "imageSource": "commons-search",
+      "photo": "photos/il-136.jpg"
     },
     {
       "id": 137,
@@ -2964,13 +2976,15 @@
       "place": "Kaz Gölü",
       "lat": 40.2761,
       "lng": 36.1508,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Kaz_G%C3%B6l%C3%BC",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Kaz_G%C3%B6l%C3%BC_Resmi-Tokat.jpg/960px-Kaz_G%C3%B6l%C3%BC_Resmi-Tokat.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Kaz_G%C3%B6l%C3%BC_Resmi-Tokat.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Kaz_G%C3%B6l%C3%BC",
       "wikiTitle": "Kaz Gölü",
       "check": "verified",
-      "photo": "photos/il-159.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Kaz_G%C3%B6l%C3%BC_Resmi-Tokat.jpg/960px-Kaz_G%C3%B6l%C3%BC_Resmi-Tokat.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Kaz Gölü Resmi-Tokat.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-159.jpg"
     },
     {
       "id": 160,
@@ -2983,13 +2997,15 @@
       "place": "Sümela Manastırı",
       "lat": 40.69,
       "lng": 39.658333,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Sumela_Showing_Location.JPG/960px-Sumela_Showing_Location.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/S%C3%BCmela_Manast%C4%B1r%C4%B1",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/S%C3%BCmela_Manast%C4%B1r%C4%B1_2014-2.jpg/960px-S%C3%BCmela_Manast%C4%B1r%C4%B1_2014-2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:S%C3%BCmela_Manast%C4%B1r%C4%B1_2014-2.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/S%C3%BCmela_Manast%C4%B1r%C4%B1",
       "wikiTitle": "Sümela Manastırı",
       "check": "verified",
-      "photo": "photos/il-160.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Sumela_Showing_Location.JPG/960px-Sumela_Showing_Location.JPG?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/S%C3%BCmela_Manast%C4%B1r%C4%B1_2014-2.jpg/960px-S%C3%BCmela_Manast%C4%B1r%C4%B1_2014-2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Sümela Manastırı 2014-2.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-160.jpg"
     },
     {
       "id": 161,
@@ -3134,13 +3150,15 @@
       "place": "Sudüşen Şelalesi",
       "lat": 40.576111,
       "lng": 29.147222,
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://tr.wikipedia.org/wiki/Sud%C3%BC%C5%9Fen_%C5%9Eelalesi",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/Su_D%C3%BC%C5%9Fen_%C5%9Eelalesi_-_panoramio.jpg/960px-Su_D%C3%BC%C5%9Fen_%C5%9Eelalesi_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Su_D%C3%BC%C5%9Fen_%C5%9Eelalesi_-_panoramio.jpg",
       "wiki": "https://tr.wikipedia.org/wiki/Sud%C3%BC%C5%9Fen_%C5%9Eelalesi",
       "wikiTitle": "Sudüşen Şelalesi",
       "check": "verified",
-      "photo": "photos/il-168.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Turkey_relief_location_map.jpg/960px-Turkey_relief_location_map.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/Su_D%C3%BC%C5%9Fen_%C5%9Eelalesi_-_panoramio.jpg/960px-Su_D%C3%BC%C5%9Fen_%C5%9Eelalesi_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageTitle": "File:Su Düşen Şelalesi - panoramio.jpg",
+      "imageSource": "commons-search",
+      "photo": "photos/il-168.jpg"
     },
     {
       "id": 169,

@@ -19,6 +19,10 @@ async function commons(q) {
     const i = p.imageinfo && p.imageinfo[0];
     if (!i || !/jpeg/.test(i.mime || "") || i.width < 900 || i.width < i.height) continue;
     if (BAD.test(p.title) || BAD.test(i.url || "")) continue;
+    // The file must be about the place: its name has to contain a word of the query.
+    const fold = t => t.toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i");
+    const words = fold(q).split(/[^a-z0-9]+/).filter(w => w.length >= 4).map(w => w.slice(0, 5));
+    if (words.length && !words.some(w => fold(p.title).includes(w))) continue;
     return { image: i.thumburl || i.url, credit: i.descriptionurl, title: p.title };
   }
   return null;
@@ -28,7 +32,9 @@ async function commons(q) {
     const p = path.join(ROOT, file), data = JSON.parse(fs.readFileSync(p, "utf8"));
     let fixed = 0;
     for (const it of data[key]) {
-      if (!it.image || !BAD.test(decodeURIComponent(it.image.split("?")[0]))) continue;
+      const src = decodeURIComponent(it.image.split("?")[0]);
+      // PNG lead images on Wikipedia are nearly always maps or diagrams.
+      if (!it.image || !(BAD.test(src) || /\.png$/i.test(src))) continue;
       const alt = await commons(q(it)) || await commons((it.aka && it.aka[0]) || it.place || it.title || "");
       console.log(file, it.id, "bad:", it.image.split("/").pop().slice(0, 50), "→", alt ? alt.title : "none");
       if (alt) { it.image = alt.image; it.imageCredit = alt.credit; it.imageTitle = alt.title; it.imageSource = "commons-search"; delete it.photo; fixed++; }

@@ -836,8 +836,10 @@
         "Maşukiye, Kartepe"
       ],
       "end": "Kartepe",
-      "place": "Kartepe",
-      "aka": [],
+      "place": "Maşukiye",
+      "aka": [
+        "Kartepe"
+      ],
       "points": [
         {
           "q": "Sapanca",
@@ -855,13 +857,7 @@
           "lng": 30.011283
         }
       ],
-      "check": "verified",
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/2017.07.04.-17-Scharmuetzelsee-Bad_Saarow--Nebelkraehe.jpg/960px-2017.07.04.-17-Scharmuetzelsee-Bad_Saarow--Nebelkraehe.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-      "imageCredit": "https://commons.wikimedia.org/wiki/File:2017.07.04.-17-Scharmuetzelsee-Bad_Saarow--Nebelkraehe.jpg",
-      "imageTitle": "File:2017.07.04.-17-Scharmuetzelsee-Bad Saarow--Nebelkraehe.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/2017.07.04.-17-Scharmuetzelsee-Bad_Saarow--Nebelkraehe.jpg/960px-2017.07.04.-17-Scharmuetzelsee-Bad_Saarow--Nebelkraehe.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-      "imageSource": "commons-search",
-      "photo": "photos/moto-20.jpg"
+      "check": "verified"
     },
     {
       "id": 21,

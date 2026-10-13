@@ -175,7 +175,7 @@ function remoteCatalogue(){
  return attempt(0).then(function(catalog){try{localStorage.setItem(cacheKey,JSON.stringify(catalog))}catch(e){}return catalog})
 }
 function loadCatalogue(){
- return fetch("gazon-destinations.json?v=20261013-photo3",{cache:"no-cache"})
+ return fetch("gazon-destinations.json?v=20261014-photos4",{cache:"no-cache"})
  .then(function(r){if(!r.ok)throw Error("Statik liste bulunamadı");return r.json()})
  .then(function(c){if(!c.items||c.items.length<81||!Array.isArray(c.cities)||c.cities.length!==81)throw Error("Statik katalog eksik");return c})
  // Offline / failed fetch: no fallback to the photo-less web scrape.

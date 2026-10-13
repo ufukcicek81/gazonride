@@ -857,7 +857,12 @@
           "lng": 30.011283
         }
       ],
-      "check": "verified"
+      "check": "verified",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/City_hall_of_ma%C5%9Fukiye_%2A%C2%A9Abdullah_Kiyga_-_panoramio.jpg/960px-City_hall_of_ma%C5%9Fukiye_%2A%C2%A9Abdullah_Kiyga_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "imageCredit": "https://tr.wikipedia.org/wiki/Ma%C5%9Fukiye",
+      "imageTitle": "Maşukiye",
+      "photo": "photos/moto-20.jpg",
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/City_hall_of_ma%C5%9Fukiye_%2A%C2%A9Abdullah_Kiyga_-_panoramio.jpg/960px-City_hall_of_ma%C5%9Fukiye_%2A%C2%A9Abdullah_Kiyga_-_panoramio.jpg?utm_source=tr.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
     },
     {
       "id": 21,
@@ -2410,11 +2415,12 @@
         }
       ],
       "check": "verified",
-      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Central_Caucasus.png/960px-Central_Caucasus.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-      "imageCredit": "https://en.wikipedia.org/wiki/Georgian_Military_Road",
-      "imageTitle": "Georgian Military Road",
-      "photo": "photos/moto-55.jpg",
-      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Central_Caucasus.png/960px-Central_Caucasus.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Georgische_Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg/960px-Georgische_Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageCredit": "https://commons.wikimedia.org/wiki/File:Georgische_Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg",
+      "imageTitle": "File:Georgische Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg",
+      "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Georgische_Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg/960px-Georgische_Heerstrasse-Kalksinter-14-Fruchtgummi-2019-gje.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageSource": "commons-search",
+      "photo": "photos/moto-55.jpg"
     },
     {
       "id": 56,
@@ -2593,5 +2599,5 @@
       "photoSrc": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/DSC07845-Panorama.jpg/960px-DSC07845-Panorama.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
     }
   ],
-  "checkedAt": "2026-10-13T22:07:39.607Z"
+  "checkedAt": "2026-10-13T22:25:33.206Z"
 }

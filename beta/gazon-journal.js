@@ -252,7 +252,8 @@ function staticMapUrl(track,w,h,key){
 }
 function mapView(track,w,h){
  var svg=routeSvg(track,w,h);if(!svg)return "";
- var url=staticMapUrl(track,w||640,h||320,mapsKey());
+ // A separate Static-Maps-only key can be set without touching the main key.
+ var url=staticMapUrl(track,w||640,h||320,(root.GAZONRIDE_STATIC_MAPS_KEY&&String(root.GAZONRIDE_STATIC_MAPS_KEY))||mapsKey());
  return svg+(url?'<img class="gr-j-mapimg" loading="lazy" decoding="async" alt="Sürüş haritası" src="'+esc(url)+'" onerror="this.remove()">':'');
 }
 function bikeName(r){var m=r&&r.motor||{};return [m.brand,m.model].filter(Boolean).join(" ")}

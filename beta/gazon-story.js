@@ -9,7 +9,7 @@
 (function(root){
 "use strict";
 var W=1080,H=1920,FPS=30;
-var T_INTRO=1.4,T_DRAW=7.6,T_OUTRO=3.2,TOTAL=T_INTRO+T_DRAW+T_OUTRO;
+var T_INTRO=1.4,T_OUTRO=3.6,LENGTHS=[15,30,60];
 var RED="#E8322E";
 // Map background styles: text and fades follow the map's brightness.
 var STYLES={
@@ -44,7 +44,8 @@ function loadImage(src,cors){
 }
 
 // Everything the frames need, computed once.
-function prepare(ride,style){
+function prepare(ride,style,seconds){
+ seconds=LENGTHS.indexOf(Number(seconds))>=0?Number(seconds):30;
  style=STYLES[style]?style:"dark";
  var J=root.GaZonJournal;if(!J||!J.storyMap)return null;
  var view=J.storyMap(ride&&ride.track,360,640,style);if(!view)return null;
@@ -53,7 +54,7 @@ function prepare(ride,style){
  var last=view.project(src[src.length-1]);xy.push([last[0]*k,last[1]*k]);
  var cum=[0];for(i=1;i<xy.length;i++)cum.push(cum[i-1]+Math.hypot(xy[i][0]-xy[i-1][0],xy[i][1]-xy[i-1][1]));
  var m=J.metrics?J.metrics(ride):{},km=Number(ride.km)||m.km||0;
- return {pal:STYLES[style],view:view,xy:xy,cum:cum,len:cum[cum.length-1]||1,base:Math.min(1.4,view.fit||1),
+ return {total:seconds,draw:seconds-T_INTRO-T_OUTRO,pal:STYLES[style],view:view,xy:xy,cum:cum,len:cum[cum.length-1]||1,base:Math.min(1.4,view.fit||1),
   title:J.rideTitle?J.rideTitle(ride):(ride.destination||"Motosiklet sürüşü"),
   km:km,sec:m.sec||0,avg:m.avg||0,max:Math.round(Number(ride.max)||0),turns:m.turns||0,climb:m.climb||0,
   fmtDur:J.fmtDur||function(s){return Math.round(s/60)+"dk"}};
@@ -155,9 +156,10 @@ function outro(g,d,logo,a){
 }
 function frame(g,d,assets,t){
  P=d.pal||STYLES.dark;
+ var TOTAL=d.total,T_DRAW=d.draw;
  var zoom=d.base*(1+.05*clamp(t/TOTAL,0,1));
  background(g,assets.map,zoom);
- var drawT=(t-T_INTRO)/T_DRAW,frac=ease(drawT);
+ var drawT=(t-T_INTRO)/T_DRAW,frac=.25*ease(drawT)+.75*clamp(drawT,0,1);
  var head=route(g,d,frac,zoom);
  if(t>=T_INTRO*.6&&t<TOTAL-T_OUTRO+.6)rider(g,head,t);
  brand(g,assets.logo,easeOut(t/.6),220);
@@ -174,7 +176,7 @@ function make(ride,opts){
  if(busy)return Promise.reject(new Error("busy"));
  var mime=pickMime();
  if(!mime)return Promise.reject(new Error("unsupported"));
- var d=prepare(ride,opts.style);if(!d)return Promise.reject(new Error("no-track"));
+ var d=prepare(ride,opts.style,opts.seconds);if(!d)return Promise.reject(new Error("no-track"));
  busy=true;
  var progress=opts.onProgress||function(){};
  progress(0,"Harita hazırlanıyor…");
@@ -184,7 +186,7 @@ function make(ride,opts){
    var g=c.getContext("2d"),assets={map:img[0],logo:img[1]};
    frame(g,d,assets,0);
    var stream=c.captureStream(FPS),chunks=[],rec;
-   try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000})}catch(e){rec=new MediaRecorder(stream)}
+   try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:d.total>30?4000000:6000000})}catch(e){rec=new MediaRecorder(stream)}
    rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
    rec.onerror=function(e){busy=false;reject(e&&e.error||new Error("record"))};
    rec.onstop=function(){
@@ -197,9 +199,9 @@ function make(ride,opts){
    function tick(now){
     if(!t0)t0=now;
     var t=(now-t0)/1000;
-    frame(g,d,assets,Math.min(t,TOTAL));
-    progress(Math.min(1,t/TOTAL),"Video oluşturuluyor…");
-    if(t<TOTAL+.25)raf=requestAnimationFrame(tick);else rec.stop();
+    frame(g,d,assets,Math.min(t,d.total));
+    progress(Math.min(1,t/d.total),"Video oluşturuluyor…");
+    if(t<d.total+.25)raf=requestAnimationFrame(tick);else rec.stop();
    }
    rec.start(500);raf=requestAnimationFrame(tick);
   });
@@ -245,5 +247,5 @@ function save(res){
  download(res);return Promise.resolve("downloaded");
 }
 
-root.GaZonStory={supported:supported,make:make,share:share,save:save,_frame:frame,_prepare:prepare,DURATION:TOTAL,STYLES:STYLES};
+root.GaZonStory={supported:supported,make:make,share:share,save:save,_frame:frame,_prepare:prepare,LENGTHS:LENGTHS,STYLES:STYLES};
 })(window);

@@ -238,13 +238,33 @@ var LIGHT_STYLE=["feature:poi|visibility:off","feature:transit|visibility:off"];
 // GPS jitter makes a hand-drawn looking line: drop points closer than 8 m,
 // then a light 5-point moving average (ends kept exact).
 function smoothTrack(pts){
- var k=[];pts.forEach(function(p){if(!k.length||hav(k[k.length-1],p)>=.008)k.push(p)});
+ var k=[];removeSpurs(pts).forEach(function(p){if(!k.length||hav(k[k.length-1],p)>=.008)k.push(p)});
  if(k.length<5)return k;
  return k.map(function(p,i){
   if(i<2||i>k.length-3)return p;
   var la=0,lo=0;for(var j=i-2;j<=i+2;j++){la+=k[j].lat;lo+=k[j].lon}
   return {lat:la/5,lon:lo/5};
  });
+}
+// Out-and-back spurs: road matching (or a GPS jump) sometimes sends the
+// path into a side road / petrol station and straight back. A stretch of
+// 40-800 m that ends within 25 m of where it started and whose farthest
+// point is ~half its length away is a retrace, not a loop: cut it.
+function removeSpurs(a){
+ if(!Array.isArray(a)||a.length<4)return a||[];
+ function lo(p){return p.lng!=null?p.lng:p.lon}
+ function d(p,q){var r=Math.PI/180,x=Math.sin((q.lat-p.lat)*r/2),y=Math.sin((lo(q)-lo(p))*r/2);return 12742*Math.asin(Math.sqrt(x*x+Math.cos(p.lat*r)*Math.cos(q.lat*r)*y*y))}
+ var out=[],i=0,n=a.length;
+ while(i<n){
+  out.push(a[i]);
+  var L=0,cut=-1,far=0;
+  for(var j=i+1;j<n&&L<.8;j++){
+   L+=d(a[j-1],a[j]);far=Math.max(far,d(a[i],a[j]));
+   if(L>=.04&&far>=.03&&d(a[i],a[j])<.025&&far>=.4*L){cut=j;break}
+  }
+  i=cut>0?cut:i+1;
+ }
+ return out;
 }
 function mercX(p,z){return 256*Math.pow(2,z)*(p.lon+180)/360}
 function mercY(p,z){var s=Math.sin(p.lat*Math.PI/180);return 256*Math.pow(2,z)*(.5-Math.log((1+s)/(1-s))/(4*Math.PI))}
@@ -319,7 +339,7 @@ function rideCard(r,opts){
   '<div class="gr-ride-stats"><b>'+(Number(m.km)||0).toFixed(1).replace(".",",")+' km</b><span>'+bits.map(esc).join(" · ")+'</span></div>'+
   '<small class="gr-ride-when">'+rideWhen(r)+'</small></div>';
 }
-var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points,storyMap:storyMap};
+var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points,storyMap:storyMap,removeSpurs:removeSpurs};
 root.GaZonJournal=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

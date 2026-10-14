@@ -11,7 +11,19 @@ function bearing(a,b){var p=Math.PI/180,y1=a.lat*p,y2=b.lat*p,dl=(b.lng-a.lng)*p
 function interpolate(a,b,t){return {lat:a.lat+(b.lat-a.lat)*t,lng:a.lng+(b.lng-a.lng)*t,alt:(a.alt||0)+((b.alt||0)-(a.alt||0))*t}}
 function geoKm(a,b){var R=6371,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lng-a.lng)*p,x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)*Math.sin(dLon/2);return 2*R*Math.asin(Math.sqrt(x))}
 function lerpAngle(a,b,t){var d=((b-a+540)%360)-180;return (a+d*t+360)%360}
-function replaySource(ride){return ride&&Array.isArray(ride._matchedReplayPath)&&ride._matchedReplayPath.length>1?ride._matchedReplayPath:cleanTrack(pts(ride))}
+function replaySource(ride){
+ var m=ride&&ride._matchedReplayPath;
+ if(!Array.isArray(m)||m.length<2)return cleanTrack(pts(ride));
+ // Cleaned once per matched path: detours off the real GPS track and
+ // out-and-back spurs removed (see keepNearRaw / GaZonJournal.removeSpurs).
+ if(ride._replayClean&&ride._replayCleanOf===m)return ride._replayClean;
+ var raw=cleanTrack(pts(ride)),kept=keepNearRaw(raw,m,.03),J=window.GaZonJournal;
+ ride._replayUseRaw=kept.length<m.length*.6;
+ var out=ride._replayUseRaw?raw:kept;
+ if(J&&J.removeSpurs)out=J.removeSpurs(out);
+ ride._replayClean=out;ride._replayCleanOf=m;
+ return out;
+}
 function cleanTrack(a){
  if(!Array.isArray(a))return [];
  var out=[];
@@ -157,11 +169,36 @@ function smoothRaw(a){
   return {lat:la/5,lng:lo/5,alt:al/5,time:p.time};
  });
 }
+/* Road matching works on ~1 sample per 130 m, so between samples it can
+ * take a ramp, a service road or a side street the rider never used. Keep
+ * only matched points within 30 m of the real (dense) GPS track; a detour
+ * becomes a short straight join along the road the rider actually took. */
+function segDistKm(p,a,b){
+ var kx=Math.cos(p.lat*Math.PI/180)*111.32,ky=110.57;
+ var ax=(a.lng-p.lng)*kx,ay=(a.lat-p.lat)*ky,dx=(b.lng-a.lng)*kx,dy=(b.lat-a.lat)*ky,L=dx*dx+dy*dy;
+ var t=L>0?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L)):0,x=ax+dx*t,y=ay+dy*t;
+ return Math.sqrt(x*x+y*y);
+}
+function keepNearRaw(raw,matched,tol){
+ if(!Array.isArray(raw)||raw.length<2||!Array.isArray(matched)||matched.length<2)return matched;
+ var out=[],j=0,miss=0,i,d,best,bj;
+ for(var m=0;m<matched.length;m++){
+  var p=matched[m];best=Infinity;bj=j;
+  // The match runs along the ride: search a window ahead of the last hit.
+  for(i=Math.max(0,j-30);i<Math.min(raw.length-1,j+300);i++){d=segDistKm(p,raw[i],raw[i+1]);if(d<best){best=d;bj=i}}
+  if(best>tol&&miss>=25){ // lost for a while: re-sync over the whole ride
+   for(i=0;i<raw.length-1;i++){d=segDistKm(p,raw[i],raw[i+1]);if(d<best){best=d;bj=i}}
+  }
+  if(best<=tol){out.push(p);j=bj;miss=0}else miss++;
+ }
+ if(m&&out.length&&out[out.length-1]!==matched[matched.length-1]&&geoKm(out[out.length-1],raw[raw.length-1])>.02)out.push(raw[raw.length-1]);
+ return out;
+}
 function preparePlayback(ride){
  playPoints=replaySource(ride);
- // Drop road-match detours (into a petrol station and back) before anything else.
- if(window.GaZonJournal&&GaZonJournal.removeSpurs)playPoints=GaZonJournal.removeSpurs(playPoints);
- if(!(ride&&ride._roadMatched))playPoints=smoothRaw(playPoints);playCum=[0];playTotal=0;
+ if(!(ride&&ride._matchedReplayPath))playPoints=window.GaZonJournal&&GaZonJournal.removeSpurs?GaZonJournal.removeSpurs(playPoints):playPoints;
+ // Raw GPS (no road match, or the match was mostly wrong) is smoothed.
+ if(!(ride&&ride._roadMatched)||ride._replayUseRaw)playPoints=smoothRaw(playPoints);playCum=[0];playTotal=0;
  for(var i=1;i<playPoints.length;i++){playTotal+=geoKm(playPoints[i-1],playPoints[i]);playCum.push(playTotal)}
 }
 function pointAtDistance(progress){
@@ -339,7 +376,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s17";
+var REPLAY_BUILD="s18";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}

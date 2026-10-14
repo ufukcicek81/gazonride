@@ -10,6 +10,35 @@
 var $=function(id){return document.getElementById(id)};
 function onReady(fn){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fn);else fn()}
 
+/* In-app dialogs instead of the browser's "…github.io sayfasında şunlar
+ * belirtiliyor" boxes. GaZonDialog.confirm(...) -> Promise<boolean>;
+ * window.alert is replaced by the same styled sheet (non-blocking). */
+var dlgQueue=Promise.resolve();
+function dialog(o){
+ var run=function(){return new Promise(function(resolve){
+  var wrap=document.createElement("div");wrap.className="gr-dialog";wrap.setAttribute("role","alertdialog");wrap.setAttribute("aria-modal","true");
+  wrap.innerHTML='<div class="gr-dialog-card">'+(o.icon?'<span class="mi gr-dialog-icon'+(o.danger?' danger':'')+'">'+o.icon+'</span>':'')+
+   (o.title?'<b class="gr-dialog-title"></b>':'')+'<p class="gr-dialog-text"></p><div class="gr-dialog-actions">'+
+   (o.cancel?'<button type="button" data-v="0"></button>':'')+'<button type="button" data-v="1" class="'+(o.danger?'danger':'primary')+'"></button></div></div>';
+  if(o.title)wrap.querySelector(".gr-dialog-title").textContent=o.title;
+  wrap.querySelector(".gr-dialog-text").textContent=o.text||"";
+  var bs=wrap.querySelectorAll("button");if(o.cancel)bs[0].textContent=o.cancel;bs[bs.length-1].textContent=o.ok||"Tamam";
+  function done(v){wrap.classList.remove("open");document.removeEventListener("keydown",key);setTimeout(function(){wrap.remove()},180);resolve(v)}
+  function key(e){if(e.key==="Escape")done(false)}
+  bs.forEach(function(b){b.onclick=function(){done(b.getAttribute("data-v")==="1")}});
+  wrap.addEventListener("click",function(e){if(e.target===wrap)done(!o.cancel)});
+  document.addEventListener("keydown",key);
+  (document.body||document.documentElement).appendChild(wrap);
+  requestAnimationFrame(function(){wrap.classList.add("open");bs[o.danger&&o.cancel?0:bs.length-1].focus()});
+ })};
+ var p=dlgQueue.then(run);dlgQueue=p.catch(function(){});return p;
+}
+window.GaZonDialog={
+ confirm:function(o){return dialog(Object.assign({ok:"Tamam",cancel:"Vazgeç"},typeof o==="string"?{text:o}:o))},
+ alert:function(o){return dialog(Object.assign({ok:"Tamam"},typeof o==="string"?{text:o}:o))}
+};
+window.alert=function(msg){window.GaZonDialog.alert({text:String(msg==null?"":msg)})};
+
 function tabs(){
  document.documentElement.classList.add("gr-tabs-v3");
  // Rota and Turlar both live on the planning map; keep the tour panel in sync.

@@ -17,9 +17,9 @@ function replaySource(ride){
  // Cleaned once per matched path: detours off the real GPS track and
  // out-and-back spurs removed (see keepNearRaw / GaZonJournal.removeSpurs).
  if(ride._replayClean&&ride._replayCleanOf===m)return ride._replayClean;
- var raw=cleanTrack(pts(ride)),kept=keepNearRaw(raw,m,.03),J=window.GaZonJournal;
- ride._replayUseRaw=kept.length<m.length*.6;
- var out=ride._replayUseRaw?raw:kept;
+ var raw=cleanTrack(pts(ride)),J=window.GaZonJournal,out=m;
+ ride._replayUseRaw=false;
+ if(ride._roadMatched){var kept=keepNearRaw(raw,m,.03);ride._replayUseRaw=kept.length<m.length*.6;out=ride._replayUseRaw?raw:kept}
  if(J&&J.removeSpurs)out=J.removeSpurs(out);
  ride._replayClean=out;ride._replayCleanOf=m;
  return out;
@@ -139,7 +139,11 @@ async function bridgeGpsGaps(raw){
 }
 async function matchRideToRoads(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
- try{
+ // Whole-ride road matching is off: the public matcher only gets ~1 sample
+ // per 130 m and kept inventing ramps and side roads the rider never used.
+ // The rider's own GPS (smoothed, spurs removed) is the truth; the routing
+ // service only joins real GPS gaps (bridgeGpsGaps below).
+ if(window.GAZONRIDE_REPLAY_MATCH)try{
   var osrmPath=await matchViaOsrm(raw);
   if(validMatched(raw,osrmPath)){
    // Road matching can trim the first/last metres; keep the real start and end.
@@ -376,7 +380,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s18";
+var REPLAY_BUILD="s19";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}

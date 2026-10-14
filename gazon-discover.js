@@ -42,7 +42,9 @@ function bind(box){
 function publish(i){
  var A=window.GaZonAuth;
  if(!A||!A.state||!A.state.user){
-  if(confirm("Sürüşünü Keşfet'te paylaşmak için üye girişi gerekli. Giriş sayfasına gidilsin mi?"))location.href="login.html?next="+encodeURIComponent(location.href);
+  var go=function(){location.href="login.html?next="+encodeURIComponent(location.href)};
+  if(window.GaZonDialog)GaZonDialog.confirm({icon:"login",title:"Giriş gerekli",text:"Sürüşünü Keşfet'te paylaşmak için üye girişi yapmalısın.",ok:"Giriş yap"}).then(function(v){if(v)go()});
+  else if(confirm("Sürüşünü Keşfet'te paylaşmak için üye girişi gerekli. Giriş sayfasına gidilsin mi?"))go();
   return;
  }
  if(window.GaZonRideSocial&&GaZonRideSocial.routeForm)GaZonRideSocial.routeForm(i);

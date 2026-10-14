@@ -1,4 +1,4 @@
-/* GaZonRide UI v3 behaviour (pairs with gazon-ui.css).
+/* GazOnRide UI v3 behaviour (pairs with gazon-ui.css).
  * - 5 tabs: Sürüş · Rota · Turlar · Keşfet · Profil (intercom moves into
  *   the ride screen as a map button)
  * - collapsible ride sheet; map buttons follow the sheet height

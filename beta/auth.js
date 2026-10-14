@@ -15,13 +15,13 @@ function redirectLogin(){if(pathName()==="login.html")return;var next=encodeURIC
 function saveLocalProfile(p){
  if(!p)return;
  var old={};try{old=JSON.parse(localStorage.getItem("gazon_profile")||"{}")||{}}catch(e){}
- var out=Object.assign({},old,{name:p.name||old.name||"GaZonRide sürücüsü",bike:p.bike||old.bike||"Motosiklet"});
+ var out=Object.assign({},old,{name:p.name||old.name||"GazOnRide sürücüsü",bike:p.bike||old.bike||"Motosiklet"});
  if(p.avatar_url)out.avatar=p.avatar_url;
  if(p.motor_data){if(Array.isArray(p.motor_data.motors)&&p.motor_data.motors.length){out.motors=p.motor_data.motors;out.activeMotorIndex=Number(p.motor_data.activeMotorIndex||0);out.motor=out.motors[out.activeMotorIndex]||out.motors[0]}else out.motor=Object.assign({},old.motor||{},p.motor_data);}
  localStorage.setItem("gazon_profile",JSON.stringify(out))
 }
 function syncUi(){
- var p=state.profile||{},w=document.getElementById("homeWelcome");if(w)w.textContent=p.name?"Merhaba, "+p.name:"GaZonRide";
+ var p=state.profile||{},w=document.getElementById("homeWelcome");if(w)w.textContent=p.name?"Merhaba, "+p.name:"GazOnRide";
  var adminBtn=document.getElementById("homeAdmin");if(adminBtn)adminBtn.style.display=state.role==="admin"?"flex":"none";
  var mn=document.getElementById("motorName"),mm=document.getElementById("motorModel"),md=p.motor_data||{};
  if(mn)mn.textContent=md.brand||((p.bike||"Motosiklet").split(" ")[0]||"Motosiklet");
@@ -29,7 +29,7 @@ function syncUi(){
  if(typeof window.updateHomeProfileUI==="function")window.updateHomeProfileUI();
 }
 async function ensureProfile(user){
- var meta=user.user_metadata||{},fallback={id:user.id,name:meta.name||"GaZonRide sürücüsü",bike:meta.bike||"Motosiklet"};
+ var meta=user.user_metadata||{},fallback={id:user.id,name:meta.name||"GazOnRide sürücüsü",bike:meta.bike||"Motosiklet"};
  var res=await client.from("profiles").select("id,name,bike,avatar_url,motor_data").eq("id",user.id).maybeSingle();
  if(res.error)throw res.error;
  if(!res.data){
@@ -58,7 +58,7 @@ async function applySession(session){
 async function register(email,password,name,bike){
  if(!configured)throw new Error("Supabase bağlantısı hazır değil.");
  var redirect=new URL("login.html",location.href).href;
- var r=await client.auth.signUp({email:email,password:password,options:{data:{name:name||"GaZonRide sürücüsü",bike:bike||"Motosiklet"},emailRedirectTo:redirect}});
+ var r=await client.auth.signUp({email:email,password:password,options:{data:{name:name||"GazOnRide sürücüsü",bike:bike||"Motosiklet"},emailRedirectTo:redirect}});
  if(r.error)throw r.error;
  if(r.data.session)await applySession(r.data.session);
  return {user:r.data.user,session:r.data.session,needsVerification:!r.data.session};

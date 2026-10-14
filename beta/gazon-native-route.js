@@ -1,4 +1,4 @@
-/* GaZonRide native-route handoff.
+/* GazOnRide native-route handoff.
  * Samples *road geometry* selected by the rider into intermediate Google
  * Navigation SDK waypoints. Google may still choose a different legal road;
  * this is a best-effort route-preservation mechanism, not polyline injection.

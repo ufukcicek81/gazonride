@@ -724,7 +724,7 @@ function replayShareText(){
  var ride=currentRide||{},track=pts(ride),J=window.GaZonJournal,label=J&&J.rideTitle?J.rideTitle(ride):(ride.destination||"Motosiklet sürüşü");
  var m=J&&J.metrics?J.metrics(ride):null,bits=[Number(ride.km||0).toFixed(1)+" km"];
  if(m){if(m.sec)bits.push(J.fmtDur(m.sec));if(m.avg>0)bits.push("ort. "+m.avg+" km/sa");if(m.turns)bits.push(m.turns+" viraj")}else if(ride.duration)bits.push(ride.duration);
- var text="🏍 GaZonRide sürüşü\n"+label+"\n"+bits.join(" · ");
+ var text="🏍 GazOnRide sürüşü\n"+label+"\n"+bits.join(" · ");
  if(track.length>1){
   var a=track[0],b=track[track.length-1];
   var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a.lat.toFixed(6)+","+a.lng.toFixed(6))+"&destination="+encodeURIComponent(b.lat.toFixed(6)+","+b.lng.toFixed(6))+"&travelmode=driving";
@@ -769,14 +769,14 @@ function storyMake(){
 }
 function storyShare(){
  var S=window.GaZonStory,result=$("grReplayShareResult");if(!S||!story.res)return;
- S.share(story.res,"🏍 "+replayShareText().split("\n").slice(1,3).join(" · ")+"\n#GaZonRide").then(function(r){
+ S.share(story.res,"🏍 "+replayShareText().split("\n").slice(1,3).join(" · ")+"\n#GazOnRide").then(function(r){
   if(result)result.textContent=r==="downloaded"?"Video indirildi; Instagram'da hikaye olarak seçebilirsin.":r==="cancelled"?"Paylaşım iptal edildi.":"Paylaşım açıldı · Instagram → Hikaye seç.";
  }).catch(function(){if(result)result.textContent="Video paylaşılamadı. Galeriye kaydetmeyi dene."});
 }
 function storySave(){
  var S=window.GaZonStory,result=$("grReplayShareResult");if(!S||!story.res)return;
  S.save(story.res).then(function(r){
-  if(result)result.textContent=r==="saved"?"Galeriye kaydedildi (Filmler/GaZonRide).":r==="downloaded"?"Video indirildi.":"Kaydedilemedi; Videoyu paylaş'ı kullan.";
+  if(result)result.textContent=r==="saved"?"Galeriye kaydedildi (Filmler/GazOnRide).":r==="downloaded"?"Video indirildi.":"Kaydedilemedi; Videoyu paylaş'ı kullan.";
  }).catch(function(){if(result)result.textContent="Kaydedilemedi; Videoyu paylaş'ı kullan."});
 }
 async function copyReplayShare(){
@@ -803,10 +803,10 @@ function whatsappReplayShare(){
 }
 async function nativeReplayShare(){
  var txt=replayShareText(),result=$("grReplayShareResult");
- if(window.AndroidBridge&&typeof AndroidBridge.shareText==="function"){try{AndroidBridge.shareText("GaZonRide Sürüşü",txt);return}catch(e){}}
+ if(window.AndroidBridge&&typeof AndroidBridge.shareText==="function"){try{AndroidBridge.shareText("GazOnRide Sürüşü",txt);return}catch(e){}}
  if(!navigator.share){if(result)result.textContent="Cihaz paylaşımı desteklenmiyor. WhatsApp veya Kopyala'yı kullan.";return}
  try{
-  await navigator.share({title:"GaZonRide Sürüşü",text:txt});
+  await navigator.share({title:"GazOnRide Sürüşü",text:txt});
   if(result)result.textContent="Paylaşım açıldı.";
  }catch(e){
   if(result)result.textContent=e&&e.name==="AbortError"?"Paylaşım iptal edildi.":"Cihaz paylaşımı açılamadı. Diğer seçenekleri kullan."

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "curated",
-  "note": "GaZonRide moto rotaları: koordinat ve fotoğraf scripts/enrich-moto-routes.js ile doğrulanır.",
+  "note": "GazOnRide moto rotaları: koordinat ve fotoğraf scripts/enrich-moto-routes.js ile doğrulanır.",
   "routes": [
     {
       "id": 1,

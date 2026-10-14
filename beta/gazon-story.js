@@ -1,6 +1,6 @@
 /* Story video: a 1080x1920 (9:16) clip of a saved ride for Instagram /
  * WhatsApp stories. Rendered on a canvas in the app (dark Google static map,
- * the route drawing itself, counting stats, GaZonRide branding) and recorded
+ * the route drawing itself, counting stats, GazOnRide branding) and recorded
  * with MediaRecorder; MP4 where the WebView supports it, WebM otherwise.
  * Android: the file goes to the native share sheet / gallery through
  * AndroidBridge.fileBegin/fileAppend/shareFile/saveToGallery.
@@ -100,7 +100,7 @@ function rider(g,p,t){
 }
 function brand(g,logo,alpha,y){
  g.save();g.globalAlpha=alpha;
- var x=W/2,size=78,label="GaZonRide";
+ var x=W/2,size=78,label="GazOnRide";
  g.font=font(58,800);var tw=g.measureText(label).width,total=size+20+tw,left=x-total/2;
  if(logo){g.save();roundRect(g,left,y-size/2,size,size,20);g.clip();g.drawImage(logo,left,y-size/2,size,size);g.restore()}
  else{g.fillStyle=RED;roundRect(g,left,y-size/2,size,size,20);g.fill()}
@@ -198,7 +198,7 @@ function make(ride,opts){
 }
 
 /* ---------- share / save ---------- */
-function fileName(res){var n=new Date(),p=function(x){return String(x).padStart(2,"0")};return "GaZonRide-"+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+"-"+p(n.getHours())+p(n.getMinutes())+"."+res.ext}
+function fileName(res){var n=new Date(),p=function(x){return String(x).padStart(2,"0")};return "GazOnRide-"+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+"-"+p(n.getHours())+p(n.getMinutes())+"."+res.ext}
 function hasBridge(){var B=root.AndroidBridge;return !!(B&&typeof B.fileBegin==="function"&&typeof B.fileAppend==="function")}
 function toNative(res){
  if(res._native)return Promise.resolve(res._native);

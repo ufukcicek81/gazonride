@@ -1,4 +1,4 @@
-/* GaZonRide Tour Planner · Phase 1, real-road loop preview */
+/* GazOnRide Tour Planner · Phase 1, real-road loop preview */
 body.mode-navigation:not(.guidance-active) .gr-plan-modes{
  display:flex;align-items:center;gap:5px;margin:0 0 9px;
  width:max-content;max-width:100%;padding:4px;

@@ -1,4 +1,4 @@
-/* GaZonRide Journal ("Günlük") + "Günün hissi" + lean calibration wizard.
+/* GazOnRide Journal ("Günlük") + "Günün hissi" + lean calibration wizard.
  * - offline SVG route thumbnail for each recorded ride (no map API cost)
  * - richer ride cards: km, time, avg speed, climb, curves, moods
  * - mood tags on the ride summary, stored on the ride and added to

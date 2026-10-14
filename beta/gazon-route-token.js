@@ -1,4 +1,4 @@
-/* GaZonRide route token bridge.
+/* GazOnRide route token bridge.
  * Google Navigation SDK can drive EXACTLY the route chosen on the map when it
  * receives a Routes API "route token" for the same waypoints. This module asks
  * the Routes REST API for that token. Any failure returns null and the caller

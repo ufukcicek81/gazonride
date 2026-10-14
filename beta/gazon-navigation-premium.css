@@ -1,4 +1,4 @@
-/* GaZonRide · premium full-map navigation · first UI pass
+/* GazOnRide · premium full-map navigation · first UI pass
    Only CSS: no changes to route computation, Google SDK, or recorded rides. */
 body.mode-navigation:not(.guidance-active) .appHeader{display:none!important}
 body.mode-navigation:not(.guidance-active) .app{

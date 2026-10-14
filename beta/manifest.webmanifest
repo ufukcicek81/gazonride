@@ -1,7 +1,7 @@
 {
   "id": "gazonride-v3",
-  "name": "GaZonRide",
-  "short_name": "GaZonRide",
+  "name": "GazOnRide",
+  "short_name": "GazOnRide",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

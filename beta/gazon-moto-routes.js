@@ -57,7 +57,7 @@ function render(){
  box.querySelectorAll("[data-moto-type]").forEach(function(b){b.onclick=function(){filterType=b.getAttribute("data-moto-type");render()}});
  box.querySelectorAll("[data-moto-go]").forEach(function(b){b.onclick=function(){go(Number(b.getAttribute("data-moto-go")))}});
 }
-// Start the route in GaZonRide: through all known points (start → via → end)
+// Start the route in GazOnRide: through all known points (start → via → end)
 // so the scenic road is used, not the fastest one; names as a fallback.
 function go(id){
  var r=routes.filter(function(x){return x.id===id})[0];if(!r)return;
@@ -76,7 +76,7 @@ function select(on){
  }
 }
 function load(){
- fetch("gazon-moto-routes.json?v=20261014-photos4",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
+ fetch("gazon-moto-routes.json?v=20261014-brand1",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
   routes=Array.isArray(d&&d.routes)?d.routes:[];loaded=true;render();
  }).catch(function(){loaded=true;routes=[];var b=$("grMotoRoutes");if(b)b.innerHTML='<div class="gr-moto-empty">Rotalar yüklenemedi. İnternet bağlantını kontrol et.</div>'});
 }

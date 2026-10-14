@@ -1,4 +1,4 @@
-/* GaZonRide Tour Planner UI v2
+/* GazOnRide Tour Planner UI v2
  * Planning logic lives in gazon-tour-engine.js (tested on a synthetic road
  * network). This file connects it to Google Routes, the map and the cards.
  * Android Native Navigation SDK receives the SAME loop corners plus a route
@@ -108,7 +108,7 @@ function openSelected(){
  setMessage("Tur navigasyona hazırlanıyor…");
  Promise.resolve(config.launchInside(o)).then(function(started){
   if(started){
-   setMessage("Tur GaZonRide içinde başlatılıyor. Yol boyunca dönüşleri takip et.");
+   setMessage("Tur GazOnRide içinde başlatılıyor. Yol boyunca dönüşleri takip et.");
    const box=id("grTourChoices");if(box)box.classList.remove("active");
   }else setMessage("Tur navigasyonu başlatılamadı. Lütfen uygulama izinlerini kontrol et.");
  },function(){setMessage("Tur navigasyonu başlatılamadı. Tekrar dene.")})

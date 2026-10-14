@@ -1,4 +1,4 @@
-/* GaZonRide Tour Engine v2
+/* GazOnRide Tour Engine v2
  * Pure, router-agnostic planner for closed motorcycle loops. The browser
  * passes a Google Routes adapter; tests pass a synthetic road network.
  *

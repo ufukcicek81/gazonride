@@ -22,7 +22,7 @@ function saveDuckSetting(on){
 function icon(name){return '<span class="mi" aria-hidden="true">'+name+'</span>'}
 function markup(){
  return '<button type="button" class="gr-music-launch" id="grMusicLaunch" aria-label="Müzik panelini aç" aria-expanded="false">'+icon("music_note")+'<span>Müzik</span></button>'+
-  '<section class="gr-music-panel" id="grMusicPanel" role="dialog" aria-label="GaZonRide müzik merkezi" aria-modal="false" hidden>'+
+  '<section class="gr-music-panel" id="grMusicPanel" role="dialog" aria-label="GazOnRide müzik merkezi" aria-modal="false" hidden>'+
    '<div class="gr-music-head"><div><small>GAZONRIDE · MÜZİK</small><b>Müzik Merkezi</b></div>'+
     '<button type="button" id="grMusicClose" aria-label="Müzik panelini kapat">'+icon("close")+'</button></div>'+
    '<div class="gr-music-provider"><button type="button" id="grMusicSpotify">'+icon("open_in_new")+' Spotify</button>'+
@@ -37,11 +37,11 @@ function markup(){
    '<button type="button" class="gr-music-test" id="grMusicTest">'+icon("volume_up")+' Ses kısılmasını dene</button>'+
    '<div class="gr-music-permission" id="grMusicPermission">'+
     '<b>Android müzik kontrol izni</b>'+
-    '<p>Spotify ve YouTube Music şarkılarını bu ekrandan yönetmek için bir defalık Android Bildirim erişimi izni gerekir. GaZonRide bildirim mesajlarını okumaz veya kaydetmez.</p>'+
+    '<p>Spotify ve YouTube Music şarkılarını bu ekrandan yönetmek için bir defalık Android Bildirim erişimi izni gerekir. GazOnRide bildirim mesajlarını okumaz veya kaydetmez.</p>'+
     '<button type="button" id="grMusicGrant">'+icon("settings")+' İzin ekranını aç</button></div>'+
    '<p class="gr-music-status" id="grMusicStatus" aria-live="polite"></p>'+
    '<p class="gr-music-focus" id="grMusicFocus" aria-live="polite">Ses odağı: henüz denenmedi</p>'+
-   '<p class="gr-music-foot">İlk kez şarkı seçmek için müzik uygulamasını aç, müziği başlat ve GaZonRide’a dön. Çalma kontrolleri burada kalır.</p>'+
+   '<p class="gr-music-foot">İlk kez şarkı seçmek için müzik uygulamasını aç, müziği başlat ve GazOnRide’a dön. Çalma kontrolleri burada kalır.</p>'+
   '</section>'
 }
 function update(){
@@ -65,7 +65,7 @@ function update(){
   status.textContent="Web sürümünde müzik çalmaya devam edebilirsin ancak uygulama içi kontrol ve otomatik kısılma için güncel Android APK gereklidir.";
   $("grMusicGrant").disabled=true;
  }else if(!access){
-  status.textContent="Android Bildirim erişimini aç, sonra GaZonRide’a dön. İzin verilmeden diğer uygulamalar kontrol edilemez.";
+  status.textContent="Android Bildirim erişimini aç, sonra GazOnRide’a dön. İzin verilmeden diğer uygulamalar kontrol edilemez.";
   $("grMusicGrant").disabled=false;
  }else if(!session){
   status.textContent="Hazır. Spotify veya YouTube Music’i başlatıp bir şarkı aç.";
@@ -107,7 +107,7 @@ function setOpen(on){
 function openPlayer(provider){
  if(supported()){
   safeCall("openMusicApp",provider);
-  $("grMusicStatus").textContent="Şarkını seçip GaZonRide’a dön. Panel kaldığın yerden devam eder.";
+  $("grMusicStatus").textContent="Şarkını seçip GazOnRide’a dön. Panel kaldığın yerden devam eder.";
  }else{
   // Universal links open the installed app on iPhone, the website otherwise.
   var url=provider==="spotify"?"https://open.spotify.com/":"https://music.youtube.com/";

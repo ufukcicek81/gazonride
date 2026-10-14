@@ -1,4 +1,4 @@
-/* GaZonRide navigation camera + GPS jump filter.
+/* GazOnRide navigation camera + GPS jump filter.
  * - rejects impossible GPS jumps (multipath in cities / tunnels)
  * - smooths heading on the circle (no 359° -> 0° spins), ignores heading
  *   while stopped so the map does not rotate at traffic lights

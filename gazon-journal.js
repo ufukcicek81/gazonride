@@ -281,6 +281,21 @@ function staticMapUrl(track,w,h,key){
  q.push("key="+encodeURIComponent(key));
  return "https://maps.googleapis.com/maps/api/staticmap?"+q.join("&");
 }
+// Story video (gazon-story.js): a plain dark map (no path, the route is
+// animated on top) plus a projector from lat/lon to image pixels (scale 2).
+function storyMap(track,w,h){
+ var pts=smoothTrack(points(track));if(pts.length<2)return null;
+ var W=Math.min(640,w),H=Math.min(640,h),v=fitView(pts,W,Math.round(H*.6),Math.round(W*.1)),key=(root.GAZONRIDE_STATIC_MAPS_KEY&&String(root.GAZONRIDE_STATIC_MAPS_KEY))||mapsKey();
+ var cx=mercX(v.center,v.zoom),cy=mercY(v.center,v.zoom),x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+ pts.forEach(function(p){var x=mercX(p,v.zoom),y=mercY(p,v.zoom);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)});
+ // Zoom levels are powers of two: how much more the route could be enlarged.
+ var pad=Math.round(W*.1),fit=Math.max(1,Math.min((W-2*pad)/Math.max(1,x1-x0),(Math.round(H*.6)-2*pad)/Math.max(1,y1-y0),2));
+ function project(p){return [(mercX(p,v.zoom)-cx)*2+W,(mercY(p,v.zoom)-cy)*2+H]}
+ var q=["size="+W+"x"+H,"scale=2","maptype=roadmap","language=tr","center="+v.center.lat.toFixed(6)+","+v.center.lon.toFixed(6),"zoom="+v.zoom];
+ DARK_STYLE.forEach(function(x){q.push("style="+encodeURIComponent(x))});
+ if(key)q.push("key="+encodeURIComponent(key));
+ return {url:key?"https://maps.googleapis.com/maps/api/staticmap?"+q.join("&"):"",width:W*2,height:H*2,zoom:v.zoom,fit:fit,points:pts,project:project};
+}
 function mapView(track,w,h){
  var svg=routeSvg(track,w,h);if(!svg)return "";
  // A separate Static-Maps-only key can be set without touching the main key.
@@ -304,7 +319,7 @@ function rideCard(r,opts){
   '<div class="gr-ride-stats"><b>'+(Number(m.km)||0).toFixed(1).replace(".",",")+' km</b><span>'+bits.map(esc).join(" · ")+'</span></div>'+
   '<small class="gr-ride-when">'+rideWhen(r)+'</small></div>';
 }
-var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points};
+var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points,storyMap:storyMap};
 root.GaZonJournal=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

@@ -17,6 +17,7 @@
     </queries>
     <application android:theme="@style/AppTheme" android:label="GaZonRide" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="false" android:hardwareAccelerated="true" android:allowBackup="true">
         <service android:name=".RideLocationService" android:foregroundServiceType="location" />
+        <provider android:name=".ShareProvider" android:authorities="com.gazonride.app.share" android:exported="false" android:grantUriPermissions="true" />
         <service
             android:name=".MusicNotificationListener"
             android:label="GaZonRide Müzik Kontrolü"

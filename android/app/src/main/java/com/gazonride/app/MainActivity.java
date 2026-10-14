@@ -344,6 +344,51 @@ public class MainActivity extends Activity {
         }
         // System share sheet (WhatsApp, Instagram, Telegram, …): the WebView has
         // no navigator.share and cannot open whatsapp:// links by itself.
+        // Ride story video: the WebView renders it, then hands it over in
+        // base64 chunks (a single multi-MB string over the bridge is fragile).
+        @JavascriptInterface public boolean fileBegin(String name){
+            try{ java.io.File f=new java.io.File(ShareProvider.dir(MainActivity.this),safeName(name)); if(f.exists())f.delete(); return f.createNewFile(); }catch(Exception e){ return false; }
+        }
+        @JavascriptInterface public boolean fileAppend(String name,String base64){
+            try(java.io.FileOutputStream o=new java.io.FileOutputStream(new java.io.File(ShareProvider.dir(MainActivity.this),safeName(name)),true)){
+                o.write(android.util.Base64.decode(base64,android.util.Base64.DEFAULT)); return true;
+            }catch(Exception e){ return false; }
+        }
+        @JavascriptInterface public void shareFile(String name,String mime,String text){
+            runOnUiThread(() -> {
+                try{
+                    Uri uri=Uri.parse("content://"+ShareProvider.AUTHORITY+"/"+safeName(name));
+                    Intent send=new Intent(Intent.ACTION_SEND);
+                    send.setType(mime);
+                    send.putExtra(Intent.EXTRA_STREAM,uri);
+                    if(text!=null&&!text.isEmpty())send.putExtra(Intent.EXTRA_TEXT,text);
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    send.setClipData(android.content.ClipData.newRawUri("",uri));
+                    Intent chooser=Intent.createChooser(send,"Sürüş videosunu paylaş");
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(chooser);
+                }catch(Exception e){
+                    Toast.makeText(MainActivity.this,"Video paylaşılamadı.",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+        // Copies the video into the gallery (Movies/GaZonRide). Android 10+.
+        @JavascriptInterface public boolean saveToGallery(String name,String mime){
+            if(android.os.Build.VERSION.SDK_INT<29)return false;
+            try{
+                android.content.ContentValues v=new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME,safeName(name));
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE,mime);
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,"Movies/GaZonRide");
+                Uri dest=getContentResolver().insert(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI,v);
+                if(dest==null)return false;
+                try(java.io.InputStream in=new java.io.FileInputStream(new java.io.File(ShareProvider.dir(MainActivity.this),safeName(name)));
+                    java.io.OutputStream out=getContentResolver().openOutputStream(dest)){
+                    byte[] b=new byte[65536];int n;while((n=in.read(b))>0)out.write(b,0,n);
+                }
+                return true;
+            }catch(Exception e){ return false; }
+        }
         // Markers left on the native navigation screen; returned once, then cleared.
         @JavascriptInterface public String takeNativeMarks(){
             String v=prefs.getString("native_marks","[]");
@@ -684,6 +729,10 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static String safeName(String n){
+        String s=n==null?"video.mp4":n.replaceAll("[^A-Za-z0-9._-]","_");
+        return s.length()>80?s.substring(s.length()-80):s;
+    }
     private void deliverPendingOAuth(){
         if(webView==null || pendingOAuthUrl==null) return;
         final String callback=pendingOAuthUrl;

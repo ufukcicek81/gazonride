@@ -68,6 +68,11 @@
 .gr-replay-share-actions button{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 12px;background:#1b242d;color:#fff;border:1px solid #414b58;border-radius:14px;font-size:14px;font-weight:800;min-height:51px}
 .gr-story-box{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
 .gr-story-box[hidden],.gr-story-box [hidden]{display:none!important}
+.gr-story-styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gr-story-styles button{min-width:0;overflow:hidden;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:14px;border:1px solid #414b58;background:#1b242d;color:#cad2df;font-weight:800;font-size:13px}
+.gr-story-styles button .mi{font-size:19px}
+.gr-story-styles button.on{background:#fff;color:#111827;border-color:#fff}
+.gr-story-styles button:disabled{opacity:.5}
 .gr-story-make{display:flex;align-items:center;gap:14px;padding:16px;border:0;border-radius:18px;background:linear-gradient(135deg,#E8322E,#ff7a1f);color:#fff;text-align:left;min-height:64px;cursor:pointer}
 .gr-story-make .mi{font-size:32px}
 .gr-story-make b{display:block;font-size:16px}

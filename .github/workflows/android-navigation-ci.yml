@@ -1,4 +1,4 @@
-name: GaZonRide Google Navigation SDK CI
+name: GazOnRide Google Navigation SDK CI
 on:
   push:
     branches:
@@ -57,7 +57,7 @@ jobs:
               -dname "CN=GaZonRide,O=GaZonRide,C=TR" -keyalg RSA \
               -keysize 2048 -validity 10000
           fi
-      - name: Restore GaZonRide launcher logo
+      - name: Restore GazOnRide launcher logo
         shell: bash
         run: |
           set -eu
@@ -82,5 +82,5 @@ jobs:
       - name: Upload test-only Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: GaZonRide-Native-Navigation-SDK-Test
+          name: GazOnRide-Native-Navigation-SDK-Test
           path: android/app/build/outputs/apk/debug/app-debug.apk

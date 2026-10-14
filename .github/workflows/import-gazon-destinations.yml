@@ -1,4 +1,4 @@
-name: GaZonRide 81 İl Gezi Kartları Denetimi
+name: GazOnRide 81 İl Gezi Kartları Denetimi
 on:
   push:
     branches: [main]

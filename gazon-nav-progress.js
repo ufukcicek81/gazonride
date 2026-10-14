@@ -1,4 +1,4 @@
-/* GaZonRide Navigation Progress Engine v1.
+/* GazOnRide Navigation Progress Engine v1.
    Uses only fresh GPS fixes and projected distance along the selected road polyline.
    Does not infer travel when GPS is stale, and does not affect the replay camera. */
 (function(root){

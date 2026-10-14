@@ -1,5 +1,5 @@
 
-/* GaZonRide destination photography and guide details */
+/* GazOnRide destination photography and guide details */
 #grRouteHubList .gr-route-tile{min-width:0;overflow:hidden}
 #grRouteHubList .gr-route-tile[data-kind="gazon"]{cursor:pointer}
 #grRouteHubList .gr-route-tile[data-kind="gazon"]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}

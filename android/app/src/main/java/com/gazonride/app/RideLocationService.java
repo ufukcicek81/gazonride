@@ -47,7 +47,7 @@ public class RideLocationService extends Service {
         createChannel();
         PowerManager pm=(PowerManager)getSystemService(POWER_SERVICE);
         if(pm!=null){
-            wakeLock=pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"GaZonRide:RideTracking");
+            wakeLock=pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"GazOnRide:RideTracking");
             wakeLock.setReferenceCounted(false);
             try{wakeLock.acquire(8L*60L*60L*1000L);}catch(Exception ignored){}
         }

@@ -1,4 +1,4 @@
-name: GaZonRide music feature APK test
+name: GazOnRide music feature APK test
 on:
   push:
     branches: [feature/gazonride-native-tts-duck-fix]
@@ -53,5 +53,5 @@ jobs:
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: GaZonRide-Music-Android-CI
+          name: GazOnRide-Music-Android-CI
           path: android/app/build/outputs/apk/debug/app-debug.apk

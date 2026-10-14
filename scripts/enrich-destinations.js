@@ -18,7 +18,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const FILE = path.join(ROOT, "gazon-destinations.json");
 const REPORT = path.join(ROOT, "docs", "destinations-check.md");
-const UA = "GaZonRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
+const UA = "GazOnRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const plain = s => String(s || "").replace(/[âÂ]/g, "a").replace(/[îÎ]/g, "i").replace(/[ûÛ]/g, "u");
 const norm = s => plain(s).toLocaleLowerCase("tr-TR").replace(/\s+(ili|province)$/i, "").replace(/[^a-zçğıöşü]/g, "");

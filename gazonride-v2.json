@@ -1,7 +1,7 @@
 {
   "id": "gazonride-v3",
-  "name": "GaZonRide",
-  "short_name": "GaZonRide",
+  "name": "GazOnRide",
+  "short_name": "GazOnRide",
   "description": "Motosiklet sürüş, rota ve grup sürüş uygulaması.",
   "start_url": "./",
   "scope": "./",

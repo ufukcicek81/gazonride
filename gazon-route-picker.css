@@ -1,4 +1,4 @@
-/* GaZonRide Navigation · choose the road BEFORE starting guidance.
+/* GazOnRide Navigation · choose the road BEFORE starting guidance.
    This sheet is portalled to <body> so the transformed top navigation
    panel cannot trap position:fixed at the top of the screen. */
 #navChoices{display:none!important}

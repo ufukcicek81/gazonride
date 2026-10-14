@@ -7,7 +7,7 @@
 //   en elsewhere), exact title first, else a Commons search result.
 const fs = require("fs"), path = require("path");
 const FILE = path.join(__dirname, "..", "gazon-moto-routes.json");
-const UA = "GaZonRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
+const UA = "GazOnRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function getJson(url) {
   for (let i = 0; i < 3; i++) {

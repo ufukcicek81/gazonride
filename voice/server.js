@@ -140,4 +140,4 @@ const heartbeat = setInterval(() => {
   }
 }, 30000);
 wss.on("close", () => clearInterval(heartbeat));
-server.listen(process.env.PORT || 8080, "0.0.0.0", () => console.log("GaZonRide voice signaling ready"));
+server.listen(process.env.PORT || 8080, "0.0.0.0", () => console.log("GazOnRide voice signaling ready"));

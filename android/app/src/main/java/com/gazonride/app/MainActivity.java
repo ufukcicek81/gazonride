@@ -297,7 +297,7 @@ public class MainActivity extends Activity {
                         startActivity(intent);
                     } catch(Exception e) {
                         Toast.makeText(MainActivity.this,
-                                "GaZonRide navigasyon ekranı açılamadı.",Toast.LENGTH_LONG).show();
+                                "GazOnRide navigasyon ekranı açılamadı.",Toast.LENGTH_LONG).show();
                     }
                 });
                 return true;
@@ -372,14 +372,14 @@ public class MainActivity extends Activity {
                 }
             });
         }
-        // Copies the video into the gallery (Movies/GaZonRide). Android 10+.
+        // Copies the video into the gallery (Movies/GazOnRide). Android 10+.
         @JavascriptInterface public boolean saveToGallery(String name,String mime){
             if(android.os.Build.VERSION.SDK_INT<29)return false;
             try{
                 android.content.ContentValues v=new android.content.ContentValues();
                 v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME,safeName(name));
                 v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE,mime);
-                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,"Movies/GaZonRide");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,"Movies/GazOnRide");
                 Uri dest=getContentResolver().insert(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI,v);
                 if(dest==null)return false;
                 try(java.io.InputStream in=new java.io.FileInputStream(new java.io.File(ShareProvider.dir(MainActivity.this),safeName(name)));
@@ -400,7 +400,7 @@ public class MainActivity extends Activity {
                 try {
                     Intent send=new Intent(Intent.ACTION_SEND);
                     send.setType("text/plain");
-                    send.putExtra(Intent.EXTRA_SUBJECT,title==null?"GaZonRide":title);
+                    send.putExtra(Intent.EXTRA_SUBJECT,title==null?"GazOnRide":title);
                     send.putExtra(Intent.EXTRA_TEXT,text==null?"":text);
                     Intent chooser=Intent.createChooser(send,"Sürüşü paylaş");
                     chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -478,7 +478,7 @@ public class MainActivity extends Activity {
         if(pendingUri!=null&&!pendingUri.isEmpty()) pendingInstallUri=Uri.parse(pendingUri);
         registerUpdateDownloadReceiver();
         captureOAuthIntent(getIntent());
-        // GaZonRide is used as a motorcycle navigation screen: keep display awake
+        // GazOnRide is used as a motorcycle navigation screen: keep display awake
         // while the application is in the foreground.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         applySystemTheme();
@@ -810,7 +810,7 @@ public class MainActivity extends Activity {
                     if(isFinishing() || (Build.VERSION.SDK_INT>=17 && isDestroyed())
                             || prefs.getBoolean("ride_active",false)) return;
                     new AlertDialog.Builder(this)
-                        .setTitle("GaZonRide v1.0."+newCode)
+                        .setTitle("GazOnRide v1.0."+newCode)
                         .setMessage("Android navigasyon veya telefon özellikleri için yeni sürüm hazır. Sürüş kayıtların korunacak. Güncellemeyi uygulama içinden indirmek ister misin?")
                         .setNegativeButton("Daha sonra",(d,w)->{
                             prefs.edit().putInt("native_update_prompt_code",newCode)
@@ -864,7 +864,7 @@ public class MainActivity extends Activity {
                     if(isFinishing() || prefs.getBoolean("ride_active",false)) return;
                     new AlertDialog.Builder(this)
                         .setTitle("Yeni test sürümü hazır")
-                        .setMessage("GaZonRide BETA güncellendi. Sürüşlerin ve ayarların korunur. Şimdi indirilip kurulsun mu?")
+                        .setMessage("GazOnRide BETA güncellendi. Sürüşlerin ve ayarların korunur. Şimdi indirilip kurulsun mu?")
                         .setNegativeButton("Daha sonra",(d,w)->prefs.edit().putString("beta_update_skipped",remote).apply())
                         .setPositiveButton("Güncelle",(d,w)->startNativeUpdateDownload(BETA_APK_URL))
                         .show();
@@ -889,7 +889,7 @@ public class MainActivity extends Activity {
             DownloadManager dm=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
             if(dm==null) throw new IllegalStateException("DownloadManager unavailable");
             DownloadManager.Request req=new DownloadManager.Request(Uri.parse(apkUrl));
-            req.setTitle("GaZonRide güncellemesi");
+            req.setTitle("GazOnRide güncellemesi");
             req.setDescription("Yeni sürüm indiriliyor");
             req.setMimeType("application/vnd.android.package-archive");
             req.setAllowedOverMetered(true);
@@ -945,7 +945,7 @@ public class MainActivity extends Activity {
             try{
                 Intent settingsIntent=new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName()));
                 startActivity(settingsIntent);
-                Toast.makeText(this,"GaZonRide güncellemesi için 'Bu kaynaktan izin ver' seçeneğini aç.",Toast.LENGTH_LONG).show();
+                Toast.makeText(this,"GazOnRide güncellemesi için 'Bu kaynaktan izin ver' seçeneğini aç.",Toast.LENGTH_LONG).show();
             }catch(Exception e){
                 Toast.makeText(this,"Uygulama yükleme izni açılamadı.",Toast.LENGTH_LONG).show();
             }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the GaZonRide destination catalogue from the user-supplied 1021-place guide.
+"""Build the GazOnRide destination catalogue from the user-supplied 1021-place guide.
 Extract place/experience facts into a normalized JSON file for static hosting.
 """
 import json
@@ -98,7 +98,7 @@ def parse_article(html):
 
 
 def main():
-    headers = {"User-Agent": "GaZonRide/1.0 public destination catalogue importer"}
+    headers = {"User-Agent": "GazOnRide/1.0 public destination catalogue importer"}
     response = requests.get(SOURCE, timeout=45, headers=headers)
     response.raise_for_status()
     response.encoding = response.apparent_encoding or "utf-8"

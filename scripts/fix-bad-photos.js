@@ -5,7 +5,7 @@
 // a Wikimedia Commons search. Runs in Actions before mirror-photos.js.
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const UA = "GaZonRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
+const UA = "GazOnRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
 const BAD = /map|harita|karte|harta|locator|location|_in_turkey|relief|\.svg|logo|belediye|from_space|roads-|diagram|plan\b|seal|flag|bayrak|armas/i;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function getJson(url) {

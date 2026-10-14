@@ -6,7 +6,7 @@
 // from the app's own site. The © credit link to the original stays.
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 const ROOT = path.join(__dirname, ".."), OUT = path.join(ROOT, "photos");
-const UA = "GaZonRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
+const UA = "GazOnRide-data-check/1.0 (+https://github.com/ufukcicek81/gazonride)";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 async function download(url) {

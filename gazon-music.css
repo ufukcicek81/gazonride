@@ -1,4 +1,4 @@
-/* GaZonRide Music Center — compact, accessible and independent of replay/navigation layout */
+/* GazOnRide Music Center — compact, accessible and independent of replay/navigation layout */
 #grMusic{--gm-accent:#ff5a1f;position:fixed;z-index:1650;right:12px;bottom:calc(109px + var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)));width:auto;max-width:100%;pointer-events:none;color:#f8fafc;font-family:inherit}
 #grMusic>*{pointer-events:auto}
 .gr-music-launch{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #ffad8a77;color:#fff;background:#151b24ed;box-shadow:0 6px 26px #0008;padding:11px 13px;border-radius:30px;min-height:48px;min-width:48px;font-size:11px;font-weight:850;cursor:pointer;backdrop-filter:blur(12px)}

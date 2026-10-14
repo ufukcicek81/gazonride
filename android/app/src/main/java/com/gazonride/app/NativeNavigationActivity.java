@@ -35,7 +35,7 @@ import com.google.android.libraries.navigation.TimeAndDistance;
 import com.google.android.libraries.navigation.Waypoint;
 
 /**
- * Native in-app Google navigation. Runs as a second screen of GaZonRide so the
+ * Native in-app Google navigation. Runs as a second screen of GazOnRide so the
  * original WebView, motorcycle tracking service, music player and 3D replay
  * remain intact. No Google Maps application or third-party WebView is opened.
  *
@@ -196,7 +196,7 @@ public final class NativeNavigationActivity extends Activity {
         // available as a small one-tap control above the native ETA card.
         Button back = control("✕");
         back.setTextSize(22);
-        back.setContentDescription("Navigasyonu bitir ve GaZonRide'a dön");
+        back.setContentDescription("Navigasyonu bitir ve GazOnRide'a dön");
         back.setBackground(shape(0xEC151D2B, 32));
         back.setOnClickListener(v -> exitNavigation());
         FrameLayout.LayoutParams backParams =
@@ -338,7 +338,7 @@ public final class NativeNavigationActivity extends Activity {
         double lat = getIntent().getDoubleExtra("destination_lat", Double.NaN);
         double lng = getIntent().getDoubleExtra("destination_lng", Double.NaN);
         if (!Double.isFinite(lat) || !Double.isFinite(lng) || Math.abs(lat)>90 || Math.abs(lng)>180) {
-            message("Geçersiz hedef konumu. GaZonRide'a dönüp hedef seç.");
+            message("Geçersiz hedef konumu. GazOnRide'a dönüp hedef seç.");
             return;
         }
 
@@ -413,7 +413,7 @@ public final class NativeNavigationActivity extends Activity {
             options.avoidHighways(getIntent().getBooleanExtra("avoid_highways",false));
             message("Google güzergâhı hesaplanıyor…");
             if (routeStops.isEmpty()) routeStops.add(waypoint);
-            // Preferred: the exact road previewed in GaZonRide (Routes API
+            // Preferred: the exact road previewed in GazOnRide (Routes API
             // token for the identical stop list). Otherwise Google computes
             // a route through the same stops.
             String token = getIntent().getStringExtra("route_token");
@@ -593,7 +593,7 @@ public final class NativeNavigationActivity extends Activity {
                 navigator.clearDestinations();
             } catch (Exception ignored) {}
         }
-        // Never stop the ongoing GaZonRide motorcycle ride on an accidental
+        // Never stop the ongoing GazOnRide motorcycle ride on an accidental
         // navigation exit. The user can finish their ride on the main screen.
         finish();
     }

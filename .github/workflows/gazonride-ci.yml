@@ -1,4 +1,4 @@
-name: GaZonRide CI (tests, Android build, beta)
+name: GazOnRide CI (tests, Android build, beta)
 # Every development push is verified before it can reach riders:
 #  1. web tests: tour engine (50/100/150 km), GPS simulation, route token, syntax
 #  2. Android compile (APK artifact only, never published as a release)
@@ -130,7 +130,7 @@ jobs:
       - name: Upload test APK (not a release)
         uses: actions/upload-artifact@v4
         with:
-          name: GaZonRide-test-${{ github.run_number }}
+          name: GazOnRide-test-${{ github.run_number }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
       # Direct (non-zip) download for testers: a PRE-release with a fixed URL
@@ -145,7 +145,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: beta-latest
-          name: GaZonRide BETA (test sürümü)
+          name: GazOnRide BETA (test sürümü)
           prerelease: true
           make_latest: false
           body: "Test sürümü · ${{ github.ref_name }} @ ${{ github.sha }} · Normal kullanıcılara güncelleme olarak sunulmaz."

@@ -292,7 +292,7 @@ async function showMine(){
  modal("Gönderilerim",q.length?q.map(function(s){var st=s.status==="approved"?"ONAYLANDI":s.status==="rejected"?"REDDEDİLDİ":"ONAY BEKLİYOR";return '<div class="gr-admin-item"><b>'+esc(s.data.title)+'</b><span class="gr-badge '+(s.status==="approved"?"approved":"pending")+'">'+st+'</span><div class="gr-post-meta">'+esc(s.type==="route"?"Rota":"Mola yeri")+' · '+esc(s.createdAt)+'</div><div class="gr-post-text">'+esc(s.data.description||"")+'</div>'+(s.type==="route"&&s.remoteId?'<div class="gr-admin-actions"><button class="gr-ok" data-my-edit="'+s.remoteId+'">Düzenle</button><button class="gr-no" data-my-delete="'+s.remoteId+'">Sil</button></div>':'')+'</div>'}).join(""):'<div class="gr-empty">Henüz gönderin yok.</div>');document.querySelectorAll("[data-my-edit]").forEach(function(b){b.onclick=function(){var item=q.find(function(x){return x.remoteId===b.dataset.myEdit});if(item)editOwnRoute(item)}});document.querySelectorAll("[data-my-delete]").forEach(function(b){b.onclick=function(){deleteOwnRoute(b.dataset.myDelete)}})
 }
 async function deleteOwnRoute(id){
- if(!confirm("Bu rotayı silmek istiyor musun?"))return;
+ if(!(window.GaZonDialog?await GaZonDialog.confirm({icon:"delete",danger:true,title:"Rota silinsin mi?",text:"Gönderdiğin rota Keşfet'ten kaldırılır.",ok:"Sil"}):confirm("Bu rotayı silmek istiyor musun?")))return;
  await GaZonAuth.ready;var r=await GaZonAuth.client.from("submissions").delete().eq("id",id).eq("user_id",GaZonAuth.state.user.id);
  if(r.error){alert(r.error.message);return}closeModal();await syncRemoteCommunity();showMine()
 }

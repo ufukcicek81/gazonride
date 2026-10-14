@@ -345,7 +345,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261014-brand1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261014-brand1">
 <link rel="stylesheet" href="gazon-tour.css?v=20261014-brand1">
-<link rel="stylesheet" href="gazon-ui.css?v=20261014-brand1">
+<link rel="stylesheet" href="gazon-ui.css?v=20261014-dlg1">
 </head>
 <body>
 <div class="app">
@@ -2502,7 +2502,8 @@ function syncMemberExtras(){
 // next sync would bring it back). Returns true when it was removed.
 async function deleteRideAt(idx){
  var arr=JSON.parse(localStorage.getItem("gazon_rides")||"[]"),ride=arr[idx];if(!ride)return false;
- if(!confirm("Bu sürüş kaydını silmek istiyor musun? Bu işlem geri alınamaz."))return false;
+ var ok=window.GaZonDialog?await GaZonDialog.confirm({icon:"delete",danger:true,title:"Sürüş silinsin mi?",text:(ride.destination?ride.destination+" · ":"")+Number(ride.km||0).toFixed(1)+" km\nBu sürüş ve 3D tekrarı kalıcı olarak silinir.",ok:"Sil",cancel:"Vazgeç"}):confirm("Bu sürüş kaydını silmek istiyor musun?");
+ if(!ok)return false;
  if(ride.cloudId&&window.GaZonAuth&&GaZonAuth.configured){
    try{await GaZonAuth.ready;if(GaZonAuth.state.user){var del=await GaZonAuth.client.from("rides").delete().eq("id",ride.cloudId).eq("user_id",GaZonAuth.state.user.id);if(del.error){alert("Sürüş buluttan silinemedi: "+del.error.message);return false}}}catch(e){alert("Sürüş silinemedi.");return false}
  }
@@ -2773,16 +2774,16 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261014-brand1"></script>
+<script src="social.js?v=20261014-dlg1"></script>
 <script src="gazon-guides.js?v=20261011-photo1"></script>
 <script src="gazon-destinations.js?v=20261014-brand1"></script>
-<script src="replay.js?v=20261014-match1"></script>
+<script src="replay.js?v=20261014-dlg1"></script>
 <script src="gazon-music.js?v=20261014-brand1"></script>
 <script src="gazon-journal.js?v=20261014-story3"></script>
 <script src="gazon-story.js?v=20261014-story3"></script>
-<script src="gazon-discover.js?v=20261013-pub1"></script>
+<script src="gazon-discover.js?v=20261014-dlg1"></script>
 <script src="gazon-marks.js?v=20261013-quick1"></script>
 <script src="gazon-moto-routes.js?v=20261014-brand1"></script>
-<script src="gazon-ui.js?v=20261014-brand1"></script>
+<script src="gazon-ui.js?v=20261014-dlg1"></script>
 </body>
 </html>

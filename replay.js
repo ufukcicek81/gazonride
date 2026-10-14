@@ -158,7 +158,10 @@ function smoothRaw(a){
  });
 }
 function preparePlayback(ride){
- playPoints=replaySource(ride);if(!(ride&&ride._roadMatched))playPoints=smoothRaw(playPoints);playCum=[0];playTotal=0;
+ playPoints=replaySource(ride);
+ // Drop road-match detours (into a petrol station and back) before anything else.
+ if(window.GaZonJournal&&GaZonJournal.removeSpurs)playPoints=GaZonJournal.removeSpurs(playPoints);
+ if(!(ride&&ride._roadMatched))playPoints=smoothRaw(playPoints);playCum=[0];playTotal=0;
  for(var i=1;i<playPoints.length;i++){playTotal+=geoKm(playPoints[i-1],playPoints[i]);playCum.push(playTotal)}
 }
 function pointAtDistance(progress){
@@ -336,7 +339,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s16";
+var REPLAY_BUILD="s17";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -359,7 +362,12 @@ function updateChaseCamera(progress,now,force){
  var t=chaseTarget(progress);if(!t)return;
  var dt=chase.ts?Math.min(.1,(now-chase.ts)/1000):1;chase.ts=now;
  var kH=1-Math.exp(-dt/1.1),kR=1-Math.exp(-dt/2.2);
- chase.heading=chase.heading==null?t.heading:lerpAngle(chase.heading,t.heading,kH);
+ if(chase.heading==null)chase.heading=t.heading;
+ else{
+  // Smoothed, and never faster than 35°/s: one bad point cannot spin the view.
+  var dh=((t.heading-chase.heading+540)%360)-180,step=dh*kH,lim=35*dt;
+  chase.heading=(chase.heading+Math.max(-lim,Math.min(lim,step))+360)%360;
+ }
  chase.range=chase.range==null?t.range:chase.range+(t.range-chase.range)*kR;
  // Look at a point just ahead of the rider along the camera heading: the
  // rider stays fixed in the lower middle of the frame, the road opens ahead.
@@ -744,18 +752,26 @@ function shareRide(){
 /* Story video (gazon-story.js): render once per ride, then share or save. */
 var story={ride:null,res:null,url:"",style:""};
 function storyStyle(){var v="dark";try{v=localStorage.getItem("gazon_story_style")||"dark"}catch(e){}return /^(dark|light|satellite)$/.test(v)?v:"dark"}
-function paintStoryStyles(){var cur=storyStyle();document.querySelectorAll("[data-story-style]").forEach(function(b){var on=b.getAttribute("data-story-style")===cur;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")})}
+function storyLen(){var v=30;try{v=Number(localStorage.getItem("gazon_story_len"))||30}catch(e){}return [15,30,60].indexOf(v)>=0?v:30}
+function paintStoryStyles(){var len=storyLen();document.querySelectorAll("[data-story-len]").forEach(function(b){var on=Number(b.getAttribute("data-story-len"))===len;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")});
+ var h=$("grStoryHint");if(h)h.textContent="Instagram · WhatsApp durum · "+len+" sn, dikey";
+ var cur=storyStyle();document.querySelectorAll("[data-story-style]").forEach(function(b){var on=b.getAttribute("data-story-style")===cur;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")})}
 function setStoryStyle(v){
  try{localStorage.setItem("gazon_story_style",v)}catch(e){}
  paintStoryStyles();
  // A finished video in another style is dropped; the rider makes a new one.
- if(story.res&&story.style!==v){story.ride=null;storyReset()}
+ if(story.res&&story.style!==v+"/"+storyLen()){story.ride=null;storyReset()}
+}
+function setStoryLen(v){
+ try{localStorage.setItem("gazon_story_len",String(v))}catch(e){}
+ paintStoryStyles();
+ if(story.res&&story.style!==storyStyle()+"/"+v){story.ride=null;storyReset()}
 }
 function storyReset(){
  var S=window.GaZonStory,box=$("grStoryBox");if(!box)return;
  box.hidden=!(S&&S.supported());
  paintStoryStyles();
- if(story.ride===currentRide&&story.res&&story.style===storyStyle())return;
+ if(story.ride===currentRide&&story.res&&story.style===storyStyle()+"/"+storyLen())return;
  if(story.url){try{URL.revokeObjectURL(story.url)}catch(e){}}
  story={ride:null,res:null,url:"",style:""};
  $("grStoryMake").hidden=false;$("grStoryProgress").hidden=true;$("grStoryActions").hidden=true;
@@ -765,17 +781,17 @@ function storyMake(){
  var S=window.GaZonStory,ride=currentRide;if(!S||!ride)return;
  var bar=$("grStoryBar"),msg=$("grStoryMsg"),result=$("grReplayShareResult");
  $("grStoryMake").hidden=true;$("grStoryProgress").hidden=false;$("grStoryActions").hidden=true;
- var st=storyStyle();
- document.querySelectorAll("[data-story-style]").forEach(function(b){b.disabled=true});
- S.make(ride,{style:st,onProgress:function(f,t){bar.style.width=Math.round(f*100)+"%";msg.textContent=t+" %"+Math.round(f*100)}}).then(function(res){
-  story={ride:ride,res:res,url:URL.createObjectURL(res.blob),style:st};
-  document.querySelectorAll("[data-story-style]").forEach(function(b){b.disabled=false});
+ var st=storyStyle(),len=storyLen();
+ document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=true});
+ S.make(ride,{style:st,seconds:len,onProgress:function(f,t){bar.style.width=Math.round(f*100)+"%";msg.textContent=t+" %"+Math.round(f*100)}}).then(function(res){
+  story={ride:ride,res:res,url:URL.createObjectURL(res.blob),style:st+"/"+len};
+  document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=false});
   $("grStoryProgress").hidden=true;$("grStoryActions").hidden=false;
   var v=$("grStoryPreview");v.src=story.url;v.hidden=false;try{v.play()}catch(e){}
   if(result)result.textContent="Video hazır · "+(res.blob.size/1048576).toFixed(1)+" MB";
  }).catch(function(e){
   $("grStoryMake").hidden=false;$("grStoryProgress").hidden=true;
-  document.querySelectorAll("[data-story-style]").forEach(function(b){b.disabled=false});
+  document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=false});
   var m=e&&e.message;
   if(result)result.textContent=m==="unsupported"?"Bu cihaz video oluşturmayı desteklemiyor.":m==="no-track"?"Bu sürüşte video için yeterli GPS izi yok.":"Video oluşturulamadı. Tekrar dene.";
  });
@@ -834,11 +850,11 @@ function install(){
  modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div>'+
  '<div class="gr-replay-hud" aria-live="off"><div><b id="grHudKm">0</b><small>km</small><span>mesafe</span></div><div><b id="grHudSpeed">—</b><small>km/sa</small><span>hız</span></div><div><b id="grHudAlt">—</b><small>m</small><span>rakım</span></div></div>'+
  '<div class="gr-replay-compass" id="grHudCompass" aria-hidden="true"><i>N</i></div>'+
- '<button class="gr-replay-cam" id="grReplayCam" type="button"></button></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><div class="gr-story-box" id="grStoryBox"><div class="gr-story-styles" role="group" aria-label="Video haritası"><button type="button" data-story-style="dark"><span class="mi">dark_mode</span> Karanlık</button><button type="button" data-story-style="light"><span class="mi">light_mode</span> Açık</button><button type="button" data-story-style="satellite"><span class="mi">satellite_alt</span> Uydu</button></div><button type="button" class="gr-story-make" id="grStoryMake"><span class="mi">movie</span><span><b>Hikaye videosu oluştur</b><small>Instagram · WhatsApp durum · 12 sn, dikey</small></span></button><div class="gr-story-progress" id="grStoryProgress" hidden><i id="grStoryBar"></i><small id="grStoryMsg">Video oluşturuluyor…</small></div><video class="gr-story-preview" id="grStoryPreview" playsinline muted loop hidden></video><div class="gr-story-actions" id="grStoryActions" hidden><button type="button" class="primary" id="grStoryShare"><span class="mi">ios_share</span> Videoyu paylaş</button><button type="button" id="grStorySave"><span class="mi">download</span> Galeriye kaydet</button></div></div><p>Metin paylaşımında başlangıç ve varış konumunu içeren harita bağlantısı gider; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button></div></div></div>';
+ '<button class="gr-replay-cam" id="grReplayCam" type="button"></button></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><div class="gr-story-box" id="grStoryBox"><div class="gr-story-styles" role="group" aria-label="Video haritası"><button type="button" data-story-style="dark"><span class="mi">dark_mode</span> Karanlık</button><button type="button" data-story-style="light"><span class="mi">light_mode</span> Açık</button><button type="button" data-story-style="satellite"><span class="mi">satellite_alt</span> Uydu</button></div><div class="gr-story-styles" role="group" aria-label="Video süresi"><button type="button" data-story-len="15">15 sn</button><button type="button" data-story-len="30">30 sn</button><button type="button" data-story-len="60">60 sn</button></div><button type="button" class="gr-story-make" id="grStoryMake"><span class="mi">movie</span><span><b>Hikaye videosu oluştur</b><small id="grStoryHint">Instagram · WhatsApp durum · dikey</small></span></button><div class="gr-story-progress" id="grStoryProgress" hidden><i id="grStoryBar"></i><small id="grStoryMsg">Video oluşturuluyor…</small></div><video class="gr-story-preview" id="grStoryPreview" playsinline muted loop hidden></video><div class="gr-story-actions" id="grStoryActions" hidden><button type="button" class="primary" id="grStoryShare"><span class="mi">ios_share</span> Videoyu paylaş</button><button type="button" id="grStorySave"><span class="mi">download</span> Galeriye kaydet</button></div></div><p>Metin paylaşımında başlangıç ve varış konumunu içeren harita bağlantısı gider; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button></div></div></div>';
  document.body.appendChild(modal);
  var camBtn=$("grReplayCam"),paintCam=function(){camBtn.innerHTML='<span class="mi">'+(camMode==="chase"?"two_wheeler":"flight")+'</span> '+(camMode==="chase"?"Takip":"Drone")};
  paintCam();camBtn.onclick=function(){camMode=camMode==="chase"?"orbit":"chase";try{localStorage.setItem("gazon_replay_cam",camMode)}catch(e){}paintCam();if(mode==="3d"&&currentRide)build3DMap(currentRide)};
- $("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;$("grStoryMake").onclick=storyMake;modal.querySelectorAll("[data-story-style]").forEach(function(b){b.onclick=function(){setStoryStyle(b.getAttribute("data-story-style"))}});$("grStoryShare").onclick=storyShare;$("grStorySave").onclick=storySave;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ $("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;$("grStoryMake").onclick=storyMake;modal.querySelectorAll("[data-story-style]").forEach(function(b){b.onclick=function(){setStoryStyle(b.getAttribute("data-story-style"))}});modal.querySelectorAll("[data-story-len]").forEach(function(b){b.onclick=function(){setStoryLen(Number(b.getAttribute("data-story-len")))}});$("grStoryShare").onclick=storyShare;$("grStorySave").onclick=storySave;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {type:"continuous-route-axis-orbit",frames:orbitFrames,railPoints:orbitRail.length,orbitDegrees:orbitTotalDegrees,latest:orbitLatest,mode:using3d?"3d":"classic"}}};

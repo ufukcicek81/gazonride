@@ -38,3 +38,18 @@ test("ride card v2: moving time, title, map with tiles",()=>{
  assert.equal(J.mapView([]),"");
  assert.match(J.rideCard({destination:"<b>x</b>",track:[]}),/&lt;b&gt;x/,"escapes user text");
 });
+test("removeSpurs: cuts an out-and-back detour, keeps a roundabout and a straight road",()=>{
+ const step=0.00018; // ~20 m north per point
+ const road=[];for(let i=0;i<30;i++)road.push({lat:40.8+i*step,lng:31.1});
+ // detour at point 10: 60 m east into a station and the same way back
+ const spur=[1,2,3,2,1].map(k=>({lat:road[10].lat,lng:31.1+k*0.00024}));
+ const withSpur=road.slice(0,11).concat(spur,road.slice(10));
+ const out=J.removeSpurs(withSpur);
+ assert.ok(out.every(p=>p.lng<31.1001),"detour points removed");
+ assert.ok(out.length>=29&&out.length<=31);
+ assert.equal(J.removeSpurs(road).length,road.length,"straight road untouched");
+ // roundabout: 270° around a 30 m circle -> kept
+ const c={lat:40.81,lng:31.12},ring=[];
+ for(let a=0;a<=270;a+=15){const r=a*Math.PI/180;ring.push({lat:c.lat+0.00027*Math.cos(r),lon:c.lng+0.00036*Math.sin(r)})}
+ assert.equal(J.removeSpurs(ring).length,ring.length,"loop kept");
+});

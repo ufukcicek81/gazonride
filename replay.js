@@ -433,7 +433,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s23";
+var REPLAY_BUILD="s24";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -444,18 +444,30 @@ function offsetPoint(a,brg,km){
  return {lat:la2/p,lng:lo2/p};
 }
 function angleGap(a,b){return Math.abs(((b-a+540)%360)-180)}
+// Faster playback = the road passes faster under the camera: look further
+// ahead and smooth more, so 2x/4x stay as calm as 1x.
+function speedK(){return Math.sqrt(Math.max(1,Number(playbackSpeed)||1))}
 function chaseTarget(progress){
- var d=progress*playTotal,cur=pointAtKm(d),ahead=pointAtKm(d+.35),near=pointAtKm(d+.12),far=pointAtKm(d+.6);
- if(!cur||!ahead)return null;
- var heading=geoKm(cur,ahead)>.01?bearing(cur,ahead):(chase.heading||0);
- // Twistiness of the next ~600 m opens the frame so bends stay in view.
+ var k=speedK(),d=progress*playTotal,cur=pointAtKm(d);
+ if(!cur)return null;
+ // Heading = average direction to several points ahead (not one point),
+ // so a single kink in the track cannot jerk the view.
+ var sx=0,sy=0,look=.35*k;
+ [.5,.75,1,1.25,1.5].forEach(function(f){
+  var q=pointAtKm(d+look*f);if(!q||geoKm(cur,q)<.01)return;
+  var b=bearing(cur,q)*Math.PI/180;sx+=Math.sin(b);sy+=Math.cos(b);
+ });
+ var heading=sx||sy?(Math.atan2(sx,sy)*180/Math.PI+360)%360:(chase.heading||0);
+ // Twistiness ahead opens the frame so bends stay in view (wider window
+ // at speed, so the zoom does not pump in and out).
+ var near=pointAtKm(d+.15*k),far=pointAtKm(d+.7*k);
  var bend=near&&far?angleGap(bearing(cur,near),bearing(near,far)):0;
- return {rider:cur,heading:heading,range:520+Math.min(600,bend*8),tilt:68};
+ return {rider:cur,heading:heading,range:(520+Math.min(600,bend*8))*(1+.2*(k-1)),tilt:68};
 }
 function updateChaseCamera(progress,now,force){
  var t=chaseTarget(progress);if(!t)return;
  var dt=chase.ts?Math.min(.1,(now-chase.ts)/1000):1;chase.ts=now;
- var kH=1-Math.exp(-dt/1.1),kR=1-Math.exp(-dt/2.2);
+ var k=speedK(),kH=1-Math.exp(-dt/(1.1*k*k)),kR=1-Math.exp(-dt/(3*k));
  if(chase.heading==null)chase.heading=t.heading;
  else{
   // Smoothed, and never faster than 35°/s: one bad point cannot spin the view.

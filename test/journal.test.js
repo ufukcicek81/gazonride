@@ -53,3 +53,19 @@ test("removeSpurs: cuts an out-and-back detour, keeps a roundabout and a straigh
  for(let a=0;a<=270;a+=15){const r=a*Math.PI/180;ring.push({lat:c.lat+0.00027*Math.cos(r),lon:c.lng+0.00036*Math.sin(r)})}
  assert.equal(J.removeSpurs(ring).length,ring.length,"loop kept");
 });
+test("cleanStrays: drops network fixes mixed into a GPS track (stale, off-road, out of order)",()=>{
+ const t0=1791614911000,tr=[[40.874,30.9516,null,t0+751]]; // start seed from the phone clock
+ for(let i=1;i<=120;i++)tr.push([40.874-i*0.00027,30.9516+i*0.00003,170,t0+i*2000]); // GPS: whole seconds, ~30 m / 2 s
+ const withStrays=tr.slice();
+ withStrays.splice(40,0,[40.8705,30.9518,170,t0+79*1000+300]);   // 30 m back & aside, 0.3 s later
+ withStrays.splice(70,0,[40.8800,30.9600,170,t0+137*1000+512]);  // 900 m off
+ withStrays.splice(100,0,[40.8600,30.9900,170,t0+190*1000-1881]); // 4 km off, time going backwards
+ const out=J.cleanStrays(withStrays);
+ assert.equal(out.length,tr.length,"all three strays removed, every GPS fix kept");
+ assert.deepEqual(out[0],tr[0],"start seed kept");
+ // a track without the GPS-clock pattern keeps plausible ms points
+ const ms=tr.map((p,i)=>[p[0],p[1],p[2],p[3]+(i?137:0)]);
+ assert.equal(J.cleanStrays(ms).length,ms.length);
+ // and metrics use the cleaned track
+ assert.ok(J.metrics({track:withStrays,km:3.6}).avg<70);
+});

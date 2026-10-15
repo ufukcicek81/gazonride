@@ -20,9 +20,17 @@ public class RideLocationService extends Service {
     private LocationManager lm;
     private PowerManager.WakeLock wakeLock;
     private SharedPreferences prefs;
+    private long lastGpsFixAt=0;
     private final LocationListener listener=new LocationListener(){
         @Override public void onLocationChanged(Location location){
             if(prefs==null) prefs=getSharedPreferences("gazonride",MODE_PRIVATE);
+            // Network (cell/Wi-Fi) fixes can be hundreds of metres off and carry
+            // stale times; mixed into the GPS track they drew detours in the
+            // replay. Use them only when GPS has been silent for 20 s (tunnel).
+            boolean gps=LocationManager.GPS_PROVIDER.equals(location.getProvider());
+            long now=android.os.SystemClock.elapsedRealtime();
+            if(gps) lastGpsFixAt=now;
+            else if(lastGpsFixAt>0&&now-lastGpsFixAt<20000) return;
             prefs.edit().putString("last_lat",String.valueOf(location.getLatitude())).apply();
             if(!prefs.getBoolean("ride_active",false)) return;
             try{
@@ -34,6 +42,7 @@ public class RideLocationService extends Service {
                 o.put("altitude",location.hasAltitude()?location.getAltitude():JSONObject.NULL);
                 o.put("speed",location.hasSpeed()?location.getSpeed():JSONObject.NULL);
                 o.put("time",location.getTime());
+                o.put("provider",gps?"gps":"network");
                 arr.put(o);
                 while(arr.length()>2500) arr.remove(0);
                 prefs.edit().putString("buffer",arr.toString()).apply();
@@ -52,8 +61,8 @@ public class RideLocationService extends Service {
             try{wakeLock.acquire(8L*60L*60L*1000L);}catch(Exception ignored){}
         }
         Notification n;
-        if(Build.VERSION.SDK_INT>=26) n=new Notification.Builder(this,CHANNEL_ID).setContentTitle("GazonRide").setContentText("Sürüş GPS takibi aktif").setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).build();
-        else n=new Notification.Builder(this).setContentTitle("GazonRide").setContentText("Sürüş GPS takibi aktif").setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).build();
+        if(Build.VERSION.SDK_INT>=26) n=new Notification.Builder(this,CHANNEL_ID).setContentTitle("GazOnRide").setContentText("Sürüş GPS takibi aktif").setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).build();
+        else n=new Notification.Builder(this).setContentTitle("GazOnRide").setContentText("Sürüş GPS takibi aktif").setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).build();
         startForeground(1001,n);
         lm=(LocationManager)getSystemService(LOCATION_SERVICE);
         try{lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,2000,5,listener);}catch(SecurityException ignored){}
@@ -61,7 +70,7 @@ public class RideLocationService extends Service {
     }
     private void createChannel(){
         if(Build.VERSION.SDK_INT>=26){
-            NotificationChannel c=new NotificationChannel(CHANNEL_ID,"GazonRide GPS",NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel c=new NotificationChannel(CHANNEL_ID,"GazOnRide GPS",NotificationManager.IMPORTANCE_LOW);
             ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(c);
         }
     }

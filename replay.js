@@ -81,11 +81,16 @@ function appendUniquePath(base,extra){
  });
  return base
 }
-async function matchOsrmChunk(chunk){
+async function matchOsrmChunk(chunk,radius){
  var coords=chunk.map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
- var radiuses=chunk.map(function(){return "45"}).join(";");
+ var radiuses=chunk.map(function(){return String(radius||45)}).join(";");
  var url="https://router.project-osrm.org/match/v1/driving/"+coords+"?overview=full&geometries=geojson&tidy=true&gaps=ignore&radiuses="+radiuses;
- var res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("OSRM "+res.status);
+ // GPS times help the matcher tell a U-turn from noise (strictly increasing seconds).
+ var ts=chunk.map(function(p){return Math.round(Number(p.time||0)/1000)});
+ if(ts.every(function(t,i){return t>0&&(!i||t>ts[i-1])}))url+="&timestamps="+ts.join(";");
+ var ctrl=typeof AbortController!=="undefined"?new AbortController():null,timer=ctrl?setTimeout(function(){ctrl.abort()},7000):null;
+ var res;try{res=await fetch(url,{cache:"no-store",signal:ctrl?ctrl.signal:undefined})}finally{if(timer)clearTimeout(timer)}
+ if(!res.ok)throw new Error("OSRM "+res.status);
  var data=await res.json(),matchings=(data&&data.matchings)||[];
  if(!matchings.length)throw new Error("OSRM match empty");
  var path=[];
@@ -96,16 +101,28 @@ async function matchOsrmChunk(chunk){
  if(path.length<2)throw new Error("OSRM geometry empty");
  return path
 }
-async function matchViaOsrm(raw){
- var sampled=simplifyForMatch(raw,180),all=[],chunkSize=45,step=44;
- for(var i=0;i<sampled.length-1;i+=step){
-  var chunk=sampled.slice(i,Math.min(sampled.length,i+chunkSize));
-  if(chunk.length<2)break;
-  var part=await matchOsrmChunk(chunk);
-  if(!validMatched(chunk,part))throw new Error("Truncated matching segment");
-  appendUniquePath(all,part);
+/* Dense matching: every GPS point at least 20 m apart (not ~1 per 130 m),
+ * each allowed to move at most 25 m onto a road, in chunks of 90. A chunk
+ * the matcher cannot place keeps the rider's own GPS for that stretch. */
+function thinForMatch(a,minKm){
+ var out=[a[0]];
+ for(var i=1;i<a.length;i++)if(geoKm(out[out.length-1],a[i])>=minKm)out.push(a[i]);
+ if(out[out.length-1]!==a[a.length-1])out.push(a[a.length-1]);
+ return out;
+}
+function chunkMatchOk(chunk,part){
+ if(!part||part.length<2)return false;
+ var a=pathLength(chunk),b=pathLength(part);
+ return b>=a*.65&&b<=a*1.3+.05&&geoKm(chunk[0],part[0])<.06&&geoKm(chunk[chunk.length-1],part[part.length-1])<.06;
+}
+async function matchDenseOsrm(raw){
+ var s=thinForMatch(raw,.02),all=[],ok=0,size=90;
+ for(var i=0;i<s.length-1;i+=size-1){
+  var chunk=s.slice(i,i+size),part=null;if(chunk.length<2)break;
+  try{part=await matchOsrmChunk(chunk,25);if(!chunkMatchOk(chunk,part))part=null}catch(e){part=null}
+  if(part){ok++;appendUniquePath(all,part)}else appendUniquePath(all,chunk);
  }
- return resamplePath(all,18)
+ return {path:resamplePath(all,10),ok:ok};
 }
 async function roadBridge(a,b){
  var coords=[a,b].map(function(p){return p.lng.toFixed(6)+","+p.lat.toFixed(6)}).join(";");
@@ -137,15 +154,24 @@ async function bridgeGpsGaps(raw){
  }
  return {path:out,bridged:bridged,unresolved:unresolved}
 }
+// Same ride opened again in this session: reuse the matched road.
+var matchCache={};
 async function matchRideToRoads(ride){
+ var tr=(ride&&ride.track)||[],key=String(ride&&(ride.cloudId||ride.date||ride.start)||"")+"|"+tr.length+"|"+(tr[0]||"")+"|"+(tr[tr.length-1]||"");
+ var hit=matchCache[key];
+ if(hit){ride._roadMatched=hit.matched;ride._replayGapCount=hit.gaps;ride._replayUnresolvedGaps=hit.unresolved;return hit.path}
+ var path=await matchRideToRoadsUncached(ride);
+ matchCache[key]={path:path,matched:!!ride._roadMatched,gaps:ride._replayGapCount,unresolved:ride._replayUnresolvedGaps};
+ return path;
+}
+async function matchRideToRoadsUncached(ride){
  var raw=cleanTrack(pts(ride));if(raw.length<2)return raw;
- // Whole-ride road matching is off: the public matcher only gets ~1 sample
- // per 130 m and kept inventing ramps and side roads the rider never used.
- // The rider's own GPS (smoothed, spurs removed) is the truth; the routing
- // service only joins real GPS gaps (bridgeGpsGaps below).
- if(window.GAZONRIDE_REPLAY_MATCH)try{
-  var osrmPath=await matchViaOsrm(raw);
-  if(validMatched(raw,osrmPath)){
+ // Dense road matching (matchDenseOsrm); replaySource then drops anything
+ // more than 30 m from the rider's own GPS, so the line follows the street
+ // the rider was on and never takes a ramp or side road they did not use.
+ try{
+  var dense=await matchDenseOsrm(raw),osrmPath=dense.path;
+  if(dense.ok>0&&validMatched(raw,osrmPath)){
    // Road matching can trim the first/last metres; keep the real start and end.
    if(geoKm(raw[0],osrmPath[0])>.02)osrmPath.unshift(raw[0]);
    var rl=raw[raw.length-1];if(geoKm(rl,osrmPath[osrmPath.length-1])>.02)osrmPath.push(rl);
@@ -380,7 +406,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s19";
+var REPLAY_BUILD="s20";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}

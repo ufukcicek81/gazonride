@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" sizes="192x192" href="icon-192.svg?v=20261008">
 <link rel="apple-touch-icon" sizes="192x192" href="android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008">
 <link rel="manifest" href="gazonride-v2.json?v=20261008-profile1">
-<title>GazonRide</title>
+<title>GazOnRide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
@@ -990,6 +990,7 @@ function nativeRidePoints(){
    var raw=JSON.parse(AndroidBridge.getBufferedPoints()||"[]"),out=[],last=null;
    (Array.isArray(raw)?raw:[]).forEach(function(p){
     if(!p||!isFinite(Number(p.lat))||!isFinite(Number(p.lon)))return;
+    if(p.provider==="network")return; // cell/Wi-Fi fix: too coarse for the track
     var acc=Number(p.accuracy),time=Number(p.time||0);
     if(!isFinite(acc)||acc<=0||acc>65||!isFinite(time)||time<=0)return;
     var point={lat:Number(p.lat),lon:Number(p.lon)},dist=last?hav(last.p,point)*1000:0;
@@ -1102,7 +1103,7 @@ function resetRideDisplay(){
 function finishRide(){
  document.body.classList.remove("ride-cockpit-active");
  var nativePts=nativeRidePoints();
- if(nativePts.length>1){var nativeKm=trackDistanceKm(nativePts),webKm=trackDistanceKm(track);if(track.length<2||nativeKm>=webKm*.90){track=nativePts;totalKm=nativeKm;}else{totalKm=webKm;console.warn("GazOnRide: partial native GPS buffer ignored",nativeKm,webKm)}if(route)route.setPath([])}
+ if(nativePts.length>1){var nativeKm=trackDistanceKm(nativePts),webKm=trackDistanceKm(track);if(track.length<2||nativeKm>=webKm*.90){track=window.GaZonJournal&&GaZonJournal.cleanStrays?GaZonJournal.cleanStrays(nativePts):nativePts;totalKm=trackDistanceKm(track);}else{totalKm=webKm;console.warn("GazOnRide: partial native GPS buffer ignored",nativeKm,webKm)}if(route)route.setPath([])}
  riding=false;if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;if(timer)clearInterval(timer);timer=null;
  $("startBtn").innerHTML='<span class="mi" style="vertical-align:middle;font-size:19px">two_wheeler</span> Yeni Sürüş';$("status").textContent="Sürüş tamamlandı: "+totalKm.toFixed(1)+" km";
  var rp=getRiderProfile(),ci=$("rideConsumptionInput"),cv=ci?Number(String(ci.value||"0").replace(",",".")):0;if(cv>0){rp.motor=rp.motor||{};rp.motor.consumption=cv;saveRiderProfileLocal(rp)}var fe=fuelEstimate(totalKm,rp),ride={marks:(window.GaZonMarks?GaZonMarks.between(startTime,Date.now()):[]),km:totalKm,duration:$("duration").textContent,durationSeconds:Math.max(0,Math.round((Date.now()-startTime)/1000)),max:Math.round(maxSpeed),elev:Math.round(totalClimb),turns:turnCount,date:new Date().toLocaleString("tr-TR"),track:track,destination:activeNavLabel||"",routeMode:activeRouteMode||"DRIVING",fuelLiters:Number(fe.liters.toFixed(2)),fuelCost:Number(fe.cost.toFixed(2)),fuelConsumption:fe.consumption,motor:rp.motor||{},leanMaxLeft:Number(leanMaxLeft.toFixed(1)),leanMaxRight:Number(leanMaxRight.toFixed(1)),leanSamples:leanSamples.slice()};
@@ -2774,12 +2775,12 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<script src="social.js?v=20261014-dlg1"></script>
+<script src="social.js?v=20261015-gps1"></script>
 <script src="gazon-guides.js?v=20261011-photo1"></script>
 <script src="gazon-destinations.js?v=20261014-brand1"></script>
-<script src="replay.js?v=20261015-match4"></script>
+<script src="replay.js?v=20261015-gps2"></script>
 <script src="gazon-music.js?v=20261014-brand1"></script>
-<script src="gazon-journal.js?v=20261014-story3"></script>
+<script src="gazon-journal.js?v=20261015-gps1"></script>
 <script src="gazon-story.js?v=20261014-story3"></script>
 <script src="gazon-discover.js?v=20261014-dlg1"></script>
 <script src="gazon-marks.js?v=20261013-quick1"></script>

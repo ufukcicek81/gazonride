@@ -9,8 +9,32 @@
 "use strict";
 var MOODS=["Keyifli","Keşif dolu","Sakin","Manzaralı","Adrenalin","Yorucu","Grup sürüşü","Yağmurlu"];
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+/* Stray fixes in a stored track ([lat,lon,alt,timeMs] rows). Rides recorded
+ * by the Android service before the fix mix GPS fixes with network
+ * (cell/Wi-Fi) fixes: those sit hundreds of metres off, carry stale times
+ * and drew detours in the replay. GPS fixes have whole-second times (GNSS
+ * clock); when most points do, the others are dropped. Generic guard for
+ * any track: time must move forward and speed stay under 200 km/h. */
+function cleanStrays(track){
+ if(!Array.isArray(track)||track.length<3)return track||[];
+ var timed=0,whole=0;
+ track.forEach(function(p,i){var t=Array.isArray(p)?Number(p[3]):0;if(i&&t>0){timed++;if(t%1000===0)whole++}});
+ var gpsClock=timed>=10&&whole>=timed*.6,out=[],last=null;
+ track.forEach(function(p,i){
+  if(!Array.isArray(p))return;
+  var t=Number(p[3])||0;
+  if(gpsClock&&i>0&&t>0&&t%1000!==0)return;
+  if(last&&t>0){
+   var dt=(t-last.t)/1000;if(dt<=0)return;
+   var d=hav({lat:Number(last.p[0]),lon:Number(last.p[1])},{lat:Number(p[0]),lon:Number(p[1])});
+   if(d>.05&&d/dt*3600>200)return;
+  }
+  out.push(p);if(t>0)last={p:p,t:t};
+ });
+ return out.length>=2?out:track;
+}
 function points(track){
- return (Array.isArray(track)?track:[]).map(function(p){
+ return (Array.isArray(track)?cleanStrays(track):[]).map(function(p){
   if(Array.isArray(p))return {lat:Number(p[0]),lon:Number(p[1])};
   return p?{lat:Number(p.lat),lon:Number(p.lon!=null?p.lon:p.lng)}:null;
  }).filter(function(p){return p&&isFinite(p.lat)&&isFinite(p.lon)});
@@ -127,7 +151,7 @@ function leanWizard(opts){
  * encoded polyline. Underneath, an offline SVG of the route (Web Mercator)
  * shows when there is no key or the image fails to load. */
 function pts3(track){
- return (Array.isArray(track)?track:[]).map(function(p){
+ return (Array.isArray(track)?cleanStrays(track):[]).map(function(p){
   return Array.isArray(p)?{lat:Number(p[0]),lon:Number(p[1]),alt:p[2]==null?null:Number(p[2]),t:Number(p[3])||0}:null;
  }).filter(function(p){return p&&isFinite(p.lat)&&isFinite(p.lon)});
 }
@@ -339,7 +363,7 @@ function rideCard(r,opts){
   '<div class="gr-ride-stats"><b>'+(Number(m.km)||0).toFixed(1).replace(".",",")+' km</b><span>'+bits.map(esc).join(" · ")+'</span></div>'+
   '<small class="gr-ride-when">'+rideWhen(r)+'</small></div>';
 }
-var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points,storyMap:storyMap,removeSpurs:removeSpurs};
+var api={MOODS:MOODS,thumb:thumb,card:card,rideCard:rideCard,mapView:mapView,metrics:metrics,rideTitle:rideTitle,fmtDur:fmtDur,stats:stats,avgSpeed:avgSpeed,moodLine:moodLine,moodPicker:moodPicker,leanWizard:leanWizard,points:points,storyMap:storyMap,removeSpurs:removeSpurs,cleanStrays:cleanStrays};
 root.GaZonJournal=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

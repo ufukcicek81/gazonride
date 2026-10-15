@@ -29,6 +29,7 @@ public class ShareProvider extends ContentProvider {
         if(n.endsWith(".webm"))return "video/webm";
         if(n.endsWith(".png"))return "image/png";
         if(n.endsWith(".jpg"))return "image/jpeg";
+        if(n.endsWith(".gpx"))return "application/gpx+xml";
         return "application/octet-stream";
     }
     @Override public ParcelFileDescriptor openFile(Uri uri,String mode) throws FileNotFoundException {

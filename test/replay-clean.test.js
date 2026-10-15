@@ -37,3 +37,17 @@ test("replay: dense road matching in chunks, failed chunk keeps the rider's GPS"
  const onGps=r.path.filter(p=>Math.abs(p.lng-31.1)<0.00002).length,onRoad=r.path.filter(p=>Math.abs(p.lng-31.1001)<0.00002).length;
  assert.ok(onGps>0&&onRoad>0,"failed chunk kept as GPS, others snapped");
 });
+test("replay: at highway speed a frontage road 22 m away is rejected and the GPS is used",()=>{
+ const f=new Function(["geoKm","segDistKm","rawSpeedAt","matchTolKm","keepNearRaw"].map(grab).join("\n")+";return {keepNearRaw,matchTolKm}")();
+ const raw=[],t0=1760000000000;
+ // 90 km/h north: ~25 m per second
+ for(let i=0;i<200;i++)raw.push({lat:40.8+i*0.000225,lng:31.1,time:t0+i*1000});
+ const m=raw.map((p,i)=>({lat:p.lat,lng:p.lng+(i>=80&&i<=86?0.00026:0)})); // ~22 m east for ~150 m
+ const out=f.keepNearRaw(raw,m,f.matchTolKm);
+ assert.ok(out.every(p=>Math.abs(p.lng-31.1)<0.00005),"no point on the frontage road");
+ assert.ok(out.length>=195,"gap filled with the rider's GPS");
+ // slow town riding keeps a 15 m offset street (GPS is noisier there)
+ const slow=raw.map((p,i)=>({lat:40.8+i*0.00004,lng:31.1,time:t0+i*1000}));
+ const ms=slow.map(p=>({lat:p.lat,lng:p.lng+0.00018}));
+ assert.equal(f.keepNearRaw(slow,ms,f.matchTolKm).filter(p=>p.lng>31.1001).length,slow.length);
+});

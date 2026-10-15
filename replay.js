@@ -790,7 +790,9 @@ async function open(ride){
   preparePlayback(currentRide);buildSpeedProfile(currentRide);
   var ts=trackStats(currentRide),vmax=speedProfile.reduce(function(m,x){return Math.max(m,x.v)},0);
   $("grReplayTime").textContent=ts?fmtDuration(ts.sec):(currentRide.duration||"00:00");
-  $("grReplayMax").textContent=Math.round(Math.max(Number(currentRide.max||0),vmax));
+  // Stored max came from the raw (network-polluted) track on older rides; with
+  // GPS times the cleaned speed profile is the real one.
+  $("grReplayMax").textContent=Math.round(speedProfile.length?vmax:Number(currentRide.max||0));
   $("grReplayAvg").textContent=ts?Math.round(ts.avg):avgSpeed(currentRide);
   $("grReplayTurns").textContent=Math.round(Number(currentRide.turns||0));
   var lm=$("grReplayLean");if(lm)lm.textContent=Math.max(Number(currentRide.leanMaxLeft||0),Number(currentRide.leanMaxRight||0)).toFixed(1)+"°";

@@ -217,7 +217,19 @@ function rawSpeedAt(raw,i){
 // How far a matched road may sit from the GPS: phone GPS is a few metres
 // accurate at speed, so on a highway the frontage road 20-25 m away is
 // rejected; in town (slow, noisier GPS) a little more slack.
-function matchTolKm(raw,i){var v=rawSpeedAt(raw,i);return v>=50?.012:v>=25?.018:.025}
+// Heading change of the GPS track over ~60 m either side of point i.
+function rawTurnAt(raw,i){
+ var a=i,b=i,d=0;while(a>0&&d<.06){d+=geoKm(raw[a-1],raw[a]);a--}
+ d=0;while(b<raw.length-1&&d<.06){d+=geoKm(raw[b],raw[b+1]);b++}
+ if(a===i||b===i)return 0;
+ return angleGap(bearing(raw[a],raw[i]),bearing(raw[i],raw[b]));
+}
+// In bends (ramps, loops) GPS cuts the corner, so the road the matcher
+// found may lie further away: only straight, fast stretches are strict.
+function matchTolKm(raw,i){
+ if(rawTurnAt(raw,i)>=20)return .03;
+ var v=rawSpeedAt(raw,i);return v>=50?.012:v>=25?.018:.025;
+}
 function keepNearRaw(raw,matched,tol){
  if(!Array.isArray(raw)||raw.length<2||!Array.isArray(matched)||matched.length<2)return matched;
  var out=[],j=0,miss=0,lastHit=-1,i,d,best,bj,k;
@@ -421,7 +433,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s21";
+var REPLAY_BUILD="s22";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}

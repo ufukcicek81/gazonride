@@ -38,7 +38,7 @@ test("replay: dense road matching in chunks, failed chunk keeps the rider's GPS"
  assert.ok(onGps>0&&onRoad>0,"failed chunk kept as GPS, others snapped");
 });
 test("replay: at highway speed a frontage road 22 m away is rejected and the GPS is used",()=>{
- const f=new Function(["geoKm","segDistKm","rawSpeedAt","matchTolKm","keepNearRaw"].map(grab).join("\n")+";return {keepNearRaw,matchTolKm}")();
+ const f=new Function(["geoKm","bearing","angleGap","segDistKm","rawSpeedAt","rawTurnAt","matchTolKm","keepNearRaw"].map(grab).join("\n")+";return {keepNearRaw,matchTolKm}")();
  const raw=[],t0=1760000000000;
  // 90 km/h north: ~25 m per second
  for(let i=0;i<200;i++)raw.push({lat:40.8+i*0.000225,lng:31.1,time:t0+i*1000});
@@ -50,4 +50,15 @@ test("replay: at highway speed a frontage road 22 m away is rejected and the GPS
  const slow=raw.map((p,i)=>({lat:40.8+i*0.00004,lng:31.1,time:t0+i*1000}));
  const ms=slow.map(p=>({lat:p.lat,lng:p.lng+0.00018}));
  assert.equal(f.keepNearRaw(slow,ms,f.matchTolKm).filter(p=>p.lng>31.1001).length,slow.length);
+});
+test("replay: on a loop ramp the matched road is kept although GPS cuts the corner",()=>{
+ const f=new Function(["geoKm","bearing","angleGap","segDistKm","rawSpeedAt","rawTurnAt","matchTolKm","keepNearRaw"].map(grab).join("\n")+";return {keepNearRaw,matchTolKm}")();
+ const c={lat:40.81,lng:31.12},k=Math.cos(c.lat*Math.PI/180),t0=1760000000000,raw=[],road=[];
+ // 270 deg loop at ~50 km/h (14 m/s); GPS radius 45 m, ramp radius 60 m
+ for(let a=0,i=0;a<=270;a+=4,i++){const r=a*Math.PI/180;
+  raw.push({lat:c.lat+45/111320*Math.cos(r),lng:c.lng+45/(111320*k)*Math.sin(r),time:t0+i*225});
+  road.push({lat:c.lat+60/111320*Math.cos(r),lng:c.lng+60/(111320*k)*Math.sin(r)});}
+ const out=f.keepNearRaw(raw,road,f.matchTolKm);
+ const onRamp=out.filter(p=>Math.abs(Math.hypot((p.lat-c.lat)*111320,(p.lng-c.lng)*111320*k)-60)<2).length;
+ assert.ok(onRamp>=road.length-2,"ramp kept: "+onRamp+"/"+road.length);
 });

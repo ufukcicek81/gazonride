@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>/* iPhone: no auto-zoom when a text field is focused (pinch zoom still works on iOS). */(function(){var ios=/iP(hone|ad|od)/.test(navigator.userAgent)||navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1;if(!ios)return;var m=document.querySelector('meta[name="viewport"]');if(m&&m.content.indexOf("maximum-scale")<0)m.content+=",maximum-scale=1";})();</script>
 <meta name="theme-color" content="#080a0e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" sizes="192x192" href="icon-192.svg?v=20261008">
@@ -2321,7 +2321,14 @@ async function ensureMic(){
  if(voice.stream&&voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}))return voice.stream;
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("Mikrofon tarayıcıda desteklenmiyor");
  var oldStream=voice.stream;
+ // iPhone (Safari 16.4+): keep the audio session in play-and-record. Without
+ // it, playing the riders' voices (or the test tone) can switch the session
+ // to playback-only and the microphone sends silence: "ses geliyor, gitmiyor".
+ try{if(navigator.audioSession&&navigator.audioSession.type!=="play-and-record")navigator.audioSession.type="play-and-record"}catch(e){}
  voice.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+ // iPhone stops the microphone on lock / app switch / calls: take a new one
+ // as soon as possible and swap it into every call (no rejoin needed).
+ voice.stream.getAudioTracks().forEach(function(t){t.onended=function(){if(voice.room)setTimeout(recoverMic,400)}});
  if(oldStream){
   var newTrack=voice.stream.getAudioTracks()[0];
   Object.keys(voice.peers).forEach(function(id){
@@ -2332,6 +2339,17 @@ async function ensureMic(){
   });
  }
  return voice.stream;
+}
+async function recoverMic(){
+ if(!voice.room||voice.recovering)return;
+ voice.recovering=true;
+ try{
+  var st=await ensureMic();
+  st.getAudioTracks().forEach(function(t){t.enabled=voice.mic});
+  voiceAnalysers.local=null;startVoiceMeters();
+  voiceState(voice.mic?"Mikrofon yeniden açıldı · konuşabilirsin":"Mikrofon hazır · sessizde");
+ }catch(e){voiceState("iPhone mikrofonu durdurdu · mikrofon tuşuna dokun")}
+ finally{voice.recovering=false}
 }
 async function startVoice(code,host){
  try{
@@ -2348,6 +2366,10 @@ async function startVoice(code,host){
   // Otherwise stopVoice() stops the just-created iOS MediaStream.
   stopVoice(false);
   var stream=await ensureMic();
+  // Android: microphone foreground service so the voice keeps going with the
+  // app in the background or the screen off (needs the mic permission first).
+  if(window.AndroidBridge&&typeof AndroidBridge.startIntercomService==="function")
+   try{AndroidBridge.startIntercomService()}catch(e){}
   voiceState("Intercom sunucusu hazırlanıyor…");
   await loadVoiceIce();
   voice.room=code;voice.host=host;voice.id=voiceId();voice.session++;
@@ -2419,7 +2441,8 @@ async function toggleMic(){
  try{
   if(window.AndroidBridge&&typeof AndroidBridge.prepareIntercom==="function")
    AndroidBridge.prepareIntercom();
-  var st=await ensureMic();voice.mic=!voice.mic;
+  var dead=!(voice.stream&&voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}));
+  var st=await ensureMic();voice.mic=dead?true:!voice.mic;
   st.getAudioTracks().forEach(function(t){t.enabled=voice.mic});
   paintMic();startVoiceMeters();
   voiceState(voice.mic?"Mikrofon açık · konuşabilirsin":"Mikrofon sessizde · dinlemedesin");
@@ -2451,7 +2474,7 @@ document.addEventListener("visibilitychange",function(){
  // iOS may suspend WebRTC signaling while locked. Rejoin the room on return.
  if(!voice.ws||voice.ws.readyState===WebSocket.CLOSED)connectVoiceSocket();
  if(voice.stream&&!voice.stream.getAudioTracks().some(function(t){return t.readyState==="live"}))
-  voiceState("iPhone mikrofonu durdurdu · konuşmayı tekrar aç");
+  recoverMic();
  if(voice.audioBlocked)voiceAudioHint();
 });
 function readJsonArray(key){try{var a=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}

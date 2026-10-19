@@ -320,7 +320,9 @@ public class MainActivity extends Activity {
         // plays on the EARPIECE when no headset is connected (riders heard
         // nothing). Route to helmet/headset when present, else loudspeaker.
         @JavascriptInterface public void prepareIntercom(){ runOnUiThread(() -> routeIntercomAudio(true)); }
-        @JavascriptInterface public void stopIntercom(){ runOnUiThread(() -> routeIntercomAudio(false)); }
+        @JavascriptInterface public void stopIntercom(){ runOnUiThread(() -> { routeIntercomAudio(false); intercomService(false); }); }
+        // Called once the microphone is open: keeps it alive in the background.
+        @JavascriptInterface public void startIntercomService(){ runOnUiThread(() -> intercomService(true)); }
         @JavascriptInterface public void setIntercomSpeaker(boolean speaker){
             prefs.edit().putBoolean("intercom_speaker",speaker).apply();
             runOnUiThread(() -> routeIntercomAudio(true));
@@ -627,6 +629,15 @@ public class MainActivity extends Activity {
     }
 
     private volatile String intercomRoute = "";
+    private void intercomService(boolean on){
+        Intent i=new Intent(this,IntercomService.class);
+        try{
+            if(!on){ stopService(i); return; }
+            // A microphone foreground service without the permission crashes on Android 14.
+            if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED) return;
+            if(Build.VERSION.SDK_INT>=26) startForegroundService(i); else startService(i);
+        }catch(Exception e){ android.util.Log.w("GazOnRide","Intercom service",e); }
+    }
     private void routeIntercomAudio(boolean on){
         AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
         if(am==null) return;

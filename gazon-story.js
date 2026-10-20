@@ -218,13 +218,26 @@ function cover(g,src,sw,sh){
  g.drawImage(src,(W-w)/2,(H-h)/2,w,h);
 }
 // o: {frac: ride progress 0..1, t: seconds since start, outA: 0..1 summary card}
+// Minimal on purpose: the 3D picture is the content. Small logo + title on
+// a light top fade, one thin km/time strip at the bottom, summary at the end.
 function overlay3d(g,d,assets,o){
  P=STYLES.satellite;
- var a=g.createLinearGradient(0,0,0,520);a.addColorStop(0,"rgba(6,8,10,.85)");a.addColorStop(1,"rgba(6,8,10,0)");g.fillStyle=a;g.fillRect(0,0,W,520);
- var b=g.createLinearGradient(0,H-640,0,H);b.addColorStop(0,"rgba(6,8,10,0)");b.addColorStop(1,"rgba(6,8,10,.9)");g.fillStyle=b;g.fillRect(0,H-640,W,640);
- brand(g,assets.logo,easeOut(o.t/.6),220);
- header(g,d,easeOut((o.t-.3)/.6));
- liveStats(g,d,clamp(o.frac,0,1),easeOut((o.t-.5)/.6)*(1-o.outA));
+ var a=g.createLinearGradient(0,0,0,360);a.addColorStop(0,"rgba(6,8,10,.7)");a.addColorStop(1,"rgba(6,8,10,0)");g.fillStyle=a;g.fillRect(0,0,W,360);
+ var top=easeOut(o.t/.6)*(1-o.outA);
+ if(top>0){
+  brand(g,assets.logo,top,200);
+  g.save();g.globalAlpha=top;g.textAlign="center";g.fillStyle="rgba(255,255,255,.85)";g.font=font(32,600);g.fillText(d.title,W/2,276);g.restore();
+ }
+ var sa=easeOut((o.t-.5)/.6)*(1-o.outA);
+ if(sa>0){
+  var f=clamp(o.frac,0,1),txt=(d.km*f).toFixed(1)+" km  ·  "+(d.fmtDur(Math.round(d.sec*f))||"0dk");
+  g.save();g.globalAlpha=sa;g.font=font(40,800);
+  var w=g.measureText(txt).width+76,x=(W-w)/2,y=H-300;
+  g.fillStyle="rgba(8,10,13,.62)";roundRect(g,x,y,w,76,38);g.fill();
+  g.fillStyle=RED;g.beginPath();g.arc(x+38,y+38,9,0,7);g.fill();
+  g.fillStyle="#fff";g.textAlign="left";g.textBaseline="middle";g.fillText(txt,x+58,y+40);
+  g.restore();
+ }
  outro(g,d,assets.logo,o.outA);
 }
 // Records any canvas: start() now, stop() -> Promise<{blob,mime,ext}>.

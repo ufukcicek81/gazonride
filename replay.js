@@ -454,7 +454,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s25";
+var REPLAY_BUILD="s26";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -483,6 +483,9 @@ function chaseTarget(progress){
  // at speed, so the zoom does not pump in and out).
  var near=pointAtKm(d+.15*k),far=pointAtKm(d+.7*k);
  var bend=near&&far?angleGap(bearing(cur,near),bearing(near,far)):0;
+ // Story video: the ride is sped up to fit the clip; the camera rises with
+ // the speed so the road moves across the screen as calmly as at 1x.
+ if(recHook)return {rider:cur,heading:heading,range:(520+Math.min(600,bend*8))*Math.max(1,Math.pow(Number(playbackSpeed)||1,.85)),tilt:58};
  return {rider:cur,heading:heading,range:(520+Math.min(600,bend*8))*(1+.2*(k-1)),tilt:68};
 }
 function updateChaseCamera(progress,now,force){
@@ -692,7 +695,7 @@ async function build3DMap(ride){
   var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
   map3d=new Map3DElement({
    center:{lat:info.center.lat,lng:info.center.lng,altitude:elevMedian},
-   range:info.range,tilt:47,heading:head,mode:"HYBRID",
+   range:info.range,tilt:47,heading:head,mode:recHook?"SATELLITE":"HYBRID",
    defaultUIHidden:true,gestureHandling:"COOPERATIVE"
   });
   map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";trackSteady(map3d);
@@ -910,7 +913,7 @@ function shareRide(){
 /* Story video (gazon-story.js): render once per ride, then share or save. */
 var story={ride:null,res:null,url:"",style:""};
 function storyStyle(){var v="3d";try{v=localStorage.getItem("gazon_story_style")||"3d"}catch(e){}return /^(3d|dark|light|satellite)$/.test(v)?v:"3d"}
-function storyLen(){var v=30;try{v=Number(localStorage.getItem("gazon_story_len"))||30}catch(e){}return [15,30,60].indexOf(v)>=0?v:30}
+function storyLen(){var v=60;try{v=Number(localStorage.getItem("gazon_story_len"))||60}catch(e){}return [15,30,60].indexOf(v)>=0?v:60}
 function paintStoryStyles(){var len=storyLen();document.querySelectorAll("[data-story-len]").forEach(function(b){var on=Number(b.getAttribute("data-story-len"))===len;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")});
  var h=$("grStoryHint");if(h)h.textContent="Instagram · WhatsApp durum · "+len+" sn, dikey";
  var cur=storyStyle();document.querySelectorAll("[data-story-style]").forEach(function(b){var on=b.getAttribute("data-story-style")===cur;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")})}
@@ -973,7 +976,7 @@ function record3DStory(seconds,progress){
  var S=window.GaZonStory,ride=currentRide;
  if(!S||!S.recorder||!S.overlay3d||!ride)return Promise.reject(new Error("unsupported"));
  var d=S.prepare(ride,"satellite",seconds);if(!d)return Promise.reject(new Error("no-track"));
- var prevSpeed=playbackSpeed;
+ var prevSpeed=playbackSpeed,prevCam=camMode;camMode="chase";
  return S.loadImage("icons/gazonride-logo.jpg",false).then(function(logo){return new Promise(function(resolve,reject){
   var outroMs=S.T_OUTRO*1000,comp=document.createElement("canvas");comp.width=S.W;comp.height=S.H;
   var g=comp.getContext("2d"),video=null,rec=null,raf=0,t0=0,endAt=0,done=false,checked=false;
@@ -981,7 +984,7 @@ function record3DStory(seconds,progress){
   function cleanup(){
    clearTimeout(safety);recHook=null;cancelAnimationFrame(raf);modal.classList.remove("gr-rec");
    if(video&&video.srcObject)try{video.srcObject.getTracks().forEach(function(t){t.stop()})}catch(e){}
-   playbackSpeed=prevSpeed;updateSpeedControls();
+   playbackSpeed=prevSpeed;updateSpeedControls();camMode=prevCam;
   }
   function fail(e){if(done)return;done=true;try{if(rec)rec.stop().catch(function(){})}catch(x){}cleanup();reject(e)}
   // An unreadable (tainted) or black picture means the 3D map was not captured.

@@ -454,7 +454,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s26";
+var REPLAY_BUILD="s27";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -913,18 +913,25 @@ function shareRide(){
 /* Story video (gazon-story.js): render once per ride, then share or save. */
 var story={ride:null,res:null,url:"",style:""};
 function storyStyle(){var v="3d";try{v=localStorage.getItem("gazon_story_style")||"3d"}catch(e){}return /^(3d|dark|light|satellite)$/.test(v)?v:"3d"}
-function storyLen(){var v=60;try{v=Number(localStorage.getItem("gazon_story_len"))||60}catch(e){}return [15,30,60].indexOf(v)>=0?v:60}
-function paintStoryStyles(){var len=storyLen();document.querySelectorAll("[data-story-len]").forEach(function(b){var on=Number(b.getAttribute("data-story-len"))===len;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")});
- var h=$("grStoryHint");if(h)h.textContent="Instagram · WhatsApp durum · "+len+" sn, dikey";
+// Video speed (1x = the replay's own pace); the clip is as long as the route needs.
+function storySpeed(){var v=1;try{v=Number(localStorage.getItem("gazon_story_speed"))||1}catch(e){}return v===2?2:1}
+function storySeconds(speed){
+ var S=window.GaZonStory,km=Math.max(.5,playTotal||Number(currentRide&&currentRide.km)||1);
+ var ms=playTotal?replayDurationMs(currentRide):Math.max(40000,Math.min(300000,km*6000));
+ return Math.round(ms/(speed||1)/1000+(S&&S.T_OUTRO||3.6));
+}
+function fmtClip(sec){var m=Math.floor(sec/60),s=sec%60;return m?m+" dk"+(s?" "+s+" sn":""):s+" sn"}
+function paintStoryStyles(){var len=storySpeed();document.querySelectorAll("[data-story-speed]").forEach(function(b){var sp=Number(b.getAttribute("data-story-speed")),on=sp===len;b.textContent=sp+"× · "+fmtClip(storySeconds(sp));b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")});
+ var h=$("grStoryHint");if(h)h.textContent="Instagram · WhatsApp durum · "+fmtClip(storySeconds(len))+", dikey";
  var cur=storyStyle();document.querySelectorAll("[data-story-style]").forEach(function(b){var on=b.getAttribute("data-story-style")===cur;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")})}
 function setStoryStyle(v){
  try{localStorage.setItem("gazon_story_style",v)}catch(e){}
  paintStoryStyles();
  // A finished video in another style is dropped; the rider makes a new one.
- if(story.res&&story.style!==v+"/"+storyLen()){story.ride=null;storyReset()}
+ if(story.res&&story.style!==v+"/"+storySpeed()){story.ride=null;storyReset()}
 }
 function setStoryLen(v){
- try{localStorage.setItem("gazon_story_len",String(v))}catch(e){}
+ try{localStorage.setItem("gazon_story_speed",String(v))}catch(e){}
  paintStoryStyles();
  if(story.res&&story.style!==storyStyle()+"/"+v){story.ride=null;storyReset()}
 }
@@ -932,7 +939,7 @@ function storyReset(){
  var S=window.GaZonStory,box=$("grStoryBox");if(!box)return;
  box.hidden=!(S&&S.supported());
  paintStoryStyles();
- if(story.ride===currentRide&&story.res&&story.style===storyStyle()+"/"+storyLen())return;
+ if(story.ride===currentRide&&story.res&&story.style===storyStyle()+"/"+storySpeed())return;
  if(story.url){try{URL.revokeObjectURL(story.url)}catch(e){}}
  story={ride:null,res:null,url:"",style:""};
  $("grStoryMake").hidden=false;$("grStoryProgress").hidden=true;$("grStoryActions").hidden=true;
@@ -942,8 +949,8 @@ function storyMake(){
  var S=window.GaZonStory,ride=currentRide;if(!S||!ride)return;
  var bar=$("grStoryBar"),msg=$("grStoryMsg"),result=$("grReplayShareResult");
  $("grStoryMake").hidden=true;$("grStoryProgress").hidden=false;$("grStoryActions").hidden=true;
- var st=storyStyle(),len=storyLen();
- document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=true});
+ var st=storyStyle(),speed=storySpeed(),len=storySeconds(speed);
+ document.querySelectorAll("[data-story-style],[data-story-speed]").forEach(function(b){b.disabled=true});
  var onProgress=function(f,t){bar.style.width=Math.round(f*100)+"%";msg.textContent=t+" %"+Math.round(f*100)},note="";
  var job=st==="3d"?record3DStory(len,onProgress).catch(function(e){
   var m=e&&e.message;if(m!=="no-3d"&&m!=="unsupported")throw e;
@@ -954,15 +961,15 @@ function storyMake(){
  }):S.make(ride,{style:st,seconds:len,onProgress:onProgress});
  job.then(function(res){
   var panel=$("grReplaySharePanel");if(panel)panel.classList.add("active");
-  story={ride:ride,res:res,url:URL.createObjectURL(res.blob),style:st+"/"+len};
-  document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=false});
+  story={ride:ride,res:res,url:URL.createObjectURL(res.blob),style:st+"/"+speed};
+  document.querySelectorAll("[data-story-style],[data-story-speed]").forEach(function(b){b.disabled=false});
   $("grStoryProgress").hidden=true;$("grStoryActions").hidden=false;
   var v=$("grStoryPreview");v.src=story.url;v.hidden=false;try{v.play()}catch(e){}
   if(result)result.textContent="Video hazır · "+(res.blob.size/1048576).toFixed(1)+" MB"+note;
  }).catch(function(e){
   var panel=$("grReplaySharePanel");if(panel)panel.classList.add("active");
   $("grStoryMake").hidden=false;$("grStoryProgress").hidden=true;
-  document.querySelectorAll("[data-story-style],[data-story-len]").forEach(function(b){b.disabled=false});
+  document.querySelectorAll("[data-story-style],[data-story-speed]").forEach(function(b){b.disabled=false});
   var m=e&&e.message;
   if(result)result.textContent=m==="unsupported"?"Bu cihaz video oluşturmayı desteklemiyor.":m==="no-track"?"Bu sürüşte video için yeterli GPS izi yok.":"Video oluşturulamadı. Tekrar dene.";
  });
@@ -972,12 +979,40 @@ function storyMake(){
  * card drawn on top (gazon-story.js). Rejects "no-3d" when the 3D picture
  * cannot be captured, so the caller can fall back to the satellite map. */
 var recHook=null;
+// A few street / road names along the ride (Google Geocoder, ~1 per 2.5 km,
+// at most 10), shown in the video as the rider passes them.
+function streetLabels(ride){
+ return new Promise(function(resolve){
+  var out=[];
+  try{
+   if(!(window.google&&google.maps&&google.maps.Geocoder))return resolve(out);
+   var a=replaySource(ride),cum=[0];for(var i=1;i<a.length;i++)cum.push(cum[i-1]+geoKm(a[i-1],a[i]));
+   var total=cum[cum.length-1];if(total<.3)return resolve(out);
+   var n=Math.max(2,Math.min(10,Math.round(total/2.5))),pts=[];
+   for(i=0;i<n;i++){var f=(i+.35)/n,j=0;while(j<cum.length-1&&cum[j]<f*total)j++;pts.push({f:f,p:a[j]})}
+   var gc=new google.maps.Geocoder(),k=0,timer=setTimeout(function(){resolve(out)},8000);
+   (function next(){
+    if(k>=pts.length){clearTimeout(timer);resolve(out);return}
+    var q=pts[k++];
+    try{gc.geocode({location:{lat:q.p.lat,lng:q.p.lng},language:"tr"},function(res,status){
+     var name="";
+     if(status==="OK"&&res)res.some(function(r){return (r.address_components||[]).some(function(c){
+      if((c.types||[]).indexOf("route")>=0&&c.long_name&&!/unnamed|adsız|isimsiz/i.test(c.long_name)){name=c.long_name;return true}
+     })});
+     if(name&&(!out.length||out[out.length-1].text!==name))out.push({f:q.f,text:name});
+     next();
+    })}catch(e){next()}
+   })();
+  }catch(e){resolve(out)}
+ });
+}
 function record3DStory(seconds,progress){
  var S=window.GaZonStory,ride=currentRide;
  if(!S||!S.recorder||!S.overlay3d||!ride)return Promise.reject(new Error("unsupported"));
  var d=S.prepare(ride,"satellite",seconds);if(!d)return Promise.reject(new Error("no-track"));
  var prevSpeed=playbackSpeed,prevCam=camMode;camMode="chase";
- return S.loadImage("icons/gazonride-logo.jpg",false).then(function(logo){return new Promise(function(resolve,reject){
+ progress(0,"Yol adları alınıyor…");
+ return Promise.all([S.loadImage("icons/gazonride-logo.jpg",false),streetLabels(ride)]).then(function(got){var logo=got[0],labels=got[1],curLabel=null,curAt=0;return new Promise(function(resolve,reject){
   var outroMs=S.T_OUTRO*1000,comp=document.createElement("canvas");comp.width=S.W;comp.height=S.H;
   var g=comp.getContext("2d"),video=null,rec=null,raf=0,t0=0,endAt=0,done=false,checked=false;
   var safety=setTimeout(function(){fail(new Error("no-3d"))},60000+seconds*1000);
@@ -997,7 +1032,11 @@ function record3DStory(seconds,progress){
    if(!t0)t0=now;var t=(now-t0)/1000;
    g.fillStyle="#0b0e12";g.fillRect(0,0,S.W,S.H);
    if(video&&video.videoWidth)S.cover(g,video,video.videoWidth,video.videoHeight);
-   S.overlay3d(g,d,{logo:logo},{frac:lastProgress,t:t,outA:endAt?Math.min(1,(now-endAt)/700):0});
+   // Street name: the last one the rider has passed, shown for ~4 s.
+   var lab=null;for(var li=labels.length-1;li>=0;li--)if(lastProgress>=labels[li].f){lab=labels[li];break}
+   if(lab&&lab!==curLabel){curLabel=lab;curAt=now}
+   var age=curLabel?(now-curAt)/1000:99,la=age<.4?age/.4:age<3.6?1:Math.max(0,1-(age-3.6)/.5);
+   S.overlay3d(g,d,{logo:logo},{frac:lastProgress,t:t,outA:endAt?Math.min(1,(now-endAt)/700):0,label:curLabel&&la>0?{text:curLabel.text,a:la}:null});
    if(!checked&&t>3){checked=true;if(blank()){fail(new Error("no-3d"));return}}
    var pct=endAt?Math.min(1,.92+.08*(now-endAt)/outroMs):lastProgress*.92;
    progress(pct,"3D video kaydediliyor…");
@@ -1014,7 +1053,7 @@ function record3DStory(seconds,progress){
     try{
      video=document.createElement("video");video.muted=true;video.playsInline=true;video.setAttribute("playsinline","");
      video.srcObject=c.captureStream(30);var pl=video.play();if(pl&&pl.catch)pl.catch(function(){});
-     rec=S.recorder(comp,seconds>30?5000000:7000000);
+     rec=S.recorder(comp,seconds>120?3500000:seconds>30?5000000:7000000);
     }catch(e){fail(new Error("no-3d"));return}
     raf=requestAnimationFrame(draw);
    },
@@ -1080,11 +1119,11 @@ function install(){
  modal.innerHTML='<div class="gr-replay-wrap"><div class="gr-replay-head"><div><b>Sürüş Tekrarı</b><small id="grReplayState">Rota hazırlanıyor</small></div><button class="gr-replay-close" id="grReplayClose"><span class="mi">close</span></button></div><div class="gr-replay-stage"><div id="grReplayMap" class="gr-replay-map"></div><div class="gr-rec-badge" id="grRecBadge" aria-live="polite"><i></i><span>3D harita hazırlanıyor…</span></div><button class="gr-play3d" id="grReplayPlay3D"><span class="mi">play_arrow</span> Sürüşü Oynat</button><div class="gr-replay-title"><b id="grReplayName">Sürüş Tekrarı</b><small id="grReplayDate"></small><small id="grReplayDistance" class="gr-replay-distance">0 / 0 km</small><div class="gr-replay-progress"><i id="grReplayBar"></i></div></div>'+
  '<div class="gr-replay-hud" aria-live="off"><div><b id="grHudKm">0</b><small>km</small><span>mesafe</span></div><div><b id="grHudSpeed">—</b><small>km/sa</small><span>hız</span></div><div><b id="grHudAlt">—</b><small>m</small><span>rakım</span></div></div>'+
  '<div class="gr-replay-compass" id="grHudCompass" aria-hidden="true"><i>N</i></div>'+
- '<button class="gr-replay-cam" id="grReplayCam" type="button"></button></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><div class="gr-story-box" id="grStoryBox"><div class="gr-story-styles" role="group" aria-label="Video haritası"><button type="button" data-story-style="3d"><span class="mi">3d_rotation</span> 3D</button><button type="button" data-story-style="dark"><span class="mi">dark_mode</span> Karanlık</button><button type="button" data-story-style="light"><span class="mi">light_mode</span> Açık</button><button type="button" data-story-style="satellite"><span class="mi">satellite_alt</span> Uydu</button></div><div class="gr-story-styles" role="group" aria-label="Video süresi"><button type="button" data-story-len="15">15 sn</button><button type="button" data-story-len="30">30 sn</button><button type="button" data-story-len="60">60 sn</button></div><button type="button" class="gr-story-make" id="grStoryMake"><span class="mi">movie</span><span><b>Hikaye videosu oluştur</b><small id="grStoryHint">Instagram · WhatsApp durum · dikey</small></span></button><div class="gr-story-progress" id="grStoryProgress" hidden><i id="grStoryBar"></i><small id="grStoryMsg">Video oluşturuluyor…</small></div><video class="gr-story-preview" id="grStoryPreview" playsinline muted loop hidden></video><div class="gr-story-actions" id="grStoryActions" hidden><button type="button" class="primary" id="grStoryShare"><span class="mi">ios_share</span> Videoyu paylaş</button><button type="button" id="grStorySave"><span class="mi">download</span> Galeriye kaydet</button></div></div><p>Metin paylaşımında başlangıç ve varış konumunu içeren harita bağlantısı gider; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button><button id="grReplayGpx"><span class="mi">route</span> GPX dosyası</button></div></div></div>';
+ '<button class="gr-replay-cam" id="grReplayCam" type="button"></button></div><div class="gr-replay-speed"><span>Oynatma hızı</span><button data-replay-speed="1">1×</button><button data-replay-speed="2" class="active">2×</button><button data-replay-speed="4">4×</button></div><div class="gr-bigstats"><div><b id="grReplayKm">0</b><small>KM</small></div><div><b id="grReplayTime">00:00</b><small>SÜRE</small></div><div><b id="grReplayTurns">0</b><small>VİRAJ</small></div></div><div class="gr-detail-list"><div><span>Ortalama hız</span><b><span id="grReplayAvg">0</span> km/sa</b></div><div><span>Azami hız</span><b><span id="grReplayMax">0</span> km/sa</b></div><div><span>En yüksek yatış</span><b id="grReplayLean">0°</b></div><div><span>Tahmini yakıt</span><b id="grReplayFuel">0.0 L</b></div></div><div class="gr-replay-controls"><button id="grReplayPause" style="display:none"><span class="mi">pause</span> Duraklat</button><button id="grReplayOverview"><span class="mi">map</span> Rota Özeti</button><button class="primary" id="grReplayShare"><span class="mi">share</span> Sürüşü Paylaş</button></div><div class="gr-replay-share-panel" id="grReplaySharePanel" role="dialog" aria-label="Sürüşü paylaş"><div class="gr-replay-share-head"><b>🏍 Sürüşü Paylaş</b><button id="grReplayShareClose" aria-label="Kapat"><span class="mi">close</span></button></div><div class="gr-story-box" id="grStoryBox"><div class="gr-story-styles" role="group" aria-label="Video haritası"><button type="button" data-story-style="3d"><span class="mi">3d_rotation</span> 3D</button><button type="button" data-story-style="dark"><span class="mi">dark_mode</span> Karanlık</button><button type="button" data-story-style="light"><span class="mi">light_mode</span> Açık</button><button type="button" data-story-style="satellite"><span class="mi">satellite_alt</span> Uydu</button></div><div class="gr-story-styles" role="group" aria-label="Video hızı"><button type="button" data-story-speed="1">1×</button><button type="button" data-story-speed="2">2×</button></div><button type="button" class="gr-story-make" id="grStoryMake"><span class="mi">movie</span><span><b>Hikaye videosu oluştur</b><small id="grStoryHint">Instagram · WhatsApp durum · dikey</small></span></button><div class="gr-story-progress" id="grStoryProgress" hidden><i id="grStoryBar"></i><small id="grStoryMsg">Video oluşturuluyor…</small></div><video class="gr-story-preview" id="grStoryPreview" playsinline muted loop hidden></video><div class="gr-story-actions" id="grStoryActions" hidden><button type="button" class="primary" id="grStoryShare"><span class="mi">ios_share</span> Videoyu paylaş</button><button type="button" id="grStorySave"><span class="mi">download</span> Galeriye kaydet</button></div></div><p>Metin paylaşımında başlangıç ve varış konumunu içeren harita bağlantısı gider; tüm GPS izi paylaşılmaz.</p><div id="grReplayShareResult" aria-live="polite">Paylaşım yöntemini seç</div><div class="gr-replay-share-actions"><button id="grReplayNative"><span class="mi">ios_share</span> Cihazla Paylaş</button><button id="grReplayWhatsapp"><span class="mi">chat</span> WhatsApp</button><button id="grReplayCopy"><span class="mi">content_copy</span> Kopyala</button><button id="grReplayGpx"><span class="mi">route</span> GPX dosyası</button></div></div></div>';
  document.body.appendChild(modal);
  var camBtn=$("grReplayCam"),paintCam=function(){camBtn.innerHTML='<span class="mi">'+(camMode==="chase"?"two_wheeler":"flight")+'</span> '+(camMode==="chase"?"Takip":"Drone")};
  paintCam();camBtn.onclick=function(){camMode=camMode==="chase"?"orbit":"chase";try{localStorage.setItem("gazon_replay_cam",camMode)}catch(e){}paintCam();if(mode==="3d"&&currentRide)build3DMap(currentRide)};
- $("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;$("grReplayGpx").onclick=gpxReplayShare;$("grStoryMake").onclick=storyMake;modal.querySelectorAll("[data-story-style]").forEach(function(b){b.onclick=function(){setStoryStyle(b.getAttribute("data-story-style"))}});modal.querySelectorAll("[data-story-len]").forEach(function(b){b.onclick=function(){setStoryLen(Number(b.getAttribute("data-story-len")))}});$("grStoryShare").onclick=storyShare;$("grStorySave").onclick=storySave;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
+ $("grReplayClose").onclick=close;$("grReplayPlay3D").onclick=function(){build3DMap(currentRide)};$("grReplayPause").onclick=pauseResume;$("grReplayOverview").onclick=backOverview;$("grReplayShare").onclick=shareRide;$("grReplayShareClose").onclick=closeReplayShare;$("grReplayNative").onclick=nativeReplayShare;$("grReplayWhatsapp").onclick=whatsappReplayShare;$("grReplayCopy").onclick=copyReplayShare;$("grReplayGpx").onclick=gpxReplayShare;$("grStoryMake").onclick=storyMake;modal.querySelectorAll("[data-story-style]").forEach(function(b){b.onclick=function(){setStoryStyle(b.getAttribute("data-story-style"))}});modal.querySelectorAll("[data-story-speed]").forEach(function(b){b.onclick=function(){setStoryLen(Number(b.getAttribute("data-story-speed")))}});$("grStoryShare").onclick=storyShare;$("grStorySave").onclick=storySave;modal.querySelectorAll("[data-replay-speed]").forEach(function(b){b.onclick=function(){setSpeed(Number(b.getAttribute("data-replay-speed")))}});new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});scan()
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 window.GaZonReplay={open:open,scan:scan,diagnostics:function(ride){return routeIntegrity(ride||currentRide)},cameraDiagnostics:function(){return {type:"continuous-route-axis-orbit",frames:orbitFrames,railPoints:orbitRail.length,orbitDegrees:orbitTotalDegrees,latest:orbitLatest,mode:using3d?"3d":"classic"}}};

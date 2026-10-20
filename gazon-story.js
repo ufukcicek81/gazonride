@@ -45,7 +45,8 @@ function loadImage(src,cors){
 
 // Everything the frames need, computed once.
 function prepare(ride,style,seconds){
- seconds=LENGTHS.indexOf(Number(seconds))>=0?Number(seconds):30;
+ // Any length: the clip follows the route (replay speed), not a fixed cap.
+ seconds=clamp(Number(seconds)||30,8,600);
  style=STYLES[style]?style:"dark";
  var J=root.GaZonJournal;if(!J||!J.storyMap)return null;
  var view=J.storyMap(ride&&ride.track,360,640,style);if(!view)return null;
@@ -186,7 +187,7 @@ function make(ride,opts){
    var g=c.getContext("2d"),assets={map:img[0],logo:img[1]};
    frame(g,d,assets,0);
    var stream=c.captureStream(FPS),chunks=[],rec;
-   try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:d.total>30?4000000:6000000})}catch(e){rec=new MediaRecorder(stream)}
+   try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:d.total>120?3000000:d.total>30?4000000:6000000})}catch(e){rec=new MediaRecorder(stream)}
    rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
    rec.onerror=function(e){busy=false;reject(e&&e.error||new Error("record"))};
    rec.onstop=function(){
@@ -236,6 +237,16 @@ function overlay3d(g,d,assets,o){
   g.fillStyle="rgba(8,10,13,.62)";roundRect(g,x,y,w,76,38);g.fill();
   g.fillStyle=RED;g.beginPath();g.arc(x+38,y+38,9,0,7);g.fill();
   g.fillStyle="#fff";g.textAlign="left";g.textBaseline="middle";g.fillText(txt,x+58,y+40);
+  g.restore();
+ }
+ // Street name where the rider is (a few times per ride), under the title.
+ if(o.label&&o.label.a>0&&o.outA<1){
+  g.save();g.globalAlpha=o.label.a*(1-o.outA);g.font=font(36,700);
+  var lw=g.measureText(o.label.text).width+96,lx=(W-lw)/2,ly=318;
+  g.fillStyle="rgba(8,10,13,.66)";roundRect(g,lx,ly,lw,70,35);g.fill();
+  g.fillStyle=RED;g.beginPath();g.arc(lx+40,ly+30,11,Math.PI,0);g.lineTo(lx+40,ly+52);g.closePath();g.fill();
+  g.fillStyle="#fff";g.beginPath();g.arc(lx+40,ly+30,4,0,7);g.fill();
+  g.fillStyle="#fff";g.textAlign="left";g.textBaseline="middle";g.fillText(o.label.text,lx+66,ly+37);
   g.restore();
  }
  outro(g,d,assets.logo,o.outA);

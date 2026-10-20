@@ -208,6 +208,44 @@ function make(ride,opts){
  }).catch(function(e){busy=false;throw e});
 }
 
+/* ---------- 3D replay video (replay.js) ----------
+ * The 3D map is drawn by Google on its own WebGL canvas; replay.js feeds that
+ * picture (as a <video> of the canvas stream) and the playback progress, we
+ * add the same branding, live stats and summary card as the map video. */
+function cover(g,src,sw,sh){
+ if(!sw||!sh)return;
+ var k=Math.max(W/sw,H/sh),w=sw*k,h=sh*k;
+ g.drawImage(src,(W-w)/2,(H-h)/2,w,h);
+}
+// o: {frac: ride progress 0..1, t: seconds since start, outA: 0..1 summary card}
+function overlay3d(g,d,assets,o){
+ P=STYLES.satellite;
+ var a=g.createLinearGradient(0,0,0,520);a.addColorStop(0,"rgba(6,8,10,.85)");a.addColorStop(1,"rgba(6,8,10,0)");g.fillStyle=a;g.fillRect(0,0,W,520);
+ var b=g.createLinearGradient(0,H-640,0,H);b.addColorStop(0,"rgba(6,8,10,0)");b.addColorStop(1,"rgba(6,8,10,.9)");g.fillStyle=b;g.fillRect(0,H-640,W,640);
+ brand(g,assets.logo,easeOut(o.t/.6),220);
+ header(g,d,easeOut((o.t-.3)/.6));
+ liveStats(g,d,clamp(o.frac,0,1),easeOut((o.t-.5)/.6)*(1-o.outA));
+ outro(g,d,assets.logo,o.outA);
+}
+// Records any canvas: start() now, stop() -> Promise<{blob,mime,ext}>.
+function recorder(canvas,bitrate){
+ var mime=pickMime();if(!mime||!canvas.captureStream)throw new Error("unsupported");
+ var stream=canvas.captureStream(FPS),chunks=[],rec;
+ try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:bitrate||6000000})}catch(e){rec=new MediaRecorder(stream)}
+ rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
+ rec.start(500);
+ return {stop:function(){return new Promise(function(resolve,reject){
+  rec.onerror=function(e){reject(e&&e.error||new Error("record"))};
+  rec.onstop=function(){
+   stream.getTracks().forEach(function(tr){tr.stop()});
+   var type=(rec.mimeType||mime).split(";")[0],blob=new Blob(chunks,{type:type});
+   if(!blob.size){reject(new Error("empty"));return}
+   resolve({blob:blob,mime:type,ext:type.indexOf("mp4")>=0?"mp4":"webm"});
+  };
+  try{rec.stop()}catch(e){reject(e)}
+ })}};
+}
+
 /* ---------- share / save ---------- */
 function fileName(res){var n=new Date(),p=function(x){return String(x).padStart(2,"0")};return "GazOnRide-"+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+"-"+p(n.getHours())+p(n.getMinutes())+"."+res.ext}
 function hasBridge(){var B=root.AndroidBridge;return !!(B&&typeof B.fileBegin==="function"&&typeof B.fileAppend==="function")}
@@ -247,5 +285,5 @@ function save(res){
  download(res);return Promise.resolve("downloaded");
 }
 
-root.GaZonStory={supported:supported,make:make,share:share,save:save,_frame:frame,_prepare:prepare,LENGTHS:LENGTHS,STYLES:STYLES};
+root.GaZonStory={supported:supported,make:make,share:share,save:save,_frame:frame,_prepare:prepare,prepare:prepare,overlay3d:overlay3d,cover:cover,recorder:recorder,loadImage:loadImage,W:W,H:H,T_OUTRO:T_OUTRO,LENGTHS:LENGTHS,STYLES:STYLES};
 })(window);

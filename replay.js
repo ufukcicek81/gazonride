@@ -454,7 +454,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s28";
+var REPLAY_BUILD="s29";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -712,7 +712,7 @@ async function build3DMap(ride){
    // Rider dot lying flat on the road, drawn like the trail (polylines are
    // ground ribbons with a constant on-screen width): a tiny circle with a
    // wide stroke reads as a filled dot. White rim, red core, white centre.
-   puck3d=[["#FFFFFF",22,4.2],["#E5322D",15,4.4],["#FFFFFF",5,4.6]].map(function(l,k){
+   puck3d=[["#FFFFFF",30,4.2],["#E5322D",21,4.4],["#FFFFFF",7,4.6]].map(function(l,k){
     var el=new Polyline3DElement({altitudeMode:"RELATIVE_TO_GROUND",strokeColor:l[0],strokeWidth:l[1],
      drawsOccludedSegments:true,zIndex:40+k,path:puckCircle(first,.45,l[2])});
     map3d.append(el);return {el:el,alt:l[2]};
@@ -757,8 +757,8 @@ var trailCtor=null,trailChunks=[],trailFrom=0;
 function newTrail(points){
  return new trailCtor({
   path:points.map(function(q){return {lat:q.lat,lng:q.lng,altitude:3}}),
-  altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#E8322E",strokeWidth:9,
-  outerColor:"#FFFFFF",outerWidth:.22,drawsOccludedSegments:true,zIndex:12
+  altitudeMode:"RELATIVE_TO_GROUND",strokeColor:"#E8322E",strokeWidth:16,
+  outerColor:"#9E1B18",outerWidth:.18,drawsOccludedSegments:true,zIndex:12
  });
 }
 function resetTrail(){

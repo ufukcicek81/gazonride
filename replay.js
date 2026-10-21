@@ -454,7 +454,7 @@ function routePoint(progress){
  * time-based exponential filter; range opens up on twisty sections. Center
  * altitude is above ground (Map3DElement), so terrain needs no elevation API. */
 // Shown in the header so a cached old version is easy to spot on the phone.
-var REPLAY_BUILD="s27";
+var REPLAY_BUILD="s28";
 var camMode=(function(){try{return localStorage.getItem("gazon_replay_cam")||"chase"}catch(e){return "chase"}})();
 var chase={heading:null,range:null,ts:0,center:null},speedProfile=[],lastHudTs=0;
 function pointAtKm(km){var x=pointAtDistance(Math.max(0,Math.min(playTotal,km))/Math.max(.000001,playTotal));return x&&x.point}
@@ -695,7 +695,7 @@ async function build3DMap(ride){
   var info=routeBoundsInfo(a),first=a[0],head=bearing(a[0],a[Math.min(4,a.length-1)]);
   map3d=new Map3DElement({
    center:{lat:info.center.lat,lng:info.center.lng,altitude:elevMedian},
-   range:info.range,tilt:47,heading:head,mode:recHook?"SATELLITE":"HYBRID",
+   range:info.range,tilt:47,heading:head,mode:"HYBRID",
    defaultUIHidden:true,gestureHandling:"COOPERATIVE"
   });
   map3d.style.width="100%";map3d.style.height="100%";map3d.style.display="block";trackSteady(map3d);

@@ -345,7 +345,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 <link rel="stylesheet" href="gazon-route-picker.css?v=20261014-brand1">
 <link rel="stylesheet" href="gazon-navigation-premium.css?v=20261014-brand1">
 <link rel="stylesheet" href="gazon-tour.css?v=20261014-brand1">
-<link rel="stylesheet" href="gazon-ui.css?v=20261014-dlg1">
+<link rel="stylesheet" href="gazon-ui.css?v=20261023-wx1">
 </head>
 <body>
 <div class="app">
@@ -1427,6 +1427,8 @@ function renderAlternativeChoices(){
   'Google navigasyonu içeride açılır; güzergâh ve süre yeniden hesaplanabilir.':
   'Tarayıcıda web yönlendirmesi kullanılır. Google’ın hazır navigasyon ekranı Android uygulamasındadır.')+'</div>';
  box.classList.add("active");
+ // Weather along the chosen route at the time the rider gets there.
+ if(window.GaZonWeather)try{GaZonWeather.renderRoute(box,navAlternatives[navSelectedAlternative])}catch(e){}
  var options=box.querySelector(".gr-route-chooser-options");
  if(options)options.scrollLeft=scroll;
  box.querySelectorAll("[data-nav-alt]").forEach(function(b){b.onclick=function(){selectAlternativeRoute(Number(b.dataset.navAlt))}});
@@ -2806,6 +2808,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script src="gazon-journal.js?v=20261015-gps1"></script>
 <script src="gazon-story.js?v=20261021-thick"></script>
 <script src="gazon-discover.js?v=20261014-dlg1"></script>
+<script src="gazon-weather.js?v=20261023-wx1"></script>
 <script src="gazon-marks.js?v=20261013-quick1"></script>
 <script src="gazon-moto-routes.js?v=20261014-brand1"></script>
 <script src="gazon-ui.js?v=20261014-dlg1"></script>

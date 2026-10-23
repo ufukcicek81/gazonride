@@ -313,7 +313,7 @@ body.guidance-active .gr-mark-toast{bottom:calc(120px + var(--gr-safe-bottom))}
 .gr-myride-pub{position:absolute;top:10px;right:62px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
  border:1px solid color-mix(in srgb,var(--gr-accent) 55%,transparent);background:color-mix(in srgb,var(--gr-accent) 12%,var(--gr-surface));color:var(--gr-accent);cursor:pointer}
 .gr-myride-pub .mi{font-size:22px}
-.gr-myride-wrap .gr-ride-card-top{padding-right:104px}
+.gr-myride-wrap .gr-ride-card-top{padding-right:156px}
 /* One-tap marker column (ride + navigation screens) */
 .gr-quick-marks{position:fixed;left:10px;top:50%;transform:translateY(-50%);z-index:1600;display:none;flex-direction:column;gap:10px}
 body.mode-ride .gr-quick-marks,body.guidance-active .gr-quick-marks{display:flex}
@@ -402,3 +402,64 @@ html.theme-light .gr-moto-photo{background:linear-gradient(135deg,#dce9df,#d9e4f
 .gr-wx-now small .mi{font-size:13px}
 .gr-wx-now.bad{border-color:rgba(248,113,113,.6)}
 .gr-wx-now.bad>.mi{color:#F87171}
+
+/* Save a ride as an own route (Sürüşlerim tile) */
+.gr-myride-route{position:absolute;top:10px;right:114px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);cursor:pointer}
+.gr-myride-route .mi{font-size:22px}
+/* Rota tab entry */
+.gr-build-route{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 2px;padding:12px 14px;border-radius:16px;border:1px dashed color-mix(in srgb,var(--gr-accent) 60%,transparent);background:color-mix(in srgb,var(--gr-accent) 8%,var(--gr-surface));color:var(--gr-text);text-align:left;cursor:pointer}
+.gr-build-route>.mi{font-size:26px;color:var(--gr-accent)}
+.gr-build-route b{display:block;font-size:15px}
+.gr-build-route small{display:block;font-size:12px;color:var(--gr-muted)}
+/* Route builder (full screen) */
+.gr-rb{position:fixed;inset:0;z-index:9600;display:flex;flex-direction:column;background:var(--gr-bg,#0A0C10);color:var(--gr-text,#F3F5F8)}
+.gr-rb-top{display:flex;align-items:center;gap:8px;padding:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 8px) 10px 8px}
+.gr-rb-top input{flex:1;min-width:0;min-height:44px;border-radius:13px;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);padding:0 12px;font-size:16px}
+.gr-rb-x,.gr-rb-save{min-height:44px;border-radius:13px;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);display:inline-flex;align-items:center;gap:4px;padding:0 11px;font-weight:800;cursor:pointer}
+.gr-rb-save{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff}
+.gr-rb-map{flex:1 1 42%;min-height:200px}
+.gr-rb-sheet{flex:0 1 auto;max-height:58%;overflow-y:auto;padding:10px 12px calc(var(--gr-safe-bottom,env(safe-area-inset-bottom,0px)) + 12px);border-top:1px solid var(--gr-line);background:var(--gr-surface)}
+.gr-rb-search{display:flex;gap:6px}
+.gr-rb-search input{flex:1;min-width:0;min-height:46px;border-radius:13px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);padding:0 12px;font-size:16px}
+.gr-rb-search button{width:46px;min-height:46px;border-radius:13px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);display:grid;place-items:center;cursor:pointer}
+.gr-rb-hint{display:flex;align-items:center;gap:6px;margin:8px 2px;font-size:12px;color:var(--gr-muted)}
+.gr-rb-hint .mi{font-size:16px}
+.gr-rb-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gr-rb-list li{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:13px;background:var(--gr-surface-2);border:1px solid var(--gr-line)}
+.gr-rb-list li.rest{border-color:rgba(234,88,12,.6)}
+.gr-rb-list li.empty{display:block;font-size:13px;color:var(--gr-muted);padding:12px}
+.gr-rb-badge{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#2563EB;color:#fff;font-weight:800;font-size:13px}
+.gr-rb-list li:first-child .gr-rb-badge{background:#16A34A}
+.gr-rb-list li:last-child:not(:first-child) .gr-rb-badge{background:#DC2626}
+.gr-rb-badge.rest{background:#EA580C!important}
+.gr-rb-badge .mi{font-size:17px}
+.gr-rb-pt{flex:1;min-width:0}
+.gr-rb-pt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-rb-pt small{font-size:11.5px;color:var(--gr-muted)}
+.gr-rb-list button{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--gr-line);background:var(--gr-surface);color:var(--gr-text);display:grid;place-items:center;cursor:pointer}
+.gr-rb-list button:disabled{opacity:.35}
+.gr-rb-list button.on{background:#EA580C;border-color:#EA580C;color:#fff}
+.gr-rb-list button .mi{font-size:19px}
+.gr-rb-opts{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+.gr-rb-opts button{display:inline-flex;align-items:center;gap:4px;min-height:38px;padding:0 11px;border-radius:999px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);font-size:13px;font-weight:700;cursor:pointer}
+.gr-rb-opts button.on{background:var(--gr-text);color:var(--gr-bg);border-color:var(--gr-text)}
+.gr-rb-opts .mi{font-size:17px}
+.gr-rb-sum{margin:8px 2px;font-size:15px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gr-rb-sum small{color:var(--gr-muted);font-size:11.5px}
+.gr-rb-sum .mi{font-size:18px}
+.gr-rb-actions{display:grid;margin-top:8px}
+.gr-rb-actions button{min-height:52px;border-radius:15px;border:0;background:var(--gr-accent);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.gr-rb-actions button:disabled{opacity:.45}
+/* Keşfet → Rotalarım */
+.gr-myroutes{display:none}
+body.gr-myroutes-active .gr-myroutes{display:block}
+body.gr-myroutes-active #grSocial,body.gr-myroutes-active #grMyRides,body.gr-myroutes-active #grTravelCatalogue,body.gr-myroutes-active .gr-moto{display:none!important}
+.gr-mr-new{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50px;margin:8px 0 12px;border-radius:15px;border:1px dashed var(--gr-accent);background:color-mix(in srgb,var(--gr-accent) 8%,var(--gr-surface));color:var(--gr-text);font-weight:800;cursor:pointer}
+.gr-mr-new .mi{color:var(--gr-accent)}
+.gr-mr-card{padding:12px;border-radius:16px;background:var(--gr-surface);border:1px solid var(--gr-line);margin-bottom:10px}
+.gr-mr-card b{display:block;font-size:15px}
+.gr-mr-card small{font-size:12px;color:var(--gr-muted)}
+.gr-mr-actions{display:flex;gap:6px;margin-top:10px}
+.gr-mr-actions button{display:inline-flex;align-items:center;gap:4px;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);font-weight:800;cursor:pointer}
+.gr-mr-actions button.primary{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff;flex:1;justify-content:center}
+.gr-mr-actions .mi{font-size:18px}

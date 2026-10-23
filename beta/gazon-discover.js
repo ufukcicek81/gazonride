@@ -19,7 +19,8 @@ function rideTile(r,i,wide){
  var body=j&&j.rideCard?j.rideCard(r,{w:640,h:wide?320:300,badge:badge}):esc(r.destination||"Sürüş")+" · "+Number(r.km||0).toFixed(1)+" km";
  return '<div class="gr-myride-wrap'+(wide?' wide':'')+'"><button type="button" class="gr-myride'+(wide?' wide':'')+'" data-myride="'+i+'" aria-label="3D tekrarı aç">'+body+'</button>'+
   '<button type="button" class="gr-myride-del" data-myride-del="'+i+'" aria-label="Bu sürüşü sil" title="Sürüşü sil"><span class="mi">delete</span></button>'+
-  '<button type="button" class="gr-myride-pub" data-myride-pub="'+i+'" aria-label="Keşfet\'e gönder" title="Keşfet\'e gönder (admin onayı)"><span class="mi">public</span></button></div>';
+  '<button type="button" class="gr-myride-pub" data-myride-pub="'+i+'" aria-label="Keşfet\'e gönder" title="Keşfet\'e gönder (admin onayı)"><span class="mi">public</span></button>'+
+  '<button type="button" class="gr-myride-route" data-myride-route="'+i+'" aria-label="Rota olarak kaydet" title="Rota olarak kaydet (molalarıyla)"><span class="mi">add_road</span></button></div>';
 }
 function bind(box){
  box.querySelectorAll("[data-myride]").forEach(function(b){b.onclick=function(){
@@ -32,6 +33,10 @@ function bind(box){
  }});
  box.querySelectorAll("[data-myride-pub]").forEach(function(b){b.onclick=function(e){
   e.stopPropagation();publish(Number(b.getAttribute("data-myride-pub")));
+ }});
+ box.querySelectorAll("[data-myride-route]").forEach(function(b){b.onclick=function(e){
+  e.stopPropagation();var r=rides()[Number(b.getAttribute("data-myride-route"))];
+  if(r&&window.GaZonMyRoutes)GaZonMyRoutes.saveRideAsRoute(r);
  }});
  var all=box.querySelector("[data-myrides-all]");if(all)all.onclick=function(){select(true)};
  var go=box.querySelector("[data-myrides-start]");if(go)go.onclick=function(){var t=document.querySelector('.bottom [data-page="ride"]');if(t)t.click()};

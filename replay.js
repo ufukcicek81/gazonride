@@ -407,7 +407,11 @@ function buildOverviewMap(ride){
  var e=a[a.length-1];
  endMarker=new google.maps.Marker({map:overviewMap,position:{lat:e.lat,lng:e.lng},icon:makeDotIcon("#DC2626",6),title:"Varış",zIndex:3});
  // Markers left during the ride (asphalt, rest stop, water, …).
- if(window.GaZonMarks&&Array.isArray(ride.marks))GaZonMarks.drawOn(overviewMap,ride.marks);
+ if(window.GaZonMarks){
+  // Rider's marks plus the rest stops detected in the ride (as Mola marks).
+  var mk=(Array.isArray(ride.marks)?ride.marks:[]).concat((Array.isArray(ride.stops)?ride.stops:[]).map(function(st){return {type:"rest",lat:st.lat,lng:st.lon}}));
+  if(mk.length)GaZonMarks.drawOn(overviewMap,mk);
+ }
  var b=new google.maps.LatLngBounds();a.forEach(function(p){b.extend({lat:p.lat,lng:p.lng})});overviewMap.fitBounds(b,48);
  mode="overview";$("grReplayPlay3D").style.display="inline-flex";modal.classList.remove("gr-replay-live");$("grReplayPause").style.display="none";$("grReplayState").textContent=qualityLabel(ride);setDistanceLabel(0);
 }

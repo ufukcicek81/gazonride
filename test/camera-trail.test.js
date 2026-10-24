@@ -1,0 +1,21 @@
+"use strict";
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const C=require("../gazon-camera.js");
+test("camera: onMove reports every drawn marker position (trail stays glued to the rider)",async()=>{
+ let pos=null;const moves=[];
+ const marker={setPosition(p){pos=p},setIcon(){}};
+ const cam=C.Camera({moveCamera(){}},{marker:()=>marker,interval:300,onMove:c=>moves.push({lat:c.lat,lon:c.lon})});
+ cam.start();
+ cam.fix({point:{lat:40.8,lon:31.1},heading:0,speed:10});
+ await new Promise(r=>setTimeout(r,120));
+ cam.fix({point:{lat:40.801,lon:31.1},heading:0,speed:10});
+ await new Promise(r=>setTimeout(r,500));
+ assert.ok(moves.length>3,"called while gliding");
+ const last=moves[moves.length-1];
+ assert.deepEqual({lat:pos.lat,lon:pos.lng},last,"trail end == marker position");
+ assert.ok(Math.abs(last.lat-40.801)<1e-6,"ends on the new fix");
+ assert.ok(moves.some(m=>m.lat>40.8&&m.lat<40.801),"passes between, never ahead");
+ assert.ok(moves.every(m=>m.lat<=40.801+1e-9));
+ cam.stop();
+});

@@ -105,6 +105,8 @@ function Camera(map,opts){
      if(opts.icon&&rot!==lastIcon){lastIcon=rot;marker.setIcon(opts.icon(rot))}
     }catch(e){}
    }
+   // Lets the page keep things (the live ride trail) glued to the marker.
+   if(opts.onMove)try{opts.onMove(c)}catch(e){}
   }
   if(now-start<duration)frame=raf(draw);
  }

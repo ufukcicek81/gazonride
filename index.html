@@ -514,7 +514,7 @@ body.mode-navigation .voiceDock.active button{width:42px;height:42px;flex:0 0 42
 </nav>
 <script src="gazonride-config.js?v=20261013-static1"></script><script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261014-brand1"></script>
 <script src="gazon-nav-progress.js?v=20261014-brand1"></script>
-<script src="gazon-camera.js?v=20261014-brand1"></script>
+<script src="gazon-camera.js?v=20261024-dot1"></script>
 <script src="gazon-native-route.js?v=20261014-brand1"></script>
 <script src="gazon-route-token.js?v=20261014-brand1"></script>
 <script src="gazon-tour-engine.js?v=20261014-brand1"></script>
@@ -653,12 +653,22 @@ function acceptLiveGpsFix(p,c,ts){
 // following until the rider taps "Konumuma dön".
 var gazonGpsFilter=window.GaZonCamera?GaZonCamera.GpsFilter():null,gazonCamera=null,gazonCameraPaused=false;
 function navArrowIcon(rot){return {path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:rot,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}}
+// Ride recording (no guidance): a white dot with a red ring, like the replay.
+function rideDotIcon(){return {path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ffffff",fillOpacity:1,strokeColor:"#E8322E",strokeWeight:5}}
+function riderIcon(rot){return riding&&!navActive?rideDotIcon():navArrowIcon(rot)}
+// The live trail ends exactly at the marker. The camera glides the marker
+// to each new fix over ~1 s; pushing the raw fix made the red line run
+// ahead of the rider. The last vertex follows the marker instead.
+function trailFollowMarker(c){
+ if(!riding||!route||!c)return;
+ try{var path=route.getPath(),ll=new google.maps.LatLng(c.lat,c.lon);if(path.getLength())path.setAt(path.getLength()-1,ll);else path.push(ll)}catch(e){}
+}
 function mapHeadingNow(){try{return map&&map.getHeading?Number(map.getHeading())||0:0}catch(e){return 0}}
 function arrowRotation(travel){return ((Number(travel)||0)-mapHeadingNow()+720)%360}
 function ensureGazonCamera(){
  if(gazonCamera||!map||!window.GaZonCamera)return gazonCamera;
  var saved="3d";try{saved=localStorage.getItem("gazon_nav_view")||"3d"}catch(e){}
- gazonCamera=GaZonCamera.Camera(map,{marker:function(){return marker},icon:navArrowIcon,
+ gazonCamera=GaZonCamera.Camera(map,{marker:function(){return marker},icon:riderIcon,onMove:trailFollowMarker,
   // Marker symbols are drawn in screen space: rotate the arrow by the
   // travel heading MINUS the map's own heading (0 on a heading-up map,
   // the full bearing when the map stays north-up, e.g. raster fallback).
@@ -738,7 +748,7 @@ function applyPosition(pos){
  if(map){
    followRideCamera(p,c,ts);
    var gp={lat:p.lat,lng:p.lon};
-   var markerIcon=(navActive||riding)?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:headingReady?arrowRotation(lastHeading):0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
+   var markerIcon=riding&&!navActive?rideDotIcon():navActive?{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:8,rotation:headingReady?arrowRotation(lastHeading):0,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3}:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:"#ff5a1f",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:3};
    if(!marker){marker=new google.maps.Marker({map:map,position:gp,title:"GazOnRide",icon:markerIcon,zIndex:999});}
    else if(!(gazonCamera&&gazonCamera.active)){marker.setPosition(gp);marker.setIcon(markerIcon);}
  }
@@ -748,7 +758,13 @@ function applyPosition(pos){
  if(riding){
    track.push([p.lat,p.lon,c.altitude==null?null:Number(c.altitude),ts]);updateTurns();
    // Draw the ridden path live.
-   if(route&&map){try{if(!route.getMap())route.setMap(map);route.getPath().push(new google.maps.LatLng(p.lat,p.lon))}catch(e){}}
+   if(route&&map){try{
+    if(!route.getMap())route.setMap(map);
+    // Camera gliding the marker: freeze the trail where the marker is now and
+    // start a new end vertex there (trailFollowMarker moves it). Otherwise the raw fix.
+    var glide=gazonCamera&&gazonCamera.active&&marker&&marker.getPosition&&marker.getPosition();
+    route.getPath().push(glide?new google.maps.LatLng(glide.lat(),glide.lng()):new google.maps.LatLng(p.lat,p.lon));
+   }catch(e){}}
    if(lastPoint){
  var d=hav(lastPoint,p),dt=lastGpsTs?Math.max(0.5,(ts-lastGpsTs)/1000):1;
  var acc=Number(c.accuracy||999),implied=dt>0?(d*3600/dt):999;

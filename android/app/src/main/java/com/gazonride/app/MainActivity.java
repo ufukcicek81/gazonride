@@ -895,27 +895,81 @@ public class MainActivity extends Activity {
         downloadReceiverRegistered=true;
     }
 
-    private void startNativeUpdateDownload(String apkUrl){
-        try{
-            DownloadManager dm=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);
-            if(dm==null) throw new IllegalStateException("DownloadManager unavailable");
-            DownloadManager.Request req=new DownloadManager.Request(Uri.parse(apkUrl));
-            req.setTitle("GazOnRide güncellemesi");
-            req.setDescription("Yeni sürüm indiriliyor");
-            req.setMimeType("application/vnd.android.package-archive");
-            req.setAllowedOverMetered(true);
-            req.setAllowedOverRoaming(true);
-            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            updateDownloadId=dm.enqueue(req);
-            prefs.edit().putLong("update_download_id",updateDownloadId).apply();
-            Toast.makeText(this,"Güncelleme indiriliyor. Bitince kurulum açılacak.",Toast.LENGTH_LONG).show();
-        }catch(Exception e){
-            try{
-                startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(apkUrl)));
-            }catch(Exception ignored){
-                Toast.makeText(this,"Güncelleme indirilemedi.",Toast.LENGTH_LONG).show();
-            }
+    /* Update download done by the app itself (not DownloadManager): on some
+     * phones DownloadManager sat on "İndiriliyor" forever with the GitHub
+     * redirect and nothing noticed. Here: progress in a dialog, a 30 s stall
+     * is an error, and the browser is offered as the way out. The APK goes
+     * to cache/share and is installed through ShareProvider. */
+    private volatile boolean updateRunning=false, updateCancelled=false;
+    private void startNativeUpdateDownload(final String apkUrl){
+        if(updateRunning){ Toast.makeText(this,"Güncelleme zaten indiriliyor.",Toast.LENGTH_SHORT).show(); return; }
+        // A DownloadManager job left over from an older build (possibly stuck).
+        long old=prefs.getLong("update_download_id",-1L);
+        if(old!=-1L){
+            try{ DownloadManager dm=(DownloadManager)getSystemService(DOWNLOAD_SERVICE); if(dm!=null) dm.remove(old); }catch(Exception ignored){}
+            prefs.edit().remove("update_download_id").apply(); updateDownloadId=-1L;
         }
+        updateRunning=true; updateCancelled=false;
+        final android.widget.ProgressBar bar=new android.widget.ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(100); bar.setIndeterminate(true);
+        final android.widget.TextView txt=new android.widget.TextView(this);
+        txt.setText("Bağlanıyor…"); txt.setPadding(0,0,0,18);
+        android.widget.LinearLayout box=new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad=(int)(22*getResources().getDisplayMetrics().density); box.setPadding(pad,pad/2,pad,0);
+        box.addView(txt); box.addView(bar);
+        final AlertDialog dlg=new AlertDialog.Builder(this).setTitle("GazOnRide güncellemesi").setView(box).setCancelable(false)
+            .setNegativeButton("Vazgeç",(d,w)->updateCancelled=true).show();
+        new Thread(() -> {
+            final java.io.File out=new java.io.File(ShareProvider.dir(MainActivity.this),"GazOnRide-update.apk");
+            HttpURLConnection c=null; String error=null;
+            try{
+                URL url=new URL(apkUrl); int hops=0;
+                while(true){
+                    c=(HttpURLConnection)url.openConnection();
+                    c.setInstanceFollowRedirects(false);
+                    c.setConnectTimeout(15000); c.setReadTimeout(30000);
+                    c.setRequestProperty("User-Agent","GazOnRide-Android");
+                    int code=c.getResponseCode();
+                    if(code>=300&&code<400&&hops<8){ String loc=c.getHeaderField("Location"); c.disconnect(); c=null; url=new URL(url,loc); hops++; continue; }
+                    if(code!=200) throw new java.io.IOException("HTTP "+code);
+                    break;
+                }
+                final long total=c.getContentLengthLong();
+                long got=0,lastUi=0;
+                try(java.io.InputStream in=c.getInputStream(); java.io.FileOutputStream fo=new java.io.FileOutputStream(out)){
+                    byte[] buf=new byte[64*1024]; int n;
+                    while((n=in.read(buf))>0){
+                        if(updateCancelled) throw new java.io.InterruptedIOException("cancel");
+                        fo.write(buf,0,n); got+=n;
+                        long now=android.os.SystemClock.uptimeMillis();
+                        if(now-lastUi>250){
+                            lastUi=now; final long g=got;
+                            runOnUiThread(() -> {
+                                if(total>0){ int pct=(int)(g*100/total); bar.setIndeterminate(false); bar.setProgress(pct);
+                                    txt.setText("İndiriliyor… %"+pct+"  ("+(g/1048576)+" / "+(total/1048576)+" MB)"); }
+                                else txt.setText("İndiriliyor… "+(g/1048576)+" MB");
+                            });
+                        }
+                    }
+                }
+                if(total>0&&got!=total) throw new java.io.IOException("eksik dosya");
+            }catch(java.io.InterruptedIOException e){ error=updateCancelled?"cancel":"Bağlantı 30 saniyedir yanıt vermiyor"; }
+            catch(Exception e){ error=String.valueOf(e.getMessage()); }
+            finally{ if(c!=null) c.disconnect(); updateRunning=false; }
+            final String err=error;
+            runOnUiThread(() -> {
+                try{ dlg.dismiss(); }catch(Exception ignored){}
+                if(err==null){ installDownloadedApk(Uri.parse("content://"+ShareProvider.AUTHORITY+"/GazOnRide-update.apk")); return; }
+                out.delete();
+                if("cancel".equals(err)||isFinishing()) return;
+                new AlertDialog.Builder(this).setTitle("Güncelleme indirilemedi")
+                    .setMessage("İndirme tamamlanamadı ("+err+"). Tarayıcıda indirip kurabilirsin; sürüşlerin ve ayarların korunur.")
+                    .setNegativeButton("Kapat",null)
+                    .setPositiveButton("Tarayıcıda indir",(d,w)->{ try{ startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(apkUrl))); }catch(Exception ignored){} })
+                    .show();
+            });
+        }).start();
     }
 
     private void handleDownloadedApk(long id){

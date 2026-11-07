@@ -81,20 +81,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Restore stable debug signing key
-        uses: actions/cache@v4
+      # The beta signing key is kept on the default branch by the daily
+      # "signing-key" job (supabase-keepalive.yml on main). Never generate a
+      # key here: a new key means the update will not install over the app.
+      - name: Restore the beta signing key (kept on main)
+        uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
-          key: gazonride-stable-debug-signing-v1
-      - name: Ensure signing key exists
+          key: gazonride-beta-signing-v2
+          fail-on-cache-miss: true
+      - name: Signing key fingerprint (not secret)
         shell: bash
-        run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
-              -storepass android -alias androiddebugkey -keypass android \
-              -dname "CN=GaZonRide,O=GaZonRide,C=TR" -keyalg RSA -keysize 2048 -validity 10000
-          fi
+        run: keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android | grep -i "SHA-256\|SHA256" || true
       - name: Restore launcher icons
         shell: bash
         run: |

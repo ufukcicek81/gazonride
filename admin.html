@@ -4,7 +4,7 @@
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f6f8;color:#171a1f}.wrap{width:min(900px,100%);margin:auto;padding:calc(var(--gr-safe-top,env(safe-area-inset-top,0px)) + 18px) 16px 30px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.head h1{margin:0;font-size:25px}.head button,.btn{border:1px solid #dce1e7;background:#fff;border-radius:12px;padding:10px 12px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:#fff;border:1px solid #dfe3e8;border-radius:16px;padding:14px}.stat b{display:block;font-size:24px}.stat small{color:#707985}.card{background:#fff;border:1px solid #dfe3e8;border-radius:17px;padding:14px;margin-top:9px}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#fff3cd;color:#745600;font-size:9px;font-weight:900}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions button{border:0;border-radius:11px;padding:10px;font-weight:900}.ok{background:#1d8b4b;color:#fff}.no{background:#303640;color:#fff}.muted{color:#737b85;font-size:11px}.empty,.denied{padding:28px;text-align:center;color:#737b85;background:#fff;border:1px dashed #dfe3e8;border-radius:17px}.danger{color:#a82d2d}.adminClaim{margin-top:14px;background:#ff5a1f;color:#fff;border:0;border-radius:13px;padding:13px 16px;font-weight:900}@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}}
 </style></head><body><div class="wrap"><div class="head"><div><div class="muted">GAZONRIDE</div><h1>Admin Paneli</h1></div><button onclick="location.href='index.html'">Uygulamaya Dön</button></div><div id="app"><div class="empty">Yükleniyor...</div></div></div>
-<script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261107-offline"></script>
+<script src="supabase-config.js?v=20261008-audit1"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth.js?v=20261107-seen1"></script>
 <script>
 (async function(){
  var app=document.getElementById("app");
@@ -14,19 +14,30 @@
    app.innerHTML='<div class="denied"><h2>Admin yetkisi gerekli</h2><div class="muted">Bu hesap GazOnRide yönetici hesabı değil.</div></div>';
    return;
  }
- var client=GaZonAuth.client,users=[],subs=[];
+ var client=GaZonAuth.client,users=[],subs=[],usersV2=true;
+ function lastActive(u){var a=u.last_seen_at?Date.parse(u.last_seen_at):0,b=u.last_sign_in_at?Date.parse(u.last_sign_in_at):0;return Math.max(a||0,b||0)}
+ function fmt(v,dateOnly){if(!v)return "—";var d=new Date(v);return d.toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric"})+(dateOnly?"":" "+d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}))}
+ function ago(t){var m=Math.round((Date.now()-t)/60000);if(m<2)return "şimdi";if(m<60)return m+" dk önce";var h=Math.round(m/60);if(h<24)return h+" saat önce";var g=Math.round(h/24);return g<31?g+" gün önce":Math.round(g/30)+" ay önce"}
  function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
  async function load(){
-   var ur=await client.rpc("admin_list_users");if(ur.error)throw ur.error;users=ur.data||[];
+   // Last sign-in / last seen need supabase/2026-11-07-uye-son-giris.sql; older list otherwise.
+   var ur=await client.rpc("admin_list_users_v2");usersV2=!ur.error;
+   if(ur.error){ur=await client.rpc("admin_list_users");if(ur.error)throw ur.error}
+   users=(ur.data||[]).slice();if(usersV2)users.sort(function(a,b){return lastActive(b)-lastActive(a)});
    var sr=await client.from("submissions").select("*").order("created_at",{ascending:false});if(sr.error)throw sr.error;subs=sr.data||[];
    render();
  }
  function render(){
    var pending=subs.filter(function(x){return x.status==="pending"}),approved=subs.filter(function(x){return x.status==="approved"});
-   app.innerHTML='<div class="grid"><div class="stat"><b>'+users.length+'</b><small>Üye</small></div><div class="stat"><b>'+pending.length+'</b><small>Onay bekleyen</small></div><div class="stat"><b>'+approved.length+'</b><small>Onaylanan</small></div></div><h3>Onay Kuyruğu</h3>'+
+   var weekAgo=Date.now()-7*864e5,active=users.filter(function(u){return lastActive(u)>=weekAgo}).length;
+   app.innerHTML='<div class="grid"><div class="stat"><b>'+users.length+'</b><small>Üye'+(usersV2?' · '+active+' son 7 günde aktif':'')+'</small></div><div class="stat"><b>'+pending.length+'</b><small>Onay bekleyen</small></div><div class="stat"><b>'+approved.length+'</b><small>Onaylanan</small></div></div><h3>Onay Kuyruğu</h3>'+
    (pending.length?pending.map(function(s){var photos=Array.isArray(s.photos)?s.photos:[],stops=Array.isArray(s.stops)?s.stops:[],meta=s.ride_meta||{};return '<div class="card"><b>'+esc(s.title)+'</b> <span class="tag">'+esc(s.type==="route"?"Rota":"Mola")+'</span><div class="muted">'+esc(s.author_name)+' · '+esc(s.bike)+'</div><p style="font-size:12px">'+esc(s.description||"")+'</p>'+(s.type==="route"?'<div class="muted">'+Number(meta.km||0).toFixed(1)+' km · '+esc(meta.duration||"—")+' · '+stops.length+' mola · '+photos.length+' fotoğraf</div>':'')+(photos.length?'<div style="display:grid;grid-template-columns:repeat('+Math.min(3,photos.length)+',1fr);gap:5px;margin-top:8px">'+photos.slice(0,3).map(function(u){return '<img src="'+esc(u)+'" style="width:100%;height:110px;object-fit:cover;border-radius:10px">'}).join("")+'</div>':'')+(stops.length?'<div class="muted" style="margin-top:7px">'+stops.map(function(x){return '☕ '+esc(x.name||"Mola")}).join(' · ')+'</div>':'')+'<div class="actions"><button class="ok" data-ok="'+s.id+'">Onayla</button><button class="btn" data-edit="'+s.id+'">Düzenle</button><button class="no" data-no="'+s.id+'">Reddet</button></div></div>'}).join(""):'<div class="empty">Onay bekleyen gönderi yok.</div>')+
    '<h3 style="margin-top:22px">Onaylanmış Rotalar</h3>'+approved.filter(function(x){return x.type==="route"}).map(function(s){return '<div class="card"><b>'+esc(s.title)+'</b><div class="muted">'+esc(s.author_name)+' · '+esc(s.destination||"")+'</div><div class="actions"><button class="btn" data-edit="'+s.id+'">Düzenle</button><button class="no" data-delete="'+s.id+'">Sil</button></div></div>'}).join("")+
-   '<h3 style="margin-top:22px">Üyeler</h3>'+users.slice(0,50).map(function(u){return '<div class="card"><b>'+esc(u.name||"Üye")+'</b><div class="muted">'+esc(u.email||"")+' · '+esc(u.bike||"Motosiklet")+'</div></div>'}).join("");
+   '<h3 style="margin-top:22px">Üyeler</h3>'+(usersV2?'':'<div class="card muted">Son giriş bilgisi için Supabase SQL Editor’da <b>supabase/2026-11-07-uye-son-giris.sql</b> dosyasını bir kez çalıştır.</div>')+
+   users.slice(0,300).map(function(u){
+    var seen=lastActive(u);
+    return '<div class="card"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(u.name||"Üye")+'</b>'+(usersV2?'<span class="tag">'+(seen?ago(seen):"hiç")+'</span>':'')+'</div><div class="muted">'+esc(u.email||"")+' · '+esc(u.bike||"Motosiklet")+'</div>'+
+     (usersV2?'<div class="muted" style="font-size:12px;margin-top:4px">Uygulamayı son açış: '+fmt(u.last_seen_at)+' · Son giriş: '+fmt(u.last_sign_in_at)+' · Üyelik: '+fmt(u.created_at,true)+'</div>':'')+'</div>'}).join("");
    app.querySelectorAll("[data-ok]").forEach(function(b){b.onclick=function(){review(b.dataset.ok,"approved")}});
    app.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){editSubmission(b.dataset.edit)}});
    app.querySelectorAll("[data-no]").forEach(function(b){b.onclick=function(){review(b.dataset.no,"rejected")}});

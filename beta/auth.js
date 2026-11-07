@@ -42,15 +42,38 @@ async function ensureProfile(user){
  state.profile={uid:user.id,email:user.email||"",name:res.data.name||fallback.name,bike:res.data.bike||fallback.bike,avatar_url:res.data.avatar_url||"",motor_data:res.data.motor_data||{},role:role};
  state.role=role;saveLocalProfile(state.profile);syncUi();return state.profile;
 }
+/* Cloud down (e.g. the free Supabase project paused after a quiet week):
+ * a rider who was signed in before must not be sent to a login page that
+ * cannot work either. Rides, navigation, replay and intercom do not need the
+ * cloud, so the app opens with a notice instead. */
+function hadAccount(){try{return localStorage.getItem("gazon_had_account")==="1"}catch(e){return false}}
+function cloudReachable(){
+ if(!configured)return Promise.resolve(false);
+ var ctrl=typeof AbortController!=="undefined"?new AbortController():null,t=setTimeout(function(){if(ctrl)ctrl.abort()},6000);
+ return fetch(url.replace(/\/$/,"")+"/auth/v1/health",{headers:{apikey:key},cache:"no-store",signal:ctrl?ctrl.signal:undefined})
+  .then(function(r){return r.ok},function(){return false}).finally(function(){clearTimeout(t)});
+}
+function offlineNotice(){
+ if(document.getElementById("grCloudOffline"))return;
+ var d=document.createElement("div");d.id="grCloudOffline";d.setAttribute("role","status");
+ d.style.cssText="position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:20001;padding:10px 14px;border-radius:14px;background:#78350F;color:#FEF3C7;font:600 13px system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.35)";
+ d.textContent="Bulut hesabına şu an ulaşılamıyor. Sürüşlerin telefonda kaydediliyor; topluluk ve senkronizasyon geçici olarak kapalı.";
+ d.onclick=function(){d.remove()};
+ (document.body||document.documentElement).appendChild(d);
+ setTimeout(function(){if(d.parentNode)d.remove()},12000);
+}
 async function applySession(session){
  state.user=session&&session.user?session.user:null;
  state.profile=null;state.role="member";
  if(state.user){try{await ensureProfile(state.user)}catch(e){console.warn("profile",e)}}
  if(!resolved){resolved=true;resolveReady(state)}
  var page=pathName();
- if(state.user)setGuest(false);
+ if(state.user){setGuest(false);try{localStorage.setItem("gazon_had_account","1")}catch(e){}}
  state.guest=!state.user&&isGuest();
- if(!state.user&&page!=="login.html"&&!isGuest())redirectLogin();
+ if(!state.user&&page!=="login.html"&&!isGuest()){
+  if(hadAccount()&&!(await cloudReachable())){state.offline=true;if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",offlineNotice);else offlineNotice();return}
+  redirectLogin();
+ }
  if(state.user&&page==="login.html"){
    var qs=new URLSearchParams(location.search);if(qs.get("recovery")!=="1"){var n=qs.get("next");location.replace(n||"index.html");}
  }
@@ -120,7 +143,7 @@ async function updatePassword(password){
  var r=await client.auth.updateUser({password:password});
  if(r.error)throw r.error;return true;
 }
-async function logout(){setGuest(false);if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
+async function logout(){setGuest(false);try{localStorage.removeItem("gazon_had_account")}catch(e){}if(configured)await client.auth.signOut();localStorage.removeItem("gazon_profile");location.href="login.html"}
 async function saveProfile(name,bike){
  if(!state.user)throw new Error("Oturum bulunamadı.");
  var r=await client.from("profiles").update({name:name,bike:bike,updated_at:new Date().toISOString()}).eq("id",state.user.id).select("id,name,bike,avatar_url,motor_data").single();

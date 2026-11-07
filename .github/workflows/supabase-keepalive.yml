@@ -1,0 +1,33 @@
+name: Supabase keep-alive
+
+# The free Supabase plan pauses a project after 7 quiet days (sign-in,
+# cloud rides and the community then stop working). One small read a day
+# keeps GaZonRide's project active. Uses only the public (publishable) key
+# already shipped in supabase-config.js; no secrets.
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: supabase-config.js
+          sparse-checkout-cone-mode: false
+      - name: Ping the Supabase project
+        run: |
+          url=$(sed -n 's/.*GAZONRIDE_SUPABASE_URL="\([^"]*\)".*/\1/p' supabase-config.js)
+          key=$(sed -n 's/.*GAZONRIDE_SUPABASE_KEY="\([^"]*\)".*/\1/p' supabase-config.js)
+          test -n "$url" && test -n "$key"
+          # A failing run (project paused or down) makes GitHub email the owner.
+          curl -sS --fail --max-time 30 -o /dev/null -w "auth health: %{http_code}\n" \
+            -H "apikey: $key" "$url/auth/v1/health"
+          curl -sS --max-time 30 -o /dev/null -w "database read: %{http_code}\n" \
+            -H "apikey: $key" "$url/rest/v1/profiles?select=id&limit=1"

@@ -40,7 +40,13 @@ async function ensureProfile(user){
  var adm=await client.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
  var role=adm.data?"admin":"member";
  state.profile={uid:user.id,email:user.email||"",name:res.data.name||fallback.name,bike:res.data.bike||fallback.bike,avatar_url:res.data.avatar_url||"",motor_data:res.data.motor_data||{},role:role};
- state.role=role;saveLocalProfile(state.profile);syncUi();return state.profile;
+ state.role=role;saveLocalProfile(state.profile);syncUi();touchLastSeen();return state.profile;
+}
+// "Last seen" for the admin panel (supabase/2026-11-07-uye-son-giris.sql);
+// at most every 30 min; silently skipped until that SQL is installed.
+function touchLastSeen(){
+ try{var t=Number(localStorage.getItem("gazon_seen_at")||0);if(Date.now()-t<30*60000)return;localStorage.setItem("gazon_seen_at",String(Date.now()))}catch(e){}
+ try{client.rpc("touch_last_seen").then(function(){},function(){})}catch(e){}
 }
 /* Cloud down (e.g. the free Supabase project paused after a quiet week):
  * a rider who was signed in before must not be sent to a login page that

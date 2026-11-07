@@ -1,4 +1,4 @@
-name: Supabase keep-alive
+name: Supabase keep-alive and signing key keeper
 
 # The free Supabase plan pauses a project after 7 quiet days (sign-in,
 # cloud rides and the community then stop working). One small read a day
@@ -31,3 +31,29 @@ jobs:
             -H "apikey: $key" "$url/auth/v1/health"
           curl -sS --max-time 30 -o /dev/null -w "database read: %{http_code}\n" \
             -H "apikey: $key" "$url/rest/v1/profiles?select=id&limit=1"
+
+  # The beta APK signing key lives in this branch's Actions cache (default
+  # branch caches are readable from every branch). Caches untouched for 7
+  # days are deleted: in Nov 2026 that silently produced a new key and the
+  # update would not install over the old app. Restoring it daily keeps it.
+  # Only this job may create the key, and only if it does not exist yet; the
+  # build fails instead of signing with a new key.
+  signing-key:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Keep the beta signing key
+        id: key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: gazonride-beta-signing-v2
+      - name: Create it once (first run only)
+        if: steps.key.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" \
+            -storepass android -alias androiddebugkey -keypass android \
+            -dname "CN=GaZonRide,O=GaZonRide,C=TR" -keyalg RSA -keysize 2048 -validity 10000
+      - name: Fingerprint (not secret)
+        run: keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android | grep -i "SHA-256\|SHA256" || true

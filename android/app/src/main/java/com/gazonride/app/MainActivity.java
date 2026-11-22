@@ -943,8 +943,15 @@ public class MainActivity extends Activity {
                 String body=new JSONObject(b.toString()).optString("body","");
                 java.util.regex.Matcher m=java.util.regex.Pattern.compile("@ ([0-9a-f]{40})").matcher(body);
                 if(!m.find()) return;
-                final String remote=m.group(1);
-                if(remote.equals(own) || remote.equals(prefs.getString("beta_update_skipped",""))) return;
+                String remoteId=m.group(1), ownId=own;
+                // Only a change to the Android app needs a new APK; web-only
+                // changes arrive by themselves. Compare the android@ versions
+                // when both this build and the release carry one.
+                String ownAndroid=getString(R.string.build_android_commit);
+                java.util.regex.Matcher ma=java.util.regex.Pattern.compile("android@([0-9a-f]{40})").matcher(body);
+                if(!ownAndroid.isEmpty() && ma.find()){ remoteId=ma.group(1); ownId=ownAndroid; }
+                final String remote=remoteId;
+                if(remote.equals(ownId) || remote.equals(prefs.getString("beta_update_skipped",""))) return;
                 runOnUiThread(() -> {
                     if(isFinishing() || prefs.getBoolean("ride_active",false)) return;
                     new AlertDialog.Builder(this)

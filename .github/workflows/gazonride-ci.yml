@@ -68,6 +68,16 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+      # The APK only changes when android/ changes (the web app is loaded
+      # from Pages). The app asks riders to update only when this differs.
+      - name: Last commit that changed the Android app
+        shell: bash
+        run: |
+          a=$(git log -1 --format=%H -- android/ 2>/dev/null || true)
+          echo "ANDROID_SHA=${a:-$GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "android code version: ${a:-$GITHUB_SHA}"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -117,7 +127,7 @@ jobs:
         working-directory: android
         env:
           GAZONRIDE_NAVIGATION_API_KEY: ${{ secrets.GAZONRIDE_NAVIGATION_API_KEY }}
-        run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta -PwebChannel=beta -PbuildCommit=${{ github.sha }}
+        run: gradle --no-daemon assembleDebug -PbuildCode=$((5000 + ${{ github.run_number }})) -PbuildName=1.0.${{ github.run_number }}-beta -PwebChannel=beta -PbuildCommit=${{ github.sha }} -PbuildAndroidCommit=${{ env.ANDROID_SHA }}
       - name: Navigation SDK API report (method signatures used via reflection)
         if: always()
         shell: bash
@@ -149,7 +159,7 @@ jobs:
           name: GazOnRide BETA (test sürümü)
           prerelease: true
           make_latest: false
-          body: "Test sürümü · ${{ github.ref_name }} @ ${{ github.sha }} · Normal kullanıcılara güncelleme olarak sunulmaz."
+          body: "Test sürümü · ${{ github.ref_name }} @ ${{ github.sha }} · android@${{ env.ANDROID_SHA }} · Normal kullanıcılara güncelleme olarak sunulmaz."
           files: GaZonRide-beta.apk
           fail_on_unmatched_files: true
         env:

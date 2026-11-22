@@ -38,6 +38,7 @@ function markup(){
    '<div class="gr-music-permission" id="grMusicPermission">'+
     '<b>Android müzik kontrol izni</b>'+
     '<p>Spotify ve YouTube Music şarkılarını bu ekrandan yönetmek için bir defalık Android Bildirim erişimi izni gerekir. GazOnRide bildirim mesajlarını okumaz veya kaydetmez.</p>'+
+    '<p class="gr-music-restricted">İzin ekranında GazOnRide gri/kilitli görünüyorsa: Ayarlar → Uygulamalar → GazOnRide → sağ üstte ⋮ → <b>Kısıtlanmış ayarlara izin ver</b>, sonra bu düğmeye tekrar bas.</p>'+
     '<button type="button" id="grMusicGrant">'+icon("settings")+' İzin ekranını aç</button></div>'+
    '<p class="gr-music-status" id="grMusicStatus" aria-live="polite"></p>'+
    '<p class="gr-music-focus" id="grMusicFocus" aria-live="polite">Ses odağı: henüz denenmedi</p>'+
@@ -101,6 +102,9 @@ function setOpen(on){
  expanded=!!on;
  var panel=$("grMusicPanel"),launch=$("grMusicLaunch");
  panel.hidden=!expanded;launch.setAttribute("aria-expanded",String(expanded));
+ // While the panel is open nothing may sit on top of it (mark buttons,
+ // Start/Finish covered the Android permission button).
+ document.body.classList.toggle("gr-music-open",expanded);
  webOnly(panel);
  if(expanded)update();
 }

@@ -132,7 +132,7 @@ jobs:
           set -eu
           dst=android/app/src/main/assets/site
           rm -rf "$dst" && mkdir -p "$dst"
-          for f in *.html *.js *.css *.json *.svg *.webmanifest; do
+          for f in *.html *.js *.css *.json *.svg *.webmanifest *.woff2; do
             case "$f" in *.test.js|package.json|package-lock.json) continue;; esac
             [ -f "$f" ] && cp "$f" "$dst/"
           done
@@ -209,7 +209,7 @@ jobs:
           rm -rf site/beta && mkdir -p site/beta
           cd branch
           # Web runtime files only. Tests, Android sources and tooling stay out.
-          for f in *.html *.js *.css *.json *.svg *.webmanifest; do
+          for f in *.html *.js *.css *.json *.svg *.webmanifest *.woff2; do
             case "$f" in *.test.js|package.json|package-lock.json) continue;; esac
             [ -f "$f" ] && cp "$f" ../site/beta/
           done

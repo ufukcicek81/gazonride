@@ -19,6 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Some mobile operators reset connections to github.io. The web app's own
@@ -32,7 +38,8 @@ import java.util.Map;
  */
 final class SiteFallback {
     private static final int CONNECT_MS = 6000, READ_MS = 12000;
-    private static final long OFFLINE_HOLD_MS = 60000;
+    private static final long OFFLINE_HOLD_MS = 60000, WAIT_WITH_COPY_MS = 3500;
+    private static final ExecutorService POOL = Executors.newCachedThreadPool();
 
     private final Context ctx;
     private final String prefix;
@@ -102,15 +109,26 @@ final class SiteFallback {
             if (versioned && f.isFile() && q.equals(readSmall(meta))) return local(rel, new FileInputStream(f));
 
             if (System.currentTimeMillis() >= offlineUntil) {
+                final String url = u.toString();
+                final Map<String, String> headers = req.getRequestHeaders();
+                final boolean keep = !rel.startsWith("photos/");
+                // The download keeps running (and refreshes the copy on the
+                // phone) even when we stop waiting for it.
+                Future<Net> job = POOL.submit(() -> {
+                    Net n = fetch(url, headers);
+                    if (n.status == 200 && keep) save(f, meta, n.body, q);
+                    return n;
+                });
+                boolean local = hasLocal(rel, f);
                 try {
-                    Net n = fetch(u.toString(), req.getRequestHeaders());
-                    if (n.status < 500 || !hasLocal(rel, f)) {
-                        if (n.status == 200 && !rel.startsWith("photos/")) save(f, meta, n.body, q);
-                        return response(n.mime, n.charset, n.status, n.body, rel);
-                    }
-                } catch (IOException e) {
+                    // A stalled site must not leave the screen white: with a
+                    // copy on the phone, wait only briefly for the network.
+                    Net n = local ? job.get(WAIT_WITH_COPY_MS, TimeUnit.MILLISECONDS) : job.get();
+                    if (n.status < 500 || !local) return response(n.mime, n.charset, n.status, n.body, rel);
+                } catch (TimeoutException | ExecutionException e) {
                     offlineUntil = System.currentTimeMillis() + OFFLINE_HOLD_MS;
-                    android.util.Log.w("GazOnRide", "Site offline, using the copy on the phone: " + e);
+                    android.util.Log.w("GazOnRide", "Site slow/unreachable, using the copy on the phone: " + e);
+                    if (!local) return null;
                 }
             }
             if (f.isFile()) return local(rel, new FileInputStream(f));

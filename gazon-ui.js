@@ -94,9 +94,30 @@ function intercomButton(){
  b.id="grIntercomFab";b.type="button";b.className="mapBtn";
  b.setAttribute("aria-label","Intercom");b.title="Intercom";
  b.innerHTML='<span class="mi">headset_mic</span>';
- b.addEventListener("click",function(){
-  var q=$("quickIntercom");if(q)q.click();
+ // On the ride screen the bottom intercom bar would cover Start / Finish, so
+ // it is hidden there (CSS) and this button takes over: while a group is
+ // live it is green and a tap mutes / unmutes; a long press (or a tap when
+ // no group is live) opens the intercom screen.
+ function openScreen(){var q=$("quickIntercom");if(q)q.click()}
+ function live(){var d=$("voiceDock");return !!(d&&d.classList.contains("active"))}
+ function micOn(){var m=$("voiceDockMic");return !!(m&&!/mic_off/.test(m.textContent))}
+ function paint(){
+  var on=live(),mic=on&&micOn();
+  b.classList.toggle("gr-ic-live",on);b.classList.toggle("muted",on&&!mic);
+  b.innerHTML='<span class="mi">'+(on?(mic?"mic":"mic_off"):"headset_mic")+'</span>';
+  b.setAttribute("aria-label",on?(mic?"Intercom açık · mikrofonu kapat":"Intercom açık · mikrofonu aç"):"Intercom");
+  b.title=on?"Dokun: mikrofon aç/kapat · basılı tut: intercom ekranı":"Intercom";
+ }
+ var pressT=0,longDone=false;
+ b.addEventListener("pointerdown",function(){longDone=false;clearTimeout(pressT);pressT=setTimeout(function(){longDone=true;openScreen()},650)});
+ ["pointerup","pointerleave","pointercancel"].forEach(function(ev){b.addEventListener(ev,function(){clearTimeout(pressT)})});
+ b.addEventListener("click",function(e){
+  if(longDone){e.preventDefault();return}
+  if(live()){var m=$("voiceDockMic");if(m)m.click();setTimeout(paint,60)}else openScreen();
  });
+ var dock=$("voiceDock");
+ if(dock&&window.MutationObserver)new MutationObserver(paint).observe(dock,{attributes:true,attributeFilter:["class"],subtree:true,childList:true,characterData:true});
+ paint();
  bar.appendChild(b);
 }
 

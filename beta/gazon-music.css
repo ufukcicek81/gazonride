@@ -75,3 +75,9 @@ body.mode-ride .gr-music-panel{
 @media(max-width:380px){
  body.mode-ride #grMusic{top:calc(112px + var(--gr-safe-top,env(safe-area-inset-top,0px)));bottom:auto}
 }
+
+/* Music panel open: mark buttons and Start/Finish covered its lower part
+ * (the "İzin ekranını aç" button could not be pressed). */
+body.gr-music-open .gr-quick-marks,body.gr-music-open.mode-ride .actions,body.gr-music-open #grIntercomFab{visibility:hidden!important}
+body.gr-music-open #grMusic{z-index:1950}
+.gr-music-restricted{font-size:11.5px;color:#fbbf24;line-height:1.45}

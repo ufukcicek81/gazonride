@@ -529,17 +529,23 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon){
                 super.onPageStarted(view,url,icon);
                 mainFrameFailed=false;
+                // Watchdog: a Wi-Fi without internet (or a stalled network)
+                // neither loads nor fails; the screen stayed white. Nothing on
+                // screen after 20 s counts as a failed load.
+                retryHandler.removeCallbacks(loadWatchdog);
+                pageVisible=false;
+                if(url!=null&&url.startsWith("http")) retryHandler.postDelayed(loadWatchdog,20000);
+            }
+            @Override public void onPageCommitVisible(WebView view, String url){
+                super.onPageCommitVisible(view,url);
+                pageVisible=true;
+                retryHandler.removeCallbacks(loadWatchdog);
             }
             @Override public void onReceivedError(WebView view, android.webkit.WebResourceRequest req, android.webkit.WebResourceError err){
                 super.onReceivedError(view,req,err);
                 if(req==null||!req.isForMainFrame()||showingLoadError) return;
-                mainFrameFailed=true;
-                final String why=err==null?"":String.valueOf(err.getDescription());
-                loadRetries++;
-                if(loadRetries<=3){
-                    long delay=loadRetries==1?800:loadRetries==2?2500:6000;
-                    retryHandler.postDelayed(() -> { if(webView!=null&&!showingLoadError) retryAppLoad(); },delay);
-                }else showLoadError(why);
+                retryHandler.removeCallbacks(loadWatchdog);
+                onMainLoadFailed(err==null?"":String.valueOf(err.getDescription()));
             }
             @Override public void onPageFinished(WebView view, String url){
                 super.onPageFinished(view,url);
@@ -694,8 +700,31 @@ public class MainActivity extends Activity {
     }
 
     private int loadRetries=0;
-    private boolean showingLoadError=false, mainFrameFailed=false;
+    private boolean showingLoadError=false, mainFrameFailed=false, pageVisible=false;
     private final Handler retryHandler=new Handler(Looper.getMainLooper());
+    private final Runnable loadWatchdog=() -> {
+        if(webView==null||pageVisible||showingLoadError) return;
+        try{ webView.stopLoading(); }catch(Exception ignored){}
+        onMainLoadFailed("zaman aşımı");
+    };
+    private void onMainLoadFailed(String why){
+        mainFrameFailed=true;
+        loadRetries++;
+        if(loadRetries<=3){
+            long delay=loadRetries==1?800:loadRetries==2?2500:6000;
+            retryHandler.postDelayed(() -> { if(webView!=null&&!showingLoadError) retryAppLoad(); },delay);
+        }else showLoadError(why);
+    }
+    // Connected to a network Android could not validate (e.g. Wi-Fi with "!").
+    private boolean onNetworkWithoutInternet(){
+        try{
+            android.net.ConnectivityManager cm=(android.net.ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+            android.net.Network n=cm==null?null:cm.getActiveNetwork();
+            if(n==null) return false;
+            android.net.NetworkCapabilities c=cm.getNetworkCapabilities(n);
+            return c!=null&&!c.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+        }catch(Exception e){ return false; }
+    }
     private void retryAppLoad(){
         if(webView==null) return;
         showingLoadError=false;
@@ -710,7 +739,9 @@ public class MainActivity extends Activity {
             ".c{max-width:360px;padding:28px;text-align:center}.i{font-size:46px}h1{font-size:21px;margin:12px 0 8px}p{color:#A0A9B8;line-height:1.5;margin:0 0 8px;font-size:14.5px}"+
             "button{margin-top:18px;width:100%;min-height:54px;border:0;border-radius:16px;background:#FF5A1F;color:#fff;font-weight:800;font-size:16px}small{display:block;margin-top:14px;color:#56606D;font-size:11px}</style></head>"+
             "<body><div class=c><div class=i>&#128225;</div><h1>Bağlantı kurulamadı</h1>"+
-            "<p>GazOnRide sunucusuna şu an ulaşılamıyor. İnternet bağlantını kontrol et; mobil veride sorun sürüyorsa Wi-Fi ile (ya da tersi) dene.</p>"+
+            (onNetworkWithoutInternet()
+              ? "<p><b>Bağlı olduğun ağın (Wi-Fi) interneti yok görünüyor.</b> Wi-Fi'yi kapatıp mobil veriyle tekrar dene.</p>"
+              : "<p>GazOnRide sunucusuna şu an ulaşılamıyor. İnternet bağlantını kontrol et; mobil veride sorun sürüyorsa Wi-Fi ile (ya da tersi) dene.</p>")+
             "<p>Kaydedilen sürüşlerin telefonda güvende.</p>"+
             "<button onclick='this.disabled=true;this.textContent=\"Bağlanıyor…\";AndroidBridge.reloadApp()'>Tekrar dene</button><small>"+safe+"</small></div></body></html>";
         webView.loadDataWithBaseURL(null,html,"text/html","utf-8",null);

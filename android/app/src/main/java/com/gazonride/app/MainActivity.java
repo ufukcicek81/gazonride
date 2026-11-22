@@ -337,6 +337,8 @@ public class MainActivity extends Activity {
             prefs.edit().putString("web_channel",next).apply();
             runOnUiThread(() -> { if(webView!=null) webView.loadUrl(startUrl()); });
         }
+        // "Tekrar dene" on the connection error page.
+        @JavascriptInterface public void reloadApp(){ runOnUiThread(() -> { loadRetries=0; retryAppLoad(); }); }
         @JavascriptInterface public boolean openNativeTour(String json){
             try {
                 JSONArray points=new JSONArray(json);
@@ -521,8 +523,27 @@ public class MainActivity extends Activity {
                 }
                 return true;
             }
+            /* A failed start (connection reset, no signal, DNS) showed Android's
+             * bare "Web sayfası mevcut değil" page. Retry a few times with a
+             * growing pause, then show our own page with a retry button. */
+            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon){
+                super.onPageStarted(view,url,icon);
+                mainFrameFailed=false;
+            }
+            @Override public void onReceivedError(WebView view, android.webkit.WebResourceRequest req, android.webkit.WebResourceError err){
+                super.onReceivedError(view,req,err);
+                if(req==null||!req.isForMainFrame()||showingLoadError) return;
+                mainFrameFailed=true;
+                final String why=err==null?"":String.valueOf(err.getDescription());
+                loadRetries++;
+                if(loadRetries<=3){
+                    long delay=loadRetries==1?800:loadRetries==2?2500:6000;
+                    retryHandler.postDelayed(() -> { if(webView!=null&&!showingLoadError) retryAppLoad(); },delay);
+                }else showLoadError(why);
+            }
             @Override public void onPageFinished(WebView view, String url){
                 super.onPageFinished(view,url);
+                if(!mainFrameFailed&&!showingLoadError&&url!=null&&url.startsWith("http")) loadRetries=0;
                 pushSafeArea();
                 stopNativeLocation();
                 startNativeLocation();
@@ -672,6 +693,28 @@ public class MainActivity extends Activity {
         }catch(Exception ignored){}
     }
 
+    private int loadRetries=0;
+    private boolean showingLoadError=false, mainFrameFailed=false;
+    private final Handler retryHandler=new Handler(Looper.getMainLooper());
+    private void retryAppLoad(){
+        if(webView==null) return;
+        showingLoadError=false;
+        webView.loadUrl(startUrl());
+    }
+    private void showLoadError(String why){
+        if(webView==null) return;
+        showingLoadError=true;
+        String safe=why==null?"":why.replaceAll("[^A-Za-z0-9_:. -]","");
+        String html="<!doctype html><html lang=tr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"+
+            "<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0A0C10;color:#F3F5F8;font:16px system-ui,sans-serif}"+
+            ".c{max-width:360px;padding:28px;text-align:center}.i{font-size:46px}h1{font-size:21px;margin:12px 0 8px}p{color:#A0A9B8;line-height:1.5;margin:0 0 8px;font-size:14.5px}"+
+            "button{margin-top:18px;width:100%;min-height:54px;border:0;border-radius:16px;background:#FF5A1F;color:#fff;font-weight:800;font-size:16px}small{display:block;margin-top:14px;color:#56606D;font-size:11px}</style></head>"+
+            "<body><div class=c><div class=i>&#128225;</div><h1>Bağlantı kurulamadı</h1>"+
+            "<p>GazOnRide sunucusuna şu an ulaşılamıyor. İnternet bağlantını kontrol et; mobil veride sorun sürüyorsa Wi-Fi ile (ya da tersi) dene.</p>"+
+            "<p>Kaydedilen sürüşlerin telefonda güvende.</p>"+
+            "<button onclick='this.disabled=true;this.textContent=\"Bağlanıyor…\";AndroidBridge.reloadApp()'>Tekrar dene</button><small>"+safe+"</small></div></body></html>";
+        webView.loadDataWithBaseURL(null,html,"text/html","utf-8",null);
+    }
     private String startUrl(){
         String base="beta".equals(prefs.getString("web_channel",getString(R.string.default_web_channel))) ? URL + "beta/" : URL;
         return base + "?theme=" + (isSystemDarkMode() ? "dark" : "light") + "&v=" + System.currentTimeMillis();

@@ -9,9 +9,7 @@
 <link rel="apple-touch-icon" sizes="192x192" href="android/app/src/main/res/drawable/gazonride_real.jpg?v=20261008">
 <link rel="manifest" href="gazonride-v2.json?v=20261008-profile1">
 <title>GazOnRide</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet" media="print" onload="this.media=\'all\'"><noscript><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="material-symbols.css?v=386">
 <link rel="stylesheet" href="social.css?v=20261014-brand1">
 <link rel="stylesheet" href="replay.css?v=20261020-rec3d">
 <link rel="stylesheet" href="gazon-guides.css?v=20261014-brand1">
@@ -31,10 +29,15 @@
     document.documentElement.classList.remove("icons-loading");
   }
   if(document.fonts&&document.fonts.load){
-    document.fonts.load("22px 'Material Symbols Rounded'").then(function(){
-      if(document.fonts.check("22px 'Material Symbols Rounded'")) revealMaterialIcons();
-      else setTimeout(revealMaterialIcons,1200);
-    }).catch(function(){ setTimeout(revealMaterialIcons,1800); });
+    // Reveal only once the icon font is really there: without it the icon
+    // names ("search", "two_wheeler") would show up as text.
+    var tries=0;
+    (function wait(){
+      document.fonts.load("22px 'Material Symbols Rounded'").catch(function(){}).then(function(){
+        if(document.fonts.check("22px 'Material Symbols Rounded'")) revealMaterialIcons();
+        else if(++tries<30) setTimeout(wait,500);
+      });
+    })();
   }else{
     window.addEventListener("load",revealMaterialIcons,{once:true});
   }

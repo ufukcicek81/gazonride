@@ -1,0 +1,5 @@
+/* Material Symbols Rounded (Apache License 2.0, Google), served with the app
+ * instead of fonts.googleapis.com: when Google's font server is slow or
+ * blocked, icon names ("search", "two_wheeler") showed up as text. */
+@font-face{font-family:'Material Symbols Rounded';font-style:normal;font-weight:500;font-display:block;src:url(material-symbols-rounded.woff2?v=386) format('woff2')}
+.material-symbols-rounded{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased}

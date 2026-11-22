@@ -38,7 +38,10 @@ jobs:
 
   ios-webkit:
     # Safari engine on an emulated iPhone: every tab, every button.
-    runs-on: ubuntu-latest
+    # Pinned: on ubuntu-latest (26.04) Playwright 1.48's WebKit system
+    # packages (libicu74, libxml2, libvpx9, libx264-164) do not exist and the
+    # job failed before running any test.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

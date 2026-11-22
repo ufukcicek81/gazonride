@@ -463,3 +463,9 @@ body.gr-myroutes-active #grSocial,body.gr-myroutes-active #grMyRides,body.gr-myr
 .gr-mr-actions button{display:inline-flex;align-items:center;gap:4px;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--gr-line);background:var(--gr-surface-2);color:var(--gr-text);font-weight:800;cursor:pointer}
 .gr-mr-actions button.primary{background:var(--gr-accent);border-color:var(--gr-accent);color:#fff;flex:1;justify-content:center}
 .gr-mr-actions .mi{font-size:18px}
+
+/* Ride screen: the intercom bar sat on top of Start / Finish. It is hidden
+ * there; the map button (#grIntercomFab) shows the live state and mutes. */
+body.mode-ride .voiceDock{display:none!important}
+.mapBtn.gr-ic-live{background:#16A34A!important;color:#fff!important;border-color:#16A34A!important;box-shadow:0 0 0 4px rgba(22,163,74,.25)}
+.mapBtn.gr-ic-live.muted{background:#6B7280!important;border-color:#6B7280!important;box-shadow:none}

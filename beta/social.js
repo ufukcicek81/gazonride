@@ -389,7 +389,9 @@ function render(filter){
 function syncRemoteCommunity(){
  if(!(window.GaZonAuth&&GaZonAuth.configured))return;
  GaZonAuth.ready.then(async function(){
-  if(!GaZonAuth.state.user)return;
+  // Guests see approved community routes and places too (read-only); likes,
+  // favourites and the rider list stay for members.
+  var member=!!GaZonAuth.state.user;
   async function pull(){
    var r=await GaZonAuth.client.from("submissions").select("*").eq("status","approved").order("reviewed_at",{ascending:false}).limit(100);
    if(r.error){console.warn("community sync",r.error);return;}
@@ -404,12 +406,13 @@ function syncRemoteCommunity(){
    if(routeIds.length){
     var lr=await GaZonAuth.client.from("route_likes").select("submission_id,user_id").in("submission_id",routeIds);
     if(!lr.error){
-     var counts={},me=GaZonAuth.state.user.id;
+     var counts={},me=member?GaZonAuth.state.user.id:"";
      (lr.data||[]).forEach(function(z){counts[z.submission_id]=(counts[z.submission_id]||0)+1;var rr=routes.find(function(q){return q.submissionId===z.submission_id});if(rr&&z.user_id===me)rr.likedByMe=true});
      routes.forEach(function(rr){rr.likes=Number(counts[rr.submissionId]||0);rr.likedByMe=!!rr.likedByMe})
     }
    }
    write(K_ROUTES,routes);write(K_PLACES,places);
+   if(!member){render();var act=document.querySelector("[data-route-source].active");renderRouteHub(act?act.dataset.routeSource:"gazon");return}
    var fr=await GaZonAuth.client.from("favorites").select("submission_id").eq("user_id",GaZonAuth.state.user.id);
    if(!fr.error){
     var favs=(fr.data||[]).map(function(x){var z=byId[x.submission_id];if(!z)return null;var kind=routes.some(function(r){return r.submissionId===x.submission_id})?"route":"place";return {id:favoriteId(kind,z),kind:kind,title:z.title||"",destination:z.destination||z.title||"",lat:z.lat,lon:z.lon,meta:kind==="route"?(z.difficulty||"Rota"):(z.type||"Mola"),author:z.author||"",submissionId:x.submission_id}}).filter(Boolean);
@@ -431,7 +434,7 @@ function syncRemoteCommunity(){
 }
 function install(){
  var host=document.querySelector(".discoverSection");if(!host||$("grSocial"))return;
- var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-route-hub"><div class="gr-route-hub-head"><div><b>Motosiklet Rotaları</b><small>Konumuna göre yakın rotalar önce gösterilir</small></div></div><div class="gr-route-source-tabs"><button class="active" data-route-source="gazon">GazOnRide Önerileri</button><button data-route-source="user">Kullanıcı Rotaları</button><button data-route-source="mine">Rotalarım</button></div><div class="gr-route-hub-list" id="grRouteHubList"></div></div><div class="gr-social-head"><div><b>Topluluktan</b><small>Son fotoğraflı sürüş paylaşımları</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions gr-social-actions-simple"><button class="gr-social-btn primary" id="grAddPost"><span class="mi">add_photo_alternate</span>Fotoğraf Paylaş</button><button class="gr-social-btn" id="grAddRoute"><span class="mi">add_road</span>Rota Paylaş</button></div><button id="grAddPlace" style="display:none"></button><button id="grAdmin" style="display:none"></button><div class="gr-social-list" id="grSocialList"></div>';
+ var wrap=document.createElement("section");wrap.id="grSocial";wrap.className="gr-social";wrap.innerHTML='<div class="gr-route-hub"><div class="gr-route-hub-head"><div><b>Motosiklet Rotaları</b><small>Konumuna göre yakın rotalar önce gösterilir</small></div></div><div class="gr-route-source-tabs"><button class="active" data-route-source="gazon">GazOnRide Önerileri</button><button data-route-source="user">Kullanıcı Rotaları</button><button data-route-source="mine">Paylaştıklarım</button></div><div class="gr-route-hub-list" id="grRouteHubList"></div></div><div class="gr-social-head"><div><b>Topluluktan</b><small>Son fotoğraflı sürüş paylaşımları</small></div><button class="chip" id="grMine">Katkılarım</button></div><div class="gr-social-actions gr-social-actions-simple"><button class="gr-social-btn primary" id="grAddPost"><span class="mi">add_photo_alternate</span>Fotoğraf Paylaş</button><button class="gr-social-btn" id="grAddRoute"><span class="mi">add_road</span>Rota Paylaş</button></div><button id="grAddPlace" style="display:none"></button><button id="grAdmin" style="display:none"></button><div class="gr-social-list" id="grSocialList"></div>';
  var quick=host.querySelector(".quickRow");if(quick)quick.insertAdjacentElement("afterend",wrap);else host.prepend(wrap);
  var m=document.createElement("div");m.id="grSocialModal";m.className="gr-modal";document.body.appendChild(m);
  $("grAddPost").onclick=postForm;$("grAddRoute").onclick=routeForm;$("grAddPlace").onclick=placeForm;$("grMine").onclick=showMine;$("grAdmin").onclick=admin;document.querySelectorAll("[data-route-source]").forEach(function(b){b.onclick=function(){renderRouteHub(b.dataset.routeSource)}});renderRouteHub("gazon");var ab=$("grAdmin");if(ab)ab.style.display="none";if(window.GaZonAuth&&GaZonAuth.ready)GaZonAuth.ready.then(function(){if(ab)ab.style.display=GaZonAuth.state.role==="admin"?"inline-block":"none"});

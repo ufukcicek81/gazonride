@@ -503,7 +503,23 @@ public class MainActivity extends Activity {
         });
         webView.setBackgroundColor(isSystemDarkMode() ? Color.rgb(8,10,14) : Color.rgb(245,246,248));
         webView.addJavascriptInterface(new AndroidBridge(),"AndroidBridge");
+        // github.io unreachable (some operators reset it): serve the app's own
+        // files from the copy inside the APK / on the phone, same address.
+        siteFallback=new SiteFallback(this,
+                "beta".equals(getString(R.string.default_web_channel)) ? URL + "beta/" : URL,
+                getString(R.string.build_commit));
+        try{
+            android.webkit.ServiceWorkerController.getInstance().setServiceWorkerClient(new android.webkit.ServiceWorkerClient(){
+                @Override public android.webkit.WebResourceResponse shouldInterceptRequest(android.webkit.WebResourceRequest request){
+                    return siteFallback.handle(request);
+                }
+            });
+        }catch(Exception ignored){}
         webView.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(WebView view, android.webkit.WebResourceRequest request){
+                android.webkit.WebResourceResponse r=siteFallback.handle(request);
+                return r!=null?r:super.shouldInterceptRequest(view,request);
+            }
             // Only the app's own site loads inside the WebView; any other page
             // (photo credits, Wikipedia, WhatsApp…) opens outside the app so
             // the rider can always come back with the back button.
@@ -699,6 +715,7 @@ public class MainActivity extends Activity {
         }catch(Exception ignored){}
     }
 
+    private SiteFallback siteFallback;
     private int loadRetries=0;
     private boolean showingLoadError=false, mainFrameFailed=false, pageVisible=false;
     private final Handler retryHandler=new Handler(Looper.getMainLooper());

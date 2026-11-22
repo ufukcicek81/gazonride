@@ -123,6 +123,24 @@ jobs:
         run: |
           mkdir -p android/app/src/main/assets
           printf '%s' "${GOOGLE_MAPS_API_KEY:-}" > android/app/src/main/assets/google_maps_api_key.txt
+      # Some mobile operators reset connections to github.io. The APK carries
+      # the same web files (this commit) and serves them when the site is
+      # unreachable (SiteFallback.java). Same file filter as deploy-beta.
+      - name: Bundle the web app into the APK (offline fallback)
+        shell: bash
+        run: |
+          set -eu
+          dst=android/app/src/main/assets/site
+          rm -rf "$dst" && mkdir -p "$dst"
+          for f in *.html *.js *.css *.json *.svg *.webmanifest; do
+            case "$f" in *.test.js|package.json|package-lock.json) continue;; esac
+            [ -f "$f" ] && cp "$f" "$dst/"
+          done
+          cp -r icons "$dst/" 2>/dev/null || true
+          mkdir -p "$dst/android/app/src/main/res/drawable"
+          cp android/app/src/main/res/drawable/gazonride_real.jpg "$dst/android/app/src/main/res/drawable/" 2>/dev/null || true
+          printf '{"branch":"%s","commit":"%s"}\n' "${GITHUB_REF_NAME}" "${GITHUB_SHA}" > "$dst/beta-build.json"
+          du -sh "$dst"
       - name: Compile APK
         working-directory: android
         env:
